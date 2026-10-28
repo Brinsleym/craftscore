@@ -8,6 +8,7 @@
     clippy::unreachable
 )]
 
+mod ci;
 mod layers;
 mod wasm;
 
@@ -17,6 +18,7 @@ use std::process::ExitCode;
 const USAGE: &str = "usage: cargo xtask <task>
 
 tasks:
+  ci       run fmt, clippy, tests, layers and wasm, as the Linux CI jobs do
   layers   check crate layering, lints and crate-root attributes (docs/architecture.md §3)
   wasm     cargo check every L0–L6 crate for wasm32-unknown-unknown";
 
@@ -31,6 +33,7 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let root = workspace_root();
     let result = match args.first().map(String::as_str) {
+        Some("ci") => ci::run(&root),
         Some("layers") => layers::run(&root),
         Some("wasm") => wasm::run(&root),
         Some("-h" | "--help" | "help") | None => {
