@@ -670,7 +670,7 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "SYNC-1",
-        title: "Sync scores, markings, lists and bookmarks across devices",
+        title: "Sync scores, markings, lists, bookmarks and settings across devices: over Wi-Fi between devices, or through Google Drive; optional sign-in",
         priority: "P1",
         commands: &["sync.now", "sync.status"],
     },
@@ -694,7 +694,7 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "SYNC-5",
-        title: "Fast first download on a new device; background downloads",
+        title: "Download everything ahead of time on every device, in the background; nothing waits on the network when a score opens",
         priority: "P2",
         commands: &[],
     },
@@ -706,7 +706,7 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "SYNC-7",
-        title: "Sync through a folder the user already syncs (iCloud Drive, OneDrive, Dropbox, Syncthing) or WebDAV, no account",
+        title: "Sync through storage the user already has, no ScoreCraft account: Google Drive first, then OneDrive and Dropbox, a folder the OS syncs, or WebDAV",
         priority: "P1",
         commands: &["sync.backend.set"],
     },
@@ -719,7 +719,7 @@ pub const FEATURES: &[Feature] = &[
     Feature {
         id: "PLAT-1",
         title: "Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web",
-        priority: "P0 (desktop), P1 (Android, web), P2 (iOS)",
+        priority: "P0 (Windows tablet, then desktop), P1 (Android, web), P2 (iPad, with a Swift pen host)",
         commands: &[],
     },
     Feature {

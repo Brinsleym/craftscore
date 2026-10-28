@@ -9,15 +9,47 @@ this file records the outcome. Newest first.
 | Id | Question | Options | Needed by |
 |---|---|---|---|
 | D2 | Record encoding on disk | JSON (readable, diffable) vs CBOR (smaller, faster) for score records; ink op logs are binary either way | M1 |
-| D3 | iOS shell | winit + wgpu + egui directly vs a thin Swift host around a Rust static library (no Swift UI logic) | M7 |
 | D4 | OCR for title/composer detection | `pdfcraft-ocr` (ocrs, on-device; leading option, model licences to confirm before shipping) vs PDF metadata and text layer only | M9 |
-| D5 | Sync server protocol | HTTP + JSON ops vs a compact binary protocol over WebSocket | M8 |
-| D6 | Product name | "ScoreCraft" (working name, following the `{Function}Craft` convention) or another name; must not include "enScore" | before the first release |
+| D5 | Device-to-device sync protocol | Wire format and pairing for Wi-Fi peers and the Google Drive relay (architecture §9): JSON ops vs a compact binary encoding; how optional sign-in links devices | M8 |
+
+## 2026-10-28: Owner's answers to the M0 review
+
+Brinsley answered the [M0 review](https://claude.ai/artifact/H2skGhp9UjwUSVmdJ6sMts)'s questions on
+2026-10-28. Each is a decision:
+
+- **Primary device: a Windows tablet.** Pen and touch on Windows are the first platform to get
+  right (architecture §10, §17). Desktops follow, then Android tablets and iPad.
+- **Web build: nice-to-have, medium priority** (not low). Every L0–L6 crate keeps checking for
+  wasm32, and the browser reader ships after the desktop one.
+- **D3 decided: a thin native Swift host on iPad for the pen.** It owns the Apple Pencil (pressure,
+  tilt, hover, predicted touches) and hands samples to the Rust ink engine; no Swift UI logic.
+- **D6 decided: the name is ScoreCraft.** ScoreCraft is independent of storytold but canonical with
+  the Craft suite apps: same framework, conventions and look.
+- **Rust 1.95, PDFCraft's version** (toolchain decision below). Take PDFCraft's constraints only
+  where ScoreCraft needs them, with **no bloat** from PDFCraft features a score reader doesn't use.
+- **ScoreCraft is a different app from PDFCraft.** It shares the framework and the implementation
+  of what the two have in common. It has its own UI and does not use `craft-update`. A build holds
+  exactly one egui: ScoreCraft's, built on `craft-ui` and distinct from PDFCraft's UI (architecture
+  §15, §16; `cargo xtask layers` enforces it).
+- **Sync has two parts** (architecture §9): (1) sync the whole library (files and folders), app
+  configuration and annotations to the user's **Google Drive**; (2) sync between devices and
+  platforms, with optional sign-in, over **Wi-Fi** and through Google Drive upload and download.
+  **Download everything, offline first**: nobody waits on a slow network in a concert hall.
+  Google Drive first; OneDrive and Dropbox later.
+- **forScore `.4sc` import with the two-team split: yes**; the owner has sample files.
+- **No tiers and no required account: confirmed.**
+- **Priority after the PDF engine: page turns and the pedal.**
+- **Everything is controllable by AI**: every part of the app, not only the engine's commands
+  (shell state, dialogs, settings, sync) goes through commands an agent can call.
 
 ## 2026-10-28: Workspace toolchain and lint baseline (M0)
 
-**Decision.** Edition 2024, `rust-version = "1.85"` (the first release with edition 2024), resolver
-3. Never-crash lints live once in `[workspace.lints]` (`unsafe_code = "forbid"`; clippy `unwrap_used`,
+**Decision.** Edition 2024, resolver 3. `rust-version = "1.95"`, matching PDFCraft's and
+craft-libs' `rust-version` (raised from 1.85 on 2026-10-28 at the owner's request: PDFCraft's crates
+don't build on older Rust). The MSRV CI job checks it. The toolchain everyone builds with is pinned
+in `rust-toolchain.toml` (1.99.1 on 2026-10-28), so a new stable release or clippy lint can't turn
+`main` red on its own; bump it in its own PR, and raise `rust-version` only when PDFCraft or
+craft-libs do. Never-crash lints live once in `[workspace.lints]` (`unsafe_code = "forbid"`; clippy `unwrap_used`,
 `expect_used`, `panic`, `unimplemented`, `todo`, `unreachable` deny, `indexing_slicing` warn, which
 CI's `-D warnings` makes an error) and every crate root repeats the `#![deny(...)]`. Cargo cannot
 mix `[lints] workspace = true` with a per-crate override, so `scorecraft-devices` copies the table
@@ -61,7 +93,8 @@ describe well enough, and the extra distance removes any doubt about provenance.
 ## 2026-10-28: No tiers, no required account
 
 Every enScore Pro and Sync capability is free in ScoreCraft and works offline; sync uses storage the
-user already has or a self-hosted server. Reason: the Crafting Apps are free and open source, and
+user already has (Google Drive first) or devices on the same Wi-Fi, and signing in to link devices
+is optional. Reason: the Crafting Apps are free and open source, and
 an account requirement would contradict offline-first.
 
 ## 2026-10-28: Shared standards copied in

@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -59,10 +59,13 @@ Ranked; pick from the top unless an issue is assigned to you.
    2026-10-28), `xtask scorecard` and testkit with a synthetic PDF generator~~.
 2. **PDFCraft integration** ([G1](gaps.md#g1-pdf-engine-parse-render-write),
    [decision D1](decisions.md#2026-10-28-d1-reuse-pdfcrafts-pdf-crates)): pin a PDFCraft revision,
-   repeat its hayro patches, write the `scorecraft-pdf` adapter, and run a 200-file public-domain
-   score corpus through it (correctness, speed, wasm size).
-3. **Specs for the alpha rows**: `docs/spec/page-turning.md`, `ink.md`, `library.md`,
-   `setlists.md` from the public listings plus observation passes ([G17](gaps.md#g17-unknowns-behaviour-not-yet-observed)).
+   repeat its hayro, lopdf and vello_common patches (not its egui and winit ones; architecture §15),
+   write the `scorecraft-pdf` adapter, and run a 200-file public-domain score corpus through it
+   (correctness, speed, wasm size). A test build on 2026-10-28 showed the crates we take check
+   natively and for wasm32 with no C code.
+3. **Page turns and the pedal next** (owner's priority, 2026-10-28): M3 includes Bluetooth pedal
+   mapping (TURN-4), on the owner's Windows tablet first. Start with `docs/spec/page-turning.md`,
+   then `ink.md`, `library.md`, `setlists.md` from the public listings plus observation passes ([G17](gaps.md#g17-unknowns-behaviour-not-yet-observed)).
 4. **Create the corpus repository** with pinned public-domain scores and hostile synthetic PDFs.
 
 ## What's next, with estimates
@@ -71,10 +74,10 @@ Ranked; pick from the top unless an issue is assigned to you.
 |---|---|---:|
 | 1 | M1 foundation (geom, raster, doc, ops, format v1) | 40–80 h |
 | 2 | M2 PDF integration (PDFCraft) | 20–40 h |
-| 3 | M3 reader app (layouts, turns, control channel, desktop + web) | 60–110 h |
+| 3 | M3 reader app (layouts, turns, pedal, control channel, Windows tablet and desktop, then web) | 66–122 h |
 | 4 | M4 ink | 80–150 h |
 | 5 | M5 library | 60–120 h |
-| 6 | M6 performance (setlists, pedals, shortcuts, snips, metronome) | 50–100 h |
+| 6 | M6 performance (setlists, shortcuts, snips, metronome) | 44–88 h |
 | Later | M7 mobile, M8 sync, M9 interop, M10 practice and MIDI, M11 parity | 490–980 h |
 
 ## Milestone definitions
@@ -87,12 +90,12 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 | **M0** | Skeleton | Workspace, all crate stubs, lints, `xtask` (layers, wasm, ci, parity, scorecard), CI matrix, testkit | `cargo test --workspace` green; `cargo xtask wasm` green; layering check passes; `docs/parity-checklist.md` generated (0 / 122) |
 | **M1** | Foundation | geom, raster (tiles, pyramids), doc (full model incl. layers, snips, shortcuts, setlists), ops (history), format v1 (blobs, records, atomic saves) | Property tests on history and the store; crash-during-save test; format fails to compile on an unmapped doc field |
 | **M2** | PDF integration | `scorecraft-pdf` adapter over PDFCraft's `cos`, `model`, `render`, `annot`, `organize`, `create` at one pinned revision with its hayro patches; tile cache and pre-rendering; outline and text access | ≥ 95% of the pinned score corpus renders within tolerance; adapter fuzz target; no `pdfcraft-*` type in the adapter's public API; 300 dpi page render within budget |
-| **M3** | Reader app | egui shell, library-less open, single/two-page, half-page and alternating turns, zoom, full screen, keep-awake, tap/key turns, control channel, CLI `run`, desktop + web | Turn latency within budget from cache; agent drives a turn and screenshots it over the control channel |
+| **M3** | Reader app | egui shell on `craft-ui` (one egui, architecture §16), library-less open, single/two-page, half-page and alternating turns, zoom, full screen, keep-awake, tap/key turns, Bluetooth pedal mapping (TURN-4), control channel, CLI `run`, Windows tablet and desktop first, web after | Turn latency within budget from cache; agent drives a turn and screenshots it over the control channel |
 | **M4** | Ink | ink engine, pen/highlighter/whiteout/erasers, text notes, stamps, layers, lasso, undo/redo, export with ink (♻ pdfcraft-annot) | Ink latency budget on desktop; strokes survive rotate/crop/reorder; exported PDF annotations open in two other readers |
 | **M5** | Library | import files/folders/images, folders, metadata, search (incl. full text), sort, bookmarks, Recently Deleted, verify/repair, thumbnails | 10,000-score synthetic library opens and searches within budget |
-| **M6** | Performance | setlists, page ranges, tempos, pedal mapping, Score Shortcuts, Score Snips, metronome | **Alpha gate passes** |
-| **M7** | Mobile | Android and iOS/iPadOS shells, pen pressure, share-sheet import, store packaging; the iPad build on Apple Vision (PLAT-5) | Alpha gate passes on one Android tablet and one iPad |
-| **M8** | Sync | op-log sync, CRDT merge, folder/WebDAV/server backends, two-way folder mirror (SYNC-8), backup/restore | Randomised two-device histories converge; offline edits on both devices merge without loss |
+| **M6** | Performance | setlists, page ranges, tempos, Score Shortcuts, Score Snips, metronome | **Alpha gate passes** |
+| **M7** | Mobile | Android and iOS/iPadOS shells (iPad: a thin Swift host for the Apple Pencil, decision D3), pen pressure, share-sheet import, store packaging; the iPad build on Apple Vision (PLAT-5) | Alpha gate passes on one Android tablet and one iPad |
+| **M8** | Sync | op-log sync, CRDT merge, Google Drive first (library, configuration, annotations), then device-to-device over Wi-Fi and via Drive with optional sign-in, download everything (architecture §9), backup/restore; OneDrive, Dropbox and the two-way folder mirror (SYNC-8) later | Randomised two-device histories converge; offline edits on both devices merge without loss |
 | **M9** | Interop | forScore `.4sc` import, camera and eSCL scanning, IMSLP, title/composer detection (♻ pdfcraft-ocr), print (♻ pdfcraft-print) | Two-team `.4sc` spec and import of the sample corpus; **beta** (with M7 and M8) |
 | **M10** | Practice and MIDI | audio attach and start at open, time-stretch, pitch-shift, loops, recorded turns, tuner, practice log, MIDI in/out with per-setlist messages | Practice workflow end to end; MIDI learn with two controllers |
 | **M11** | Parity | localization (15 locales), e-ink mode, multi-window, side by side, remaining P2 rows | Breadth ≥ 95% of the feature map |
@@ -101,6 +104,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Owner's answers to the M0 review: page turns and the pedal come first after M2, so TURN-4 moves from M6 to M3 (M3 66–122 h, M6 44–88 h; totals unchanged); M3 targets the Windows tablet first; M7 iPad uses a Swift pen host; M8 is Google Drive first, then device-to-device |
 | 2026-10-28 | minor | M0 done; alpha ~310–630 → ~250–530 h: `cargo xtask scorecard` generates the scorecard from `perf/budgets.toml` and `scorecard/*.toml`; testkit writes synthetic and hostile PDFs |
 | 2026-10-28 | minor | M0: engine `Session::dispatch` and command registry, generated feature catalog and parity checklist (0 of 122, floor 0), `panic_hunt`, CLI `commands`/`run` |
 | 2026-10-28 | minor | M0: GitHub Actions CI (fmt, layers, clippy and tests on three OSes, wasm32, MSRV) and `cargo xtask ci` |

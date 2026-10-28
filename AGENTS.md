@@ -4,7 +4,10 @@ ScoreCraft is an open-source, native sheet music reader: a clean-room reimplemen
 **enScore**, written in **Rust only** (no JavaScript or TypeScript). **No Tauri, Electron or
 webview shells:** the desktop and mobile apps are native egui/eframe on wgpu, and the web build is
 the same Rust compiled to WebAssembly (trunk + wasm-bindgen). Never add a webview or JS UI
-framework as a dependency, build step or packaging target. The product name is always written
+framework as a dependency, build step or packaging target. The one non-Rust code is the iPad's
+thin Swift host for the Apple Pencil (decision D3): it forwards pen samples and holds no UI logic.
+The UI is ScoreCraft's own, built on the Craft suite's `craft-ui` with exactly one egui in the
+build; never take PDFCraft's UI or `craft-update` ([architecture §16](docs/architecture.md#16-ui-framework-craft-ui-and-one-egui)). The product name is always written
 **ScoreCraft** in user-facing text (UI, window titles, About, installers, release names, docs
 prose), following the Crafting Apps' `{Function}Craft` convention. Machine names stay lowercase:
 crates (`scorecraft-*`), binaries, file names, ids (`app.scorecraft`). The goal is enScore parity
@@ -148,7 +151,9 @@ long tail.
    over-budget performance scenarios, settings that do nothing.
 2. [`docs/roadmap.md`](docs/roadmap.md) → **Current focus**.
 3. `cargo xtask parity` → [`docs/parity-checklist.md`](docs/parity-checklist.md) lists every
-   feature-map row without a live command. Prefer `P0` rows, then `P1`.
+   feature-map row that isn't live yet. A row counts only when its commands are registered (`ui.*` ones
+   in `crates/ui-egui/shell-commands.toml`) and you mark it `partial` or `done` in the feature map
+   with a test; a stub returning "unsupported" never counts. Prefer `P0` rows, then `P1`.
 4. If the feature has no spec in `docs/spec/`, write the spec first (from observation notes and
    public sources), in its own PR or the same one.
 5. `log/devlog.md` → the "Still open" bullets of recent entries.

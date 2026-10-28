@@ -12,6 +12,7 @@ use scorecraft_engine::Session;
 const FEATURE_MAP: &str = "docs/feature-map.md";
 const CATALOG: &str = "crates/engine/src/feature_catalog.rs";
 const CHECKLIST: &str = "docs/parity-checklist.md";
+const SHELL_COMMANDS: &str = "crates/ui-egui/shell-commands.toml";
 const HEADER: &str = "| Id | Feature | Tier | Source | Command | Crate | P | Est | Status |";
 
 /// One feature-map row.
@@ -98,13 +99,73 @@ pub fn parse_feature_map(text: &str) -> Result<Vec<Row>, String> {
     Ok(rows)
 }
 
-/// A row is live when it names at least one command and every command it names is registered.
-pub fn is_live(row: &Row, registered: &[&str]) -> bool {
+/// Every command the row names is registered (and it names at least one).
+fn is_wired(row: &Row, registered: &[&str]) -> bool {
     !row.commands.is_empty()
         && row
             .commands
             .iter()
             .all(|c| registered.contains(&c.as_str()))
+}
+
+/// The feature map says the row behaves (`partial` or `done`, see its Status legend).
+fn is_implemented(row: &Row) -> bool {
+    matches!(row.status.as_str(), "partial" | "done")
+}
+
+/// A row is live when every command it names is registered **and** the feature map marks it
+/// `partial` or `done`. Registering a stub that returns "unsupported" doesn't raise parity.
+pub fn is_live(row: &Row, registered: &[&str]) -> bool {
+    is_wired(row, registered) && is_implemented(row)
+}
+
+/// Rows the feature map marks `partial` or `done` whose commands aren't all registered: the map
+/// claims behaviour the engine doesn't have.
+pub fn inconsistencies(rows: &[Row], registered: &[&str]) -> Vec<String> {
+    rows.iter()
+        .filter(|r| is_implemented(r) && !r.commands.is_empty() && !is_wired(r, registered))
+        .map(|r| {
+            let missing: Vec<&str> = r
+                .commands
+                .iter()
+                .map(String::as_str)
+                .filter(|c| !registered.contains(c))
+                .collect();
+            format!(
+                "{FEATURE_MAP}: {} is `{}` but these commands aren't registered: {}",
+                r.id,
+                r.status,
+                missing.join(", ")
+            )
+        })
+        .collect()
+}
+
+/// The shell's `ui.*` command ids from [`SHELL_COMMANDS`].
+pub fn shell_commands(text: &str) -> Result<Vec<String>, String> {
+    let table: toml::Table = text
+        .parse()
+        .map_err(|e| format!("parsing {SHELL_COMMANDS}: {e}"))?;
+    let list = table
+        .get("commands")
+        .and_then(toml::Value::as_array)
+        .ok_or_else(|| format!("{SHELL_COMMANDS}: needs `commands = [...]`"))?;
+    let mut ids = Vec::new();
+    for v in list {
+        let id = v
+            .as_str()
+            .ok_or_else(|| format!("{SHELL_COMMANDS}: every command id is a string"))?;
+        if !id.starts_with("ui.") {
+            return Err(format!(
+                "{SHELL_COMMANDS}: `{id}` is not a shell command (shell ids start with `ui.`)"
+            ));
+        }
+        if ids.iter().any(|i| i == id) {
+            return Err(format!("{SHELL_COMMANDS}: `{id}` is listed twice"));
+        }
+        ids.push(id.to_owned());
+    }
+    Ok(ids)
 }
 
 pub fn render_catalog(rows: &[Row]) -> String {
@@ -192,11 +253,11 @@ pub fn render_checklist(rows: &[Row], registered: &[&str]) -> String {
         );
     }
     s.push_str(
-        "\n\"Live\" means the row names at least one command and every command id it names is\n\
-         registered in the engine. It measures wiring, not behaviour; behaviour is the `Status`\n\
-         column of the feature map and the parity docs. Shell commands (`ui.*`) count once the\n\
-         shell registers them. Rows with no command (quality bars, model rules) are never live\n\
-         here; their parity docs track them.\n\n",
+        "\n\"Live\" means every command id the row names is registered (in the engine, or for\n\
+         `ui.*` ids in `crates/ui-egui/shell-commands.toml`) **and** the feature map marks the row\n\
+         `partial` or `done`, which means it behaves as specified with a test. A registered stub\n\
+         doesn't count. Rows with no command (quality bars, model rules) are never live here;\n\
+         their parity docs track them.\n\n",
     );
     s.push_str("## Live\n\n");
     let live_rows: Vec<&Row> = rows.iter().filter(|r| is_live(r, registered)).collect();
@@ -209,11 +270,26 @@ pub fn render_checklist(rows: &[Row], registered: &[&str]) -> String {
         }
         s.push('\n');
     }
+    let wired: Vec<&Row> = rows
+        .iter()
+        .filter(|r| is_wired(r, registered) && !is_implemented(r))
+        .collect();
+    if !wired.is_empty() {
+        s.push_str(
+            "## Registered, not yet implemented\n\n\
+             Their commands exist but the feature map still says `missing`, so they don't count.\n\n\
+             | Id | Feature | Commands |\n|---|---|---|\n",
+        );
+        for r in wired {
+            let _ = writeln!(s, "| {} | {} | {} |", r.id, r.title, code_list(&r.commands));
+        }
+        s.push('\n');
+    }
     s.push_str("## Not yet implemented\n\n");
     for area in &areas {
         let missing: Vec<&Row> = rows
             .iter()
-            .filter(|r| r.area == *area && !is_live(r, registered))
+            .filter(|r| r.area == *area && !is_live(r, registered) && !is_wired(r, registered))
             .collect();
         if missing.is_empty() {
             continue;
@@ -264,7 +340,15 @@ pub fn run(root: &Path, check: bool) -> Result<(), String> {
     let rows = parse_feature_map(&text)?;
     let session = Session::new();
     let infos = session.commands();
-    let registered: Vec<&str> = infos.iter().map(|c| c.id).collect();
+    let shell_text = fs::read_to_string(root.join(SHELL_COMMANDS))
+        .map_err(|e| format!("reading {SHELL_COMMANDS}: {e}"))?;
+    let shell = shell_commands(&shell_text)?;
+    let mut registered: Vec<&str> = infos.iter().map(|c| c.id).collect();
+    registered.extend(shell.iter().map(String::as_str));
+    let bad = inconsistencies(&rows, &registered);
+    if !bad.is_empty() {
+        return Err(bad.join("\n"));
+    }
 
     let catalog = render_catalog(&rows);
     let checklist = render_checklist(&rows, &registered);
@@ -339,7 +423,7 @@ mod tests {
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
 | READ-1 | Open a score | Free | S1 | `score.open`, `view.render` | pdf | P0 | 10–20 | missing |
-| READ-2 | Single page | Free | S1 | `view.layout.single` | layout | P0 | 4–8 | missing |
+| READ-2 | Single page | Free | S1 | `view.layout.single` | layout | P0 | 4–8 | partial |
 | READ-14 | Quality | Free | S1 | n/a (quality bar) | pdf | P0 | 1 | missing |
 
 | Id | What PDFCraft provides | Before | After |
@@ -358,7 +442,7 @@ mod tests {
 
     #[test]
     fn rejects_malformed_rows_and_duplicates() {
-        let bad = MAP.replace("| P0 | 4–8 | missing |", "| P0 |");
+        let bad = MAP.replace("| P0 | 4–8 | partial |", "| P0 |");
         assert!(parse_feature_map(&bad).is_err());
         let dup = MAP.replace("READ-2", "READ-1");
         assert!(parse_feature_map(&dup).is_err());
@@ -367,12 +451,42 @@ mod tests {
     #[test]
     fn live_needs_every_command() {
         let rows = parse_feature_map(MAP).unwrap();
-        assert!(!is_live(&rows[0], &["score.open"]));
-        assert!(is_live(&rows[0], &["score.open", "view.render"]));
+        assert!(!is_live(&rows[1], &[]));
+        assert!(is_live(&rows[1], &["view.layout.single"]));
         assert!(!is_live(&rows[2], &["anything"]));
         let doc = render_checklist(&rows, &["view.layout.single"]);
         assert!(doc.contains("**1 of 3 features live (33.3%).**"));
         assert!(doc.contains("| READ | 1 | 3 | 33% |"));
+    }
+
+    #[test]
+    fn a_registered_stub_is_not_live() {
+        let rows = parse_feature_map(MAP).unwrap();
+        // READ-1 is `missing`: registering its commands wires it but doesn't count it.
+        assert!(!is_live(&rows[0], &["score.open", "view.render"]));
+        let doc = render_checklist(&rows, &["score.open", "view.render"]);
+        assert!(doc.contains("**0 of 3 features live (0.0%).**"));
+        assert!(doc.contains("## Registered, not yet implemented"));
+    }
+
+    #[test]
+    fn implemented_rows_need_their_commands() {
+        let rows = parse_feature_map(MAP).unwrap();
+        let bad = inconsistencies(&rows, &[]);
+        assert_eq!(bad.len(), 1);
+        assert!(bad[0].contains("READ-2 is `partial`"));
+        assert!(inconsistencies(&rows, &["view.layout.single"]).is_empty());
+    }
+
+    #[test]
+    fn shell_commands_must_be_ui_ids() {
+        assert_eq!(
+            shell_commands("commands = [\"ui.view.fullScreen\"]").unwrap(),
+            ["ui.view.fullScreen"]
+        );
+        assert!(shell_commands("commands = [\"view.turn.next\"]").is_err());
+        assert!(shell_commands("commands = [\"ui.a\", \"ui.a\"]").is_err());
+        assert!(shell_commands("ids = []").is_err());
     }
 
     #[test]

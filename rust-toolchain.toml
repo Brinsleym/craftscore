@@ -1,0 +1,8 @@
+# The toolchain CI and every contributor build with, so a new Rust release can't turn `main`
+# red on its own. Bump it in its own PR (docs/decisions.md, toolchain). The oldest supported
+# Rust is `rust-version` in Cargo.toml, checked by the MSRV CI job.
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

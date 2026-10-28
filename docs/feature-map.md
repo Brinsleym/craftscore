@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (reconciled with the Microsoft Store description S8: 4 rows added, 1 corrected; earlier: 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -228,20 +228,20 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| SYNC-1 | Sync scores, markings, lists and bookmarks across devices | Sync | S1, S3, S4 | `sync.now`, `sync.status` | sync | P1 | 60–120 | missing |
+| SYNC-1 | Sync scores, markings, lists, bookmarks and settings across devices: over Wi-Fi between devices, or through Google Drive; optional sign-in | Sync | S1, S3, S4 | `sync.now`, `sync.status` | sync | P1 | 60–120 | missing |
 | SYNC-2 | Cloud backup of the whole library | Sync | S1, S4 | `backup.create`, `backup.restore` | sync, format | P1 | 12–24 | missing |
 | SYNC-3 | Offline-first: the device is the source of truth; the server holds a copy | Sync | S1 | n/a (design rule) | sync | P1 | n/a | missing |
 | SYNC-4 | Account deletion removes server copies, keeps local ones | Sync | S1 | `sync.account.delete` | sync | P2 | 2–4 | missing |
-| SYNC-5 | Fast first download on a new device; background downloads | Sync | S1 | n/a (performance) | sync | P2 | 8–16 | missing |
+| SYNC-5 | Download everything ahead of time on every device, in the background; nothing waits on the network when a score opens | Sync | S1 | n/a (performance) | sync | P2 | 8–16 | missing |
 | SYNC-6 | Conflict-free merging of concurrent markings on two devices | Sync | inferred | n/a (CRDT) | sync | P1 | 20–40 | missing |
-| SYNC-7 | Sync through a folder the user already syncs (iCloud Drive, OneDrive, Dropbox, Syncthing) or WebDAV, no account | n/a | ours (S3 review); enScore's free folder mirror is SYNC-8 | `sync.backend.set` | sync | P1 | 16–30 | missing |
+| SYNC-7 | Sync through storage the user already has, no ScoreCraft account: Google Drive first, then OneDrive and Dropbox, a folder the OS syncs, or WebDAV | n/a | ours (S3 review); enScore's free folder mirror is SYNC-8 | `sync.backend.set` | sync | P1 | 16–30 | missing |
 | SYNC-8 | Mirror a library folder two ways with a folder on the computer or in OneDrive, no account or subscription | Free | S8 | `library.folder.mirror.set` | sync, io | P1 | 8–16 | missing |
 
 ## PLAT: platforms, UI and languages
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| PLAT-1 | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | Free | S1–S3 | n/a | apps | P0 (desktop), P1 (Android, web), P2 (iOS) | 80–200 | missing |
+| PLAT-1 | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | Free | S1–S3 | n/a | apps | P0 (Windows tablet, then desktop), P1 (Android, web), P2 (iPad, with a Swift pen host) | 80–200 | missing |
 | PLAT-2 | E-ink / e-reader mode (no animation, high contrast, partial refresh friendly) | Free | S3, S6, S8 | `ui.display.eInk` | ui-egui | P2 | 8–16 | missing |
 | PLAT-3 | Fifteen interface languages (see [`localization-parity.md`](localization-parity.md)) | Free | S1, S8 | n/a | ui-egui | P1 | 40–80 | missing |
 | PLAT-4 | Light and dark app themes, independent of the page filter | Free | S4 | `ui.theme.set` | ui-egui | P0 | 4–8 | missing |
@@ -308,6 +308,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Owner's answers: SYNC-1, SYNC-5 and SYNC-7 describe Google Drive first, Wi-Fi device sync and download-everything; PLAT-1 puts the Windows tablet first and the iPad Swift pen host at P2; rows and estimates unchanged |
 | 2026-10-28 | minor | Reconciled with the Microsoft Store description (S8): added PLAY-7, MIDI-5, SYNC-8, PLAT-5 (118 → 122 rows); corrected PAGE-7 and PLAT-3; all rows ~910–1,830 → ~920–1,860 h |
 | 2026-10-28 | minor | 13 rows marked ♻ PDFCraft reuse; estimates lowered (all rows ~990–1,990 → ~910–1,830 h) |
 | 2026-10-28 | major | First version: 118 rows from public listings (S1–S6) |

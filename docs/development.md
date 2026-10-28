@@ -31,7 +31,7 @@ cargo xtask ci                                      # what CI runs on Linux
 
 | Task | What it checks |
 |---|---|
-| `cargo xtask ci` | what the Linux CI jobs run: `fmt --check`, clippy with `-D warnings`, `test --workspace`, `layers`, `wasm` |
+| `cargo xtask ci` | what the Linux CI jobs run: `fmt --check`, clippy with `-D warnings`, `test --workspace` (plus doctests), `panic_hunt`, `layers`, `parity --check`, `scorecard --check`, `wasm` |
 | `cargo xtask layers` | every package is registered in `xtask/src/layers.rs`, depends only on lower layers, uses the workspace lints and carries the never-crash `#![deny(...)]` at its root; PDFCraft and UI-toolkit allow-lists |
 | `cargo xtask parity` | regenerates `crates/engine/src/feature_catalog.rs` and [`parity-checklist.md`](parity-checklist.md) from the feature map and the registry; fails below `FLOOR`; `--check` fails if either is stale |
 | `cargo xtask scorecard` | regenerates [`scorecard.md`](scorecard.md) from `perf/budgets.toml`, `scorecard/*.toml`, the parity docs' status columns and measured counts; `--check` fails if stale |
@@ -76,6 +76,18 @@ scorecraft-cli commands --json
 
 # Let an agent drive it over MCP (headless, or bridged to the running app)
 scorecraft-cli mcp
+```
+
+`run` prints one JSON line per step. It stops at the first failing step: the results of the steps
+that ran are still printed, followed by `{"error":{"code":…,"message":…,"command":…,"step":n}}`
+(the control protocol's error shape), and it exits with status 1.
+
+**Windows PowerShell** (5.1) strips the inner double quotes from `'{"x":1}'` when it calls a
+native program, so the CLI receives `{x:1}`. Put params in a file, or pipe them in:
+
+```powershell
+scorecraft-cli run --cmd engine.commands.list --params-file params.json
+'{"filter":"view."}' | scorecraft-cli run --cmd engine.commands.list --params-file -
 ```
 
 The desktop app's control channel (`scorecraft --control`) reads UI state, sends pointer, key,
