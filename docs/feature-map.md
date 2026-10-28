@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, 118 rows from public listings) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (13 rows marked ♻ reuse of PDFCraft crates, estimates lowered; earlier: major, first version, 118 rows from public listings) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -22,7 +22,7 @@ row, mark it `dropped` with a reason.
 - **Command**: the engine command id(s), `area.noun.verb` in lowerCamelCase segments, like
   PhotoCraft's (`view.turn.next`). Pure view state that never touches a document may be a shell
   command (`ui.*`), as in PhotoCraft's `UI_COMMANDS`.
-- **Crate**: where the algorithm lives (see [`architecture.md`](architecture.md#2-workspace-layout)).
+- **Crate**: where the algorithm lives. **♻** marks a row built mainly on a PDFCraft crate rather than new code ([reuse](#reuse-from-pdfcraft)) (see [`architecture.md`](architecture.md#2-workspace-layout)).
 - **P**: priority. `P0` = needed for the [alpha gate](roadmap.md#alpha-gate), `P1` = needed for
   beta, `P2` = full parity, `P3` = ours only or optional.
 - **Est**: agent-hours including tests, uncalibrated until we have merged-PR history
@@ -49,13 +49,13 @@ row, mark it `dropped` with a reason.
 | Platforms, UI and languages | PLAT | 4 | 2 | 0 | 0 | 4 |
 | **Total** | | **118** | **39** | **0** | **0** | **118** |
 
-Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
+Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft reuse (was ~990–1,990) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
 ## READ: reading and display
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| READ-1 | Open a PDF score and render its pages crisply at any zoom, fast enough to turn without a visible delay | Free | S1 | `score.open`, `view.render` | pdf, render | P0 | 40–80 | missing |
+| READ-1 | Open a PDF score and render its pages crisply at any zoom, fast enough to turn without a visible delay | Free | S1 | `score.open`, `view.render` | pdf ♻ pdfcraft-cos, -render; render | P0 | 10–20 | missing |
 | READ-2 | Single-page layout | Free | S1, S4 | `view.layout.single` | layout | P0 | 4–8 | missing |
 | READ-3 | Two-page spread layout, with correct first-page placement for spreads | Free | S1 | `view.layout.twoPage` | layout | P0 | 6–12 | missing |
 | READ-4 | Full-screen (chrome hidden) performance mode | Free | S1, S4 | `ui.view.fullScreen` | ui-egui | P0 | 3–6 | missing |
@@ -68,7 +68,7 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | READ-11 | Multiple windows, each with its own score | Free | S1 | `ui.window.new` | app shell | P2 | 8–16 | missing |
 | READ-12 | Landscape Page Zoom (fit width in landscape, scroll within a page) | Free | S1 | `view.zoom.landscapeFit` | layout | P1 | 4–8 | missing |
 | READ-13 | Non-destructive crop and margin adjustment per page | Free | S1 | `page.crop.set`, `page.margins.set` | doc, layout | P1 | 6–12 | missing |
-| READ-14 | Robust with damaged pages and very large scores (hundreds of pages, huge scans) | Free | S1 | n/a (quality bar) | pdf, render | P0 | 10–20 | missing |
+| READ-14 | Robust with damaged pages and very large scores (hundreds of pages, huge scans) | Free | S1 | n/a (quality bar) | pdf ♻ pdfcraft-cos (xref repair), -render | P0 | 4–8 | missing |
 | READ-15 | Pinch / scroll zoom and pan within a page | Free | inferred | `view.zoom.set`, `view.pan` | layout, ui-egui | P0 | 4–8 | missing |
 
 ## TURN: page turning inputs
@@ -114,8 +114,8 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | LIB-3 | Folders | Free | S1 | `library.folder.new`, `library.score.move` | doc | P0 | 4–8 | missing |
 | LIB-4 | Metadata fields: title, composer, tags, key | Free | S1 | `score.metadata.set` | doc | P0 | 4–8 | missing |
 | LIB-5 | Search across title, composer, tags, key and folders | Free | S1 | `library.search` | search | P0 | 6–12 | missing |
-| LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search, pdf | P1 | 12–24 | missing |
-| LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2 | `score.metadata.detect` | metadata | P2 | 16–30 | missing |
+| LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search; pdf ♻ pdfcraft-render (text) | P1 | 6–12 | missing |
+| LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2 | `score.metadata.detect` | metadata ♻ pdfcraft-ocr | P2 | 8–16 | missing |
 | LIB-8 | Detection for a whole folder of files at once | Acct | S1 | `library.metadata.detectAll` | metadata | P2 | 4–8 | missing |
 | LIB-9 | Sort by title, composer, date added, recently opened | Free | S1 | `library.sort.set` | engine | P0 | 2–4 | missing |
 | LIB-10 | Recently Deleted folder with restore | Free | S1, S3 | `library.trash.restore`, `library.trash.empty` | doc | P1 | 4–8 | missing |
@@ -134,7 +134,7 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | PAGE-3 | Hide pages (kept, not shown) | Free | S1, S4 | `page.setHidden` | doc | P0 | 2–4 | missing |
 | PAGE-4 | Delete pages | Free | S1, S4 | `page.delete` | doc | P0 | 2–4 | missing |
 | PAGE-5 | Crop and straighten scanned pages without altering the file | Free | S1 | `page.straighten`, `page.crop.set` | algo, doc | P1 | 8–16 | missing |
-| PAGE-6 | Blank manuscript paper: single staff, grand staff or tab, any page size | Free | S1 | `score.newManuscript` | render, pdf | P1 | 8–14 | missing |
+| PAGE-6 | Blank manuscript paper: single staff, grand staff or tab, any page size | Free | S1 | `score.newManuscript` | pdf ♻ pdfcraft-create | P1 | 4–8 | missing |
 | PAGE-7 | Score Snips: copy bars from one place and show them elsewhere (for example the end of the previous page after a turn) | Pro | S1, S3, S4 | `page.snip.create`, `page.snip.place` | doc, render | P1 | 12–24 | missing |
 | PAGE-8 | Page Range: limit a score to a range of its PDF's pages | Free | S1 | `score.pageRange.set` | doc | P1 | 3–6 | missing |
 
@@ -146,7 +146,7 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | NAV-2 | Create a shortcut from the viewer menu | Pro | S1 | `nav.shortcut.add` | ui-egui | P1 | 2–4 | missing |
 | NAV-3 | Return from a jump (back to where the shortcut was followed) | Pro | inferred | `nav.back` | engine | P1 | 2–4 | missing |
 | NAV-4 | Page-turn order follows shortcuts during a performance (repeat-aware turning) | Pro | S1, S4 | `nav.follow.mode` | engine | P2 | 8–16 | missing |
-| NAV-5 | Table of contents from PDF outline | Free | inferred | `view.outline.goto` | pdf | P0 | 3–6 | missing |
+| NAV-5 | Table of contents from PDF outline | Free | inferred | `view.outline.goto` | pdf ♻ pdfcraft-model | P0 | 2–4 | missing |
 
 ## LIST: setlists
 
@@ -192,7 +192,7 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | PRAC-6 | Daily practice goals | Free | S1 | `practice.goal.set` | practice | P2 | 2–4 | missing |
 | PRAC-7 | Pause and resume logging | Free | S1 | `practice.log.pause` | practice | P2 | 1–2 | missing |
 | PRAC-8 | Practice notes inside scores | Free | S1 | `score.note.add` | doc | P2 | 3–6 | missing |
-| PRAC-9 | Shareable PDF practice report | Free | S1 | `practice.report.export` | practice, pdf | P2 | 6–10 | missing |
+| PRAC-9 | Shareable PDF practice report | Free | S1 | `practice.report.export` | practice; pdf ♻ pdfcraft-create | P2 | 3–6 | missing |
 | PRAC-10 | Practice log backup and restore | Free | S1 | `practice.log.export`, `practice.log.import` | practice, format | P2 | 2–4 | missing |
 | PRAC-11 | Visual metronome pulse (silent performance cue) | Free | inferred | `practice.metronome.visual` | ui-egui | P3 | 2–4 | missing |
 
@@ -200,22 +200,22 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| IMP-1 | Camera scan with automatic edge detection, perspective straightening, crop and clean-up into a PDF | Free | S1, S2 | `scan.camera` | scan | P2 | 24–40 | missing |
+| IMP-1 | Camera scan with automatic edge detection, perspective straightening, crop and clean-up into a PDF | Free | S1, S2 | `scan.camera` | scan, algo; pdf ♻ pdfcraft-create | P2 | 18–32 | missing |
 | IMP-2 | Wi-Fi flatbed and feeder scanners (eSCL / AirScan) | Free | S1 | `scan.network` | scan | P2 | 12–24 | missing |
-| IMP-3 | Import photos / images (PNG, JPEG, HEIC, TIFF) as pages | Free | S1 | `library.import.images` | io, codecs | P1 | 6–10 | missing |
+| IMP-3 | Import photos / images (PNG, JPEG, HEIC, TIFF) as pages | Free | S1 | `library.import.images` | io ♻ pdfcraft-create | P1 | 2–4 | missing |
 | IMP-4 | IMSLP search and import of public-domain scores | Pro | S1, S3, S4 | `imslp.search`, `imslp.import` | imslp | P2 | 12–24 | missing |
 | IMP-5 | Import a forScore library from a `.4sc` file: pages, ink, stamps, layers | Free | S1, S4 | `library.import.forscore` | fsc, io | P1 | 30–60 | missing |
 | IMP-6 | Import report: what was imported, skipped, or could not be read | Free | inferred | n/a (result of import) | io | P0 | 2–4 | missing |
-| IMP-7 | Import PDF annotations made in other PDF apps (ISO 32000 ink, highlight, free-text annots) | Free | ours | `library.import.files` | pdf, io | P1 | 10–18 | missing |
+| IMP-7 | Import PDF annotations made in other PDF apps (ISO 32000 ink, highlight, free-text annots) | Free | ours | `library.import.files` | pdf ♻ pdfcraft-annot | P1 | 4–8 | missing |
 | IMP-8 | Import MusicXML / MIDI rendered to pages | n/a | ours | `library.import.musicxml` | engrave | P3 | 80–160 | missing |
 
 ## EXP: export and print
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| EXP-1 | Print a score with or without annotations | Free | S1, S4 | `score.print` | pdf, app shell | P1 | 8–16 | missing |
-| EXP-2 | Export a PDF with ink flattened, or as real PDF annotations, choosing which layers | Free | S1, S4 | `score.export.pdf` | pdf | P0 | 10–18 | missing |
-| EXP-3 | Export a setlist as a single combined PDF | Pro | inferred | `list.export.pdf` | pdf | P2 | 3–6 | missing |
+| EXP-1 | Print a score with or without annotations | Free | S1, S4 | `score.print` | io ♻ pdfcraft-print | P1 | 3–6 | missing |
+| EXP-2 | Export a PDF with ink flattened, or as real PDF annotations, choosing which layers | Free | S1, S4 | `score.export.pdf` | pdf ♻ pdfcraft-annot, -cos (save) | P0 | 4–8 | missing |
+| EXP-3 | Export a setlist as a single combined PDF | Pro | inferred | `list.export.pdf` | pdf ♻ pdfcraft-organize | P2 | 1–2 | missing |
 | EXP-4 | Export a page as an image | Free | inferred | `page.export.image` | render, codecs | P2 | 2–4 | missing |
 
 ## SYNC: sync and backup
@@ -239,6 +239,34 @@ Sum of the estimates: **~990–1,990 agent-hours** for every row (P0 alone: see 
 | PLAT-3 | Twelve or more interface languages (see [`localization-parity.md`](localization-parity.md)) | Free | S1 | n/a | ui-egui | P1 | 40–80 | missing |
 | PLAT-4 | Light and dark app themes, independent of the page filter | Free | S4 | `ui.theme.set` | ui-egui | P0 | 4–8 | missing |
 
+## Reuse from PDFCraft
+
+ScoreCraft's PDF backend reuses [storytold/pdfcraft](https://github.com/storytold/pdfcraft)'s crates
+instead of writing a PDF engine ([architecture §15](architecture.md#15-reusing-pdfcraft),
+[decision D1](decisions.md#2026-10-28-d1-reuse-pdfcrafts-pdf-crates)). These rows become integration
+work on top of PDFCraft rather than new code. Estimates are agent-hours, before → after.
+
+| Id | What PDFCraft provides | Before | After |
+|---|---|---:|---:|
+| READ-1 | pdfcraft-cos parses (lazy, tolerant), pdfcraft-render rasterises (vendored hayro, JBIG2/CCITT/DCT/JPX) | 40–80 | 10–20 |
+| READ-14 | pdfcraft-cos xref repair and resource caps; hayro paint-nesting and image-size caps | 10–20 | 4–8 |
+| NAV-5 | pdfcraft-model typed catalog / outline access | 3–6 | 2–4 |
+| LIB-6 | text extraction from pdfcraft-render inspection; our index stays in `search` | 12–24 | 6–12 |
+| LIB-7 | pdfcraft-ocr (ocrs) recognises first-page text; our heuristics pick title and composer | 16–30 | 8–16 |
+| PAGE-6 | pdfcraft-create writes the blank pages; we draw the staves | 8–14 | 4–8 |
+| PRAC-9 | pdfcraft-create writes the report PDF | 6–10 | 3–6 |
+| IMP-3 | pdfcraft-create turns PNG/JPEG/TIFF into pages | 6–10 | 2–4 |
+| IMP-7 | pdfcraft-annot reads Ink, Highlight, FreeText, Square/Circle | 10–18 | 4–8 |
+| EXP-1 | pdfcraft-print composes pages; craft-print spools | 8–16 | 3–6 |
+| EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
+| EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
+| IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
+| **Total** | 13 rows | **~156–292** | **~69–134** |
+
+Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
+shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
+caching for instant turns, and corpus checks.
+
 ## Ours only (not in enScore)
 
 Rows tagged `ours` above (IMP-7, IMP-8, SYNC-7) and these capabilities come from the Crafting Apps
@@ -254,4 +282,5 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | 13 rows marked ♻ PDFCraft reuse; estimates lowered (all rows ~990–1,990 → ~910–1,830 h) |
 | 2026-10-28 | major | First version: 118 rows from public listings (S1–S6) |

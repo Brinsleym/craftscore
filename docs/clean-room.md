@@ -48,6 +48,11 @@ In order of preference:
    network traffic, memory).
 5. **Academic papers and open-licensed implementations** for algorithms (stroke smoothing, page
    deskewing, pitch detection, full-text indexing), under permissive licences only.
+6. **Other Crafting Apps' code**, in particular [PDFCraft](https://github.com/storytold/pdfcraft)'s
+   PDF crates, which ScoreCraft depends on ([architecture §15](architecture.md#15-reusing-pdfcraft)).
+   PDFCraft is MIT OR Apache-2.0 and itself clean-room (Acrobat's behaviour from public specs), so
+   reusing it is reuse of open code, not of proprietary material. Its ArtCraft brand files are not
+   open source and are never copied.
 
 ## 3. Forbidden sources and actions
 

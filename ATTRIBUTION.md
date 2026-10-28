@@ -18,6 +18,15 @@ to them ([`docs/contributing.md`](docs/contributing.md#adding-an-asset)).
 |---|---|---|---|---|
 | _none yet_ | | | | |
 
+## Reused code (dependencies, not copied files)
+
+| Component | Source | License | Use |
+|---|---|---|---|
+| PdfCraft crates (`pdfcraft-cos`, `-render`, `-annot`, `-create`, `-organize`, `-print`, `-ocr` and their lower layers) | <https://github.com/storytold/pdfcraft>, pinned revision | MIT OR Apache-2.0 | The PDF backend ([architecture §15](docs/architecture.md#15-reusing-pdfcraft)) |
+| hayro family as patched in PdfCraft's `vendor/` | same | Apache-2.0 OR MIT; bundled Foxit fonts and Adobe CMaps BSD-3-Clause | Page rasterisation, through `pdfcraft-render` |
+
+Notices for these are in [`NOTICE`](NOTICE).
+
 ## Process credits
 
 The development process, document structure and many rules in this repository are adapted from

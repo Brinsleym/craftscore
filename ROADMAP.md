@@ -1,8 +1,8 @@
 # ScoreCraft roadmap
 
-**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~350–720 h away)
+**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~310–630 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version: documentation and process in place, no code) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (PDF backend reuses PDFCraft, estimates lowered; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -22,9 +22,9 @@ repository has merged-PR history. About 75% of the work parallelizes.
 | **Ready for real work** | **0%** | estimated |
 | Practising musician | 0% | estimated ([method](docs/target-app-parity.md#practising-musician)) |
 | Essentials user | 0% | estimated ([method](docs/target-app-parity.md#essentials-user)) |
-| Remaining to **alpha** | **~350–720 h** | estimated |
-| Remaining to **beta** | **~830–1,650 h** | estimated |
-| Remaining to **full parity** | **~1,070–2,120 h** | estimated |
+| Remaining to **alpha** | **~310–630 h** | estimated |
+| Remaining to **beta** | **~760–1,520 h** | estimated |
+| Remaining to **full parity** | **~980–1,960 h** | estimated |
 
 **Why pre-alpha.** The project has its process, clean-room rules, architecture and feature map, and
 no code. The first milestone is the workspace skeleton (M0).
@@ -33,10 +33,10 @@ no code. The first milestone is the workspace skeleton (M0).
 
 | Dimension | % ready | Hours to full | Doc |
 |---|---:|---:|---|
-| Features (depth) | 0% | 900–1,800 | [feature-map](docs/feature-map.md) |
+| Features (depth) | 0% | 830–1,660 | [feature-map](docs/feature-map.md) |
 | Page-turn reliability and latency | 0% | 60–120 | [ui-parity](docs/ui-parity.md) |
 | Ink feel | 0% | 40–80 | [annotation-parity](docs/annotation-parity.md) |
-| PDF fidelity | 0% | 80–160 | [file-format-parity](docs/file-format-parity.md) |
+| PDF fidelity (engine reused from [PDFCraft](https://github.com/storytold/pdfcraft)) | 0% | 20–40 | [file-format-parity](docs/file-format-parity.md) |
 | Stability | 0% | 60–120 | [gaps G3](docs/gaps.md#g3-stability-and-data-safety) |
 | Hardware (pedals, MIDI, stylus, e-ink) | 0% | 50–100 | [hardware-parity](docs/hardware-parity.md) |
 | Platforms | 0% | 80–200 | [gaps G9](docs/gaps.md#g9-mobile-platforms) |
@@ -54,7 +54,7 @@ enScore lists 15 locales. ScoreCraft ships English first; the rest follow at M11
 | Rank | Milestone | Estimate |
 |---|---|---:|
 | 1 | M0 skeleton and CI | 60–100 h |
-| 2 | Decision D1: PDF rasteriser, then M2 PDF v1 | 80–160 h |
+| 2 | M2 PDF integration: adapter over PDFCraft's crates | 20–40 h |
 | 3 | M1 foundation | 40–80 h |
 | 4 | M3 reader app | 60–110 h |
 | 5 | M4 ink | 80–150 h |
@@ -65,10 +65,12 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-28 | PDF backend to reuse PDFCraft's crates (decision D1); 13 features marked as reuse |
 | 2026-10-28 | Documentation and process: clean-room rules, feature map (118 rows), architecture, parity docs, RFC process |
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | PDFCraft reuse: estimates lowered |
 | 2026-10-28 | major | First version, per [`docs/standards/progress-docs.md`](docs/standards/progress-docs.md) |

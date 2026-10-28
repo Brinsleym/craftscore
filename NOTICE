@@ -10,5 +10,23 @@ compatibility and comparison.
 
 Third-party material
 
-This repository does not yet bundle third-party material. When it does, each item is listed here
-with its licence, and the per-file list (author, source, licence) is in ATTRIBUTION.md.
+This repository does not yet bundle third-party material. The per-file list (author, source,
+licence) is in ATTRIBUTION.md.
+
+Planned dependencies whose notices builds will carry (docs/architecture.md §15):
+
+- PdfCraft crates (pdfcraft-geom, -filters, -crypt, -cos, -model, -content, -fonts, -render,
+  -annot, -organize, -create, -print, -ocr), https://github.com/storytold/pdfcraft, used as git
+  dependencies at a pinned revision. Copyright (c) 2026 ArtCraft Team and the PdfCraft
+  contributors. MIT OR Apache-2.0. The ArtCraft name and logos are not covered by that licence and
+  are not used by ScoreCraft.
+- hayro, hayro-interpret, hayro-syntax, hayro-cmap, hayro-postscript, hayro-jbig2 (as patched by
+  PdfCraft) — Apache-2.0 OR MIT, Copyright the hayro authors. hayro's embed-fonts feature bundles
+  the Foxit standard-14 Type 1 fonts: Copyright 2014 PDFium Authors. All rights reserved. Original
+  code copyright 2014 Foxit Software Inc. BSD-3-Clause. hayro-cmap bundles Adobe CMap resources:
+  Copyright 1990-2023 Adobe. All rights reserved. BSD-3-Clause; neither the name of Adobe nor the
+  names of its contributors are used to endorse or promote this product.
+- lopdf — MIT. vello_common — Apache-2.0 OR MIT.
+- CGATS001Compat-v2-micro.icc in hayro-interpret — CC0-1.0, Clinton Ingram.
+- ocrs and its recognition models (through pdfcraft-ocr), if OCR ships — licences to be recorded
+  here before the first release that includes them.

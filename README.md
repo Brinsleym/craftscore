@@ -169,6 +169,9 @@ offscreen screenshots. See [`docs/control-protocol.md`](docs/control-protocol.md
 
 - **Engine first:** a pure-data library model and a command engine, with a thin egui UI on top.
   Layering is enforced at build time across about 30 crates ([architecture](docs/architecture.md)).
+- **PDF engine from PDFCraft:** parsing, rendering, annotations, page assembly, printing and OCR
+  come from [PDFCraft](https://github.com/storytold/pdfcraft)'s hardened, MIT/Apache-licensed
+  crates, so ScoreCraft's own code goes into what a score reader adds.
 - **The PDF is sacred:** imported files are stored content-addressed and never rewritten; every
   edit and marking is data, in source-page coordinates, so it survives rotation, crops and reorders.
 - **Two compositors:** a CPU compositor is the reference oracle; a wgpu compositor puts pages and
