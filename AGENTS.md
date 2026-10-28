@@ -148,7 +148,9 @@ long tail.
    over-budget performance scenarios, settings that do nothing.
 2. [`docs/roadmap.md`](docs/roadmap.md) → **Current focus**.
 3. `cargo xtask parity` → [`docs/parity-checklist.md`](docs/parity-checklist.md) lists every
-   feature-map row without a live command. Prefer `P0` rows, then `P1`.
+   feature-map row that isn't live yet. A row counts only when its commands are registered (`ui.*` ones
+   in `crates/ui-egui/shell-commands.toml`) and you mark it `partial` or `done` in the feature map
+   with a test; a stub returning "unsupported" never counts. Prefer `P0` rows, then `P1`.
 4. If the feature has no spec in `docs/spec/`, write the spec first (from observation notes and
    public sources), in its own PR or the same one.
 5. `log/devlog.md` → the "Still open" bullets of recent entries.

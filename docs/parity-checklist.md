@@ -24,11 +24,11 @@ hand: change the feature map or register commands, then regenerate. CI runs
 | SYNC | 0 | 8 | 0% |
 | PLAT | 0 | 5 | 0% |
 
-"Live" means the row names at least one command and every command id it names is
-registered in the engine. It measures wiring, not behaviour; behaviour is the `Status`
-column of the feature map and the parity docs. Shell commands (`ui.*`) count once the
-shell registers them. Rows with no command (quality bars, model rules) are never live
-here; their parity docs track them.
+"Live" means every command id the row names is registered (in the engine, or for
+`ui.*` ids in `crates/ui-egui/shell-commands.toml`) **and** the feature map marks the row
+`partial` or `done`, which means it behaves as specified with a test. A registered stub
+doesn't count. Rows with no command (quality bars, model rules) are never live here;
+their parity docs track them.
 
 ## Live
 
