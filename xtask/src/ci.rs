@@ -53,9 +53,13 @@ pub fn run(root: &Path) -> Result<(), String> {
     for (label, args) in STEPS {
         cargo(root, label, args)?;
     }
+    println!("ci: layers");
     crate::layers::run(root)?;
+    println!("ci: parity --check");
     crate::parity::run(root, true)?;
+    println!("ci: scorecard --check");
     crate::scorecard::run(root, true)?;
+    println!("ci: wasm");
     crate::wasm::run(root)?;
     println!("ci: all steps passed");
     Ok(())

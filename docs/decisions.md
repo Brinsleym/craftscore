@@ -16,8 +16,12 @@ this file records the outcome. Newest first.
 
 ## 2026-10-28: Workspace toolchain and lint baseline (M0)
 
-**Decision.** Edition 2024, `rust-version = "1.85"` (the first release with edition 2024), resolver
-3. Never-crash lints live once in `[workspace.lints]` (`unsafe_code = "forbid"`; clippy `unwrap_used`,
+**Decision.** Edition 2024, resolver 3. `rust-version = "1.95"`, matching PDFCraft's and
+craft-libs' `rust-version` (raised from 1.85 on 2026-10-28 at the owner's request: PDFCraft's crates
+don't build on older Rust). The MSRV CI job checks it. The toolchain everyone builds with is pinned
+in `rust-toolchain.toml` (1.99.1 on 2026-10-28), so a new stable release or clippy lint can't turn
+`main` red on its own; bump it in its own PR, and raise `rust-version` only when PDFCraft or
+craft-libs do. Never-crash lints live once in `[workspace.lints]` (`unsafe_code = "forbid"`; clippy `unwrap_used`,
 `expect_used`, `panic`, `unimplemented`, `todo`, `unreachable` deny, `indexing_slicing` warn, which
 CI's `-D warnings` makes an error) and every crate root repeats the `#![deny(...)]`. Cargo cannot
 mix `[lints] workspace = true` with a per-crate override, so `scorecraft-devices` copies the table

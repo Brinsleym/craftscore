@@ -25,9 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
+      # Installs the toolchain, components and targets pinned in rust-toolchain.toml.
+      - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo xtask layers
@@ -43,10 +42,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          # rustfmt too: xtask's tests regenerate the formatted feature catalog.
-          components: clippy, rustfmt
+      # Installs the toolchain, components and targets pinned in rust-toolchain.toml.
+      - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo test --locked --workspace --all-targets
@@ -59,17 +56,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+      # Installs the toolchain, components and targets pinned in rust-toolchain.toml.
+      - run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask wasm
 
   msrv:
-    name: MSRV (1.85)
+    # The oldest Rust we support: `rust-version` in Cargo.toml, which follows PDFCraft's.
+    name: MSRV (1.95)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.85
+      - run: rustup toolchain install 1.95 --profile minimal
       - uses: Swatinem/rust-cache@v2
-      - run: cargo check --locked --workspace --all-targets
+      - run: cargo +1.95 check --locked --workspace --all-targets
