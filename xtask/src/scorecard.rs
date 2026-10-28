@@ -384,7 +384,10 @@ pub fn run(root: &Path, check: bool) -> Result<(), String> {
         areas: &areas,
         measured: &measured,
     });
-    let current = fs::read_to_string(root.join(OUT)).unwrap_or_default();
+    // Ignore CRLF from a checkout that converted line endings.
+    let current = fs::read_to_string(root.join(OUT))
+        .unwrap_or_default()
+        .replace("\r\n", "\n");
     if current == out {
         println!("scorecard: up to date");
         return Ok(());
