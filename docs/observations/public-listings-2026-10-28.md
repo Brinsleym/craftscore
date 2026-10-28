@@ -17,6 +17,7 @@ source for the first version of the feature map. Nothing here comes from the app
 | S4 | [AirTurn app page](https://airturn.com/blogs/apps/enscore-sheet-music-viewer) | Page-turn inputs (tap, swipe, arrow keys, Bluetooth pedal), Pro feature list |
 | S5 | [MWM app directory](https://mwm.ai/apps/enscore/6767764210) | Version 3.7.0 on Apple platforms, feature summary |
 | S6 | [Amazon Appstore listing](https://www.amazon.com/Jonathan-Vardouniotis-enScore-Sheet-Reader/dp/B0HKD8K22P) | Fire / e-reader availability |
+| S8 | Microsoft Store full description (same listing as S2), pasted into the project by Brinsley on 2026-10-28 | Every section of the Windows description: detection, turns, import, ink, play-along, MIDI, practice log, shared setlists, forScore, platforms, account-free use, the "also in the box" list, Pro and Sync |
 | S7 | enscore.app (developer site) | Linked from every listing; not reachable from our build environment on 2026-10-28, to be read in a later pass |
 
 ## What the listings say
@@ -55,7 +56,7 @@ Bookmarks, a Recently Deleted folder, Verify & Repair Library (S1, S3).
 
 **Page editing.** Reorder, rotate, hide and delete pages. Crop and straighten scans. Blank
 manuscript paper (single staff, grand staff, tab) in any page size. Score Snips: copy and paste
-bars, for example to show bars from the previous page after a turn (Pro). Page Range per score
+bars (Pro); S8 describes the use as pasting the bars that come after a turn before it. Page Range per score
 (S1, S3, S5).
 
 **Navigation.** Score Shortcuts: tappable links in a score for multi-page repeats and D.S. al Coda,
@@ -87,9 +88,35 @@ and faster first downloads on a new device. Scores live on the device and the cl
 deleting the account removes server copies and keeps local ones (S1). A public review asks for
 OneDrive sync (S3).
 
-**Languages.** Listings say twelve interface languages; S1 lists English, Dutch, French, German,
+**Languages.** Fifteen interface languages (S8); S1 lists English, Dutch, French, German,
 Greek, Italian, Japanese, Korean, Polish, Portuguese (incl. Brazilian), Russian, Simplified
 Chinese, Spanish, Swedish and Traditional Chinese.
+
+## What the Microsoft Store description adds (S8)
+
+Brinsley supplied the full text of the Windows listing on 2026-10-28. It is public marketing copy,
+summarised here in our own words. Most of it confirms the sections above. New or sharper points:
+
+- **Play-along.** A recording can start by itself when the score opens. Recorded page turns include
+  half-page turns.
+- **MIDI.** A score can send one message or a whole list (Program Change, Bank Select, Song Select)
+  so a keyboard is on the right patch when the score opens. The same piece can send different
+  sounds in different setlists.
+- **Practice log.** Kept automatically while playing. A note about the day's practice can be written
+  from inside the score.
+- **Score Snips.** Described as pasting the bars after a turn before it, so the player can turn
+  later. This corrects our earlier wording.
+- **Highlighters** blend with the page like real ones.
+- **Folder mirroring.** A folder can be mirrored two ways with the PC or with OneDrive, listed
+  among the free features (not Sync).
+- **Platforms.** Windows, iPhone, iPad, Mac, Apple Vision, Android and e-ink readers, "the same
+  app on all of them".
+- **Languages.** Fifteen.
+- **Account.** Reading, ink, setlists and scanning need no account or network; an account is only
+  for Sync and online title/composer detection. Deleting the account removes server copies and
+  keeps local ones.
+- **Tiers.** Pro (one purchase): Lists with page range and tempo, annotation layers, Score Snips,
+  Score Shortcuts, in-app IMSLP search. Sync is a separate optional monthly or yearly subscription.
 
 ## Open questions (need observation or the developer site)
 
@@ -101,3 +128,5 @@ Chinese, Spanish, Swedish and Traditional Chinese.
 - Tuner range, reference pitch setting, temperaments.
 - `.4sc` contents beyond "pages, ink, stamps and layers".
 - Behaviour on e-ink displays (refresh, animation).
+- Folder mirror (S8): conflict handling, whether ink travels with the PDFs, and which folders can be mirrored.
+- Per-setlist MIDI (S8): does the list's message replace the score's, or add to it?

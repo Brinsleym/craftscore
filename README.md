@@ -75,7 +75,7 @@ detected from generic scan names. Bookmarks, a Recently Deleted folder, and a li
 repairs what a crash or a sync hiccup broke.
 
 **Edit pages, not files.** Reorder, rotate, hide and delete pages; crop and straighten scans; limit a
-score to a page range; Score Snips to show the bars you need after a turn; blank manuscript paper
+score to a page range; Score Snips to paste the bars after a turn before it; blank manuscript paper
 with single staves, grand staves or tab.
 
 **Perform a set.** Setlists with a page range and a tempo per entry that flow from piece to piece.
@@ -84,13 +84,14 @@ PDFs and markings included, as one file.
 
 **Practise.** A metronome with tap tempo, subdivisions and nine sounds; a tuner; recordings attached
 to scores, slowed down, looped or transposed; a practice log with streaks, goals and a PDF report.
-MIDI program changes when a score opens.
+MIDI program changes when a score opens, with different sounds per setlist.
 
 **Bring your music.** Camera scanning that straightens and cleans pages, Wi-Fi scanners, IMSLP search
 and import, and migration from forScore's `.4sc` files with pages, ink, stamps and layers.
 
 **Sync your way.** Sync scores, markings, setlists and bookmarks through a folder you already sync
-(iCloud Drive, OneDrive, Dropbox, Syncthing), WebDAV, or a sync server you host. No subscription.
+(iCloud Drive, OneDrive, Dropbox, Syncthing), WebDAV, or a sync server you host, or mirror one
+folder two ways with your computer. No subscription.
 
 ## Everything in the box
 
@@ -116,7 +117,7 @@ and import, and migration from forScore's `.4sc` files with pages, ink, stamps a
     </td>
     <td width="33%" valign="top">
       <h4>🎧 Practice</h4>
-      Metronome (tap tempo, subdivisions, nine sounds) · tuner · audio attach, time-stretch, pitch-shift, loops · practice log, streaks, goals · PDF reports · MIDI program, bank and song select
+      Metronome (tap tempo, subdivisions, nine sounds) · tuner · audio attach, time-stretch, pitch-shift, loops · practice log, streaks, goals · PDF reports · MIDI program, bank and song select, per setlist
     </td>
     <td width="33%" valign="top">
       <h4>🔄 Files and sync</h4>
@@ -206,7 +207,7 @@ cargo test --workspace                           # the test suite
 | [`AGENTS.md`](AGENTS.md) | Guide for agents and contributors: rules, workspace map, checks before you finish |
 | [`ROADMAP.md`](ROADMAP.md) | One-page status: stage, parity numbers, what's next |
 | [`docs/clean-room.md`](docs/clean-room.md) | The clean-room methodology |
-| [`docs/feature-map.md`](docs/feature-map.md) | All 118 enScore features with ids, commands, crates, priorities, estimates |
+| [`docs/feature-map.md`](docs/feature-map.md) | All 122 enScore features with ids, commands, crates, priorities, estimates |
 | [`docs/architecture.md`](docs/architecture.md) | Crates, layers, document model, rendering, sync |
 | [`docs/target-app-parity.md`](docs/target-app-parity.md), [`docs/gaps.md`](docs/gaps.md), [`docs/roadmap.md`](docs/roadmap.md) | Parity assessment, ranked gaps, milestones and alpha gate |
 | [`docs/contributing.md`](docs/contributing.md), [`docs/development.md`](docs/development.md) | How to contribute, build, test and drive the app |

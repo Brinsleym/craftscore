@@ -1,6 +1,6 @@
 # Practice and audio parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (PR-5 and PR-10 refined from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Status and evidence as in [`ui-parity.md`](ui-parity.md). Metronome and tuner sounds are original
 or synthesised, never sampled from another app ([clean-room](clean-room.md)).
@@ -13,16 +13,17 @@ or synthesised, never sampled from another app ([clean-room](clean-room.md)).
 | PR-2 | Nine metronome sounds and a visual pulse | PRAC-3, PRAC-11 | missing |
 | PR-3 | Tempo per setlist entry starts the metronome at that tempo | LIST-3 | missing |
 | PR-4 | Tuner: pitch detection (YIN/McLeod-class, from papers), reference pitch, cents display, transposing instruments | PRAC-4 | missing |
-| PR-5 | Attach a recording (WAV, FLAC, MP3, AAC/M4A, Ogg) to a score | PLAY-1 | missing |
+| PR-5 | Attach a recording (WAV, FLAC, MP3, AAC/M4A, Ogg) to a score; optionally start it when the score opens | PLAY-1, PLAY-7 | missing |
 | PR-6 | Time-stretch 25%–200% without pitch change; pitch-shift ±12 semitones | PLAY-2, PLAY-4 | missing |
 | PR-7 | A–B loop, transport controls in the reader | PLAY-3, PLAY-6 | missing |
-| PR-8 | Record page turns against playback time; follow them on later plays | TURN-6, PLAY-5 | missing |
+| PR-8 | Record page turns (half-page turns included) against playback time; follow them on later plays | TURN-6, PLAY-5 | missing |
 | PR-9 | Practice log: time per day per piece, streaks, goals, pause | PRAC-5..7 | missing |
-| PR-10 | Practice notes in scores, searchable | PRAC-8, LIB-6 | missing |
+| PR-10 | Practice notes about the day's practice, written from inside the score, searchable | PRAC-8, LIB-6 | missing |
 | PR-11 | PDF practice report; log backup and restore | PRAC-9, PRAC-10 | missing |
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | PR-5, PR-8, PR-10 refined from the Microsoft Store description (PLAY-7) |
 | 2026-10-28 | major | First version |

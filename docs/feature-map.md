@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (13 rows marked ♻ reuse of PDFCraft crates, estimates lowered; earlier: major, first version, 118 rows from public listings) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (reconciled with the Microsoft Store description S8: 4 rows added, 1 corrected; earlier: 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -8,7 +8,7 @@ the **denominator** of the breadth number in [`target-app-parity.md`](target-app
 source of `crates/engine/src/feature_catalog.rs` once the engine exists, and what
 `cargo xtask parity` will measure into [`parity-checklist.md`](parity-checklist.md).
 
-Rows come from public sources only ([clean-room](clean-room.md)); the per-row source tags (S1–S6)
+Rows come from public sources only ([clean-room](clean-room.md)); the per-row source tags (S1–S8)
 are listed in [`observations/public-listings-2026-10-28.md`](observations/public-listings-2026-10-28.md).
 Add a row when a new enScore release or an observation note shows a new capability; never delete a
 row, mark it `dropped` with a reason.
@@ -44,16 +44,16 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Page editing | PAGE | 8 | 4 | 0 | 0 | 8 |
 | In-score navigation | NAV | 5 | 1 | 0 | 0 | 5 |
 | Setlists | LIST | 7 | 3 | 0 | 0 | 7 |
-| Audio playback | PLAY | 6 | 0 | 0 | 0 | 6 |
-| MIDI | MIDI | 4 | 0 | 0 | 0 | 4 |
+| Audio playback | PLAY | 7 | 0 | 0 | 0 | 7 |
+| MIDI | MIDI | 5 | 0 | 0 | 0 | 5 |
 | Practice tools | PRAC | 11 | 1 | 0 | 0 | 11 |
 | Import and scanning | IMP | 8 | 1 | 0 | 0 | 8 |
 | Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
-| Sync and backup | SYNC | 7 | 0 | 0 | 0 | 7 |
-| Platforms, UI and languages | PLAT | 4 | 2 | 0 | 0 | 4 |
-| **Total** | | **118** | **39** | **0** | **0** | **118** |
+| Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
+| Platforms, UI and languages | PLAT | 5 | 2 | 0 | 0 | 5 |
+| **Total** | | **122** | **39** | **0** | **0** | **122** |
 
-Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft reuse (was ~990–1,990) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
+Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft reuse and the S8 rows (P0 250–530, P1 360–700, P2 230–450, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
 ## READ: reading and display
 
@@ -65,11 +65,11 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | READ-4 | Full-screen (chrome hidden) performance mode | Free | S1, S4 | `ui.view.fullScreen` | ui-egui | P0 | 3–6 | missing |
 | READ-5 | Half-page turns: the next system appears before the full turn | Free | S1, S2, S3 | `view.turn.halfPage` (mode) | layout | P0 | 8–16 | missing |
 | READ-6 | Alternating page turns for awkward page breaks | Free | S4 | `view.turn.alternating` (mode) | layout | P1 | 4–8 | missing |
-| READ-7 | Display filters: light, dark, sepia (with intensity), inverted | Free | S1 | `view.filter.set` | render | P1 | 6–10 | missing |
+| READ-7 | Display filters: light, dark, sepia (with intensity), inverted | Free | S1, S8 | `view.filter.set` | render | P1 | 6–10 | missing |
 | READ-8 | Enhance filter for scanned pages (contrast / clean-up) | Free | S1 | `view.filter.enhance` | algo | P2 | 8–16 | missing |
 | READ-9 | Keep the screen awake while a score or setlist is open | Free | S1, S4 | `ui.power.keepAwake` | app shell | P0 | 2–4 | missing |
 | READ-10 | Two scores side by side | Free | S1, S3 | `view.split.open` | engine, ui-egui | P2 | 8–16 | missing |
-| READ-11 | Multiple windows, each with its own score | Free | S1 | `ui.window.new` | app shell | P2 | 8–16 | missing |
+| READ-11 | Multiple windows, each with its own score | Free | S1, S8 | `ui.window.new` | app shell | P2 | 8–16 | missing |
 | READ-12 | Landscape Page Zoom (fit width in landscape, scroll within a page) | Free | S1 | `view.zoom.landscapeFit` | layout | P1 | 4–8 | missing |
 | READ-13 | Non-destructive crop and margin adjustment per page | Free | S1 | `page.crop.set`, `page.margins.set` | doc, layout | P1 | 6–12 | missing |
 | READ-14 | Robust with damaged pages and very large scores (hundreds of pages, huge scans) | Free | S1 | n/a (quality bar) | pdf ♻ pdfcraft-cos (xref repair), -render | P0 | 4–8 | missing |
@@ -84,7 +84,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | TURN-3 | Keyboard arrow keys (and Page Up / Down, Space) | Free | S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 1–2 | missing |
 | TURN-4 | Bluetooth foot pedals (keyboard-emulating HID pedals, configurable key mapping) | Free | S1, S4 | `input.pedal.map` | input | P0 | 6–12 | missing |
 | TURN-5 | MIDI pedals and controllers turn pages | Free | S1 | `input.midi.mapTurn` | midi, input | P2 | 6–12 | missing |
-| TURN-6 | Record page turns during audio playback; replay them automatically | Free | S1 | `play.turns.record`, `play.turns.follow` | engine, audio | P2 | 8–16 | missing |
+| TURN-6 | Record page turns during audio playback (half-page turns included); replay them automatically | Free | S1, S8 | `play.turns.record`, `play.turns.follow` | engine, audio | P2 | 8–16 | missing |
 | TURN-7 | Turn across score boundaries inside a setlist (last page → next piece) | Pro | S1 | `list.turn.next` | engine | P1 | 3–6 | missing |
 | TURN-8 | Jump to first / last page, go to page number | Free | inferred | `view.page.goto` | engine | P1 | 1–2 | missing |
 
@@ -94,7 +94,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 |---|---|---|---|---|---|---|---:|---|
 | ANNO-1 | Pen ink with stylus, finger ("draw with touch") or mouse, low latency | Free | S1, S2, S4 | `annotate.tool.pen`, `annotate.stroke` | ink | P0 | 16–30 | missing |
 | ANNO-2 | Pressure-sensitive strokes (Apple Pencil, Windows Ink, Android stylus, Wacom) | Free | S1, S2 | `annotate.stroke` (pressure) | ink, input | P0 | 8–16 | missing |
-| ANNO-3 | Highlighter (translucent, stronger option) | Free | S1 | `annotate.tool.highlighter` | ink | P0 | 4–8 | missing |
+| ANNO-3 | Highlighter that blends with the print like a real one (translucent multiply, no build-up within a stroke; stronger option) | Free | S1, S8 | `annotate.tool.highlighter` | ink | P0 | 4–8 | missing |
 | ANNO-4 | Custom pen colours and widths, saved presets | Free | S1 | `annotate.pen.preset.set` | ink, engine | P1 | 4–8 | missing |
 | ANNO-5 | Whiteout: cover printed marks, then write over them | Free | S1, S2 | `annotate.tool.whiteout` | ink | P1 | 4–8 | missing |
 | ANNO-6 | Stroke eraser (removes whole strokes) | Free | S1 | `annotate.tool.strokeEraser` | ink | P0 | 4–8 | missing |
@@ -119,7 +119,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | LIB-4 | Metadata fields: title, composer, tags, key | Free | S1 | `score.metadata.set` | doc | P0 | 4–8 | missing |
 | LIB-5 | Search across title, composer, tags, key and folders | Free | S1 | `library.search` | search | P0 | 6–12 | missing |
 | LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search; pdf ♻ pdfcraft-render (text) | P1 | 6–12 | missing |
-| LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2 | `score.metadata.detect` | metadata ♻ pdfcraft-ocr | P2 | 8–16 | missing |
+| LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2, S8 | `score.metadata.detect` | metadata ♻ pdfcraft-ocr | P2 | 8–16 | missing |
 | LIB-8 | Detection for a whole folder of files at once | Acct | S1 | `library.metadata.detectAll` | metadata | P2 | 4–8 | missing |
 | LIB-9 | Sort by title, composer, date added, recently opened | Free | S1 | `library.sort.set` | engine | P0 | 2–4 | missing |
 | LIB-10 | Recently Deleted folder with restore | Free | S1, S3 | `library.trash.restore`, `library.trash.empty` | doc | P1 | 4–8 | missing |
@@ -139,7 +139,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | PAGE-4 | Delete pages | Free | S1, S4 | `page.delete` | doc | P0 | 2–4 | missing |
 | PAGE-5 | Crop and straighten scanned pages without altering the file | Free | S1 | `page.straighten`, `page.crop.set` | algo, doc | P1 | 8–16 | missing |
 | PAGE-6 | Blank manuscript paper: single staff, grand staff or tab, any page size | Free | S1 | `score.newManuscript` | pdf ♻ pdfcraft-create | P1 | 4–8 | missing |
-| PAGE-7 | Score Snips: copy bars from one place and show them elsewhere (for example the end of the previous page after a turn) | Pro | S1, S3, S4 | `page.snip.create`, `page.snip.place` | doc, render | P1 | 12–24 | missing |
+| PAGE-7 | Score Snips: copy bars from one place and paste them elsewhere, for example the bars after a page turn pasted before it, so the turn can come later | Pro | S1, S3, S4, S8 | `page.snip.create`, `page.snip.place` | doc, render | P1 | 12–24 | missing |
 | PAGE-8 | Page Range: limit a score to a range of its PDF's pages | Free | S1 | `score.pageRange.set` | doc | P1 | 3–6 | missing |
 
 ## NAV: in-score navigation
@@ -160,7 +160,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | LIST-2 | Page range per list entry | Pro | S1 | `list.entry.pageRange.set` | doc | P1 | 3–6 | missing |
 | LIST-3 | Tempo per list entry (feeds the metronome) | Pro | S1 | `list.entry.tempo.set` | doc, practice | P1 | 2–4 | missing |
 | LIST-4 | Pieces flow into one another; screen stays awake until the end | Pro | S1, S2 | `list.play` | engine | P0 | 4–8 | missing |
-| LIST-5 | Share a whole setlist as one file (PDFs, order, page ranges, markings) and import it | Pro | S1, S3 | `list.export.bundle`, `list.import.bundle` | io, format | P1 | 10–18 | missing |
+| LIST-5 | Share a whole setlist as one file (PDFs, order, page ranges, markings) and import it ready to play on another device | Pro | S1, S3, S8 | `list.export.bundle`, `list.import.bundle` | io, format | P1 | 10–18 | missing |
 | LIST-6 | The same score appears in several lists without duplication | Pro | inferred | n/a (model rule) | doc | P0 | 1–2 | missing |
 | LIST-7 | Placeholders / breaks in a list (intermission, spoken item) | Pro | inferred | `list.entry.addPlaceholder` | doc | P3 | 2–4 | missing |
 
@@ -174,15 +174,17 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | PLAY-4 | Transpose playback by semitones (pitch-shift) | Free | S1 | `play.transpose.set` | audio | P2 | 10–20 | missing |
 | PLAY-5 | Record page turns during playback (see TURN-6) | Free | S1 | `play.turns.record` | engine | P2 | 2–4 | missing |
 | PLAY-6 | Transport controls while reading (play, pause, scrub) | Free | S1 | `play.toggle`, `play.seek` | ui-egui, audio | P2 | 4–8 | missing |
+| PLAY-7 | Start the attached recording automatically when the score opens | Free | S8 | `play.autoStart.set` | doc, audio | P2 | 1–2 | missing |
 
 ## MIDI
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
 | MIDI-1 | Turn pages with MIDI pedals or controllers (learn mode) | Free | S1 | `input.midi.mapTurn` | midi | P2 | 6–12 | missing |
-| MIDI-2 | Send Program Change and Bank Select when a score opens | Free | S1 | `score.midi.onOpen.set` | midi | P2 | 4–8 | missing |
-| MIDI-3 | Send Song Select when a score opens | Free | S1 | `score.midi.onOpen.set` | midi | P2 | 1–2 | missing |
+| MIDI-2 | Send Program Change and Bank Select when a score opens: one message or an ordered list | Free | S1, S8 | `score.midi.onOpen.set` | midi | P2 | 4–8 | missing |
+| MIDI-3 | Send Song Select when a score opens | Free | S1, S8 | `score.midi.onOpen.set` | midi | P2 | 1–2 | missing |
 | MIDI-4 | Choose MIDI input/output devices (USB, Bluetooth LE MIDI, network) | Free | S1 | `input.midi.devices` | midi | P2 | 8–16 | missing |
+| MIDI-5 | Per-setlist sounds: the same score sends different MIDI messages in different setlists (list entry overrides the score's) | Pro | S8 | `list.entry.midi.set` | doc, midi | P2 | 2–4 | missing |
 
 ## PRAC: practice tools
 
@@ -191,12 +193,12 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | PRAC-1 | Metronome with tap tempo | Free | S1, S4 | `practice.metronome.toggle`, `practice.metronome.tap` | practice | P0 | 6–12 | missing |
 | PRAC-2 | Metronome subdivisions and beats per bar, accent | Free | S1 | `practice.metronome.set` | practice | P1 | 3–6 | missing |
 | PRAC-3 | Nine metronome sounds (our own recordings or synthesis) | Free | S1 | `practice.metronome.sound.set` | practice | P2 | 4–8 | missing |
-| PRAC-4 | Tuner (pitch detection from the microphone, reference pitch) | Free | S1 | `practice.tuner.toggle` | practice | P2 | 12–24 | missing |
-| PRAC-5 | Practice log: minutes per day, streaks, pieces practised and when | Free | S1 | `practice.log.*` | practice, doc | P2 | 8–16 | missing |
-| PRAC-6 | Daily practice goals | Free | S1 | `practice.goal.set` | practice | P2 | 2–4 | missing |
+| PRAC-4 | Tuner (pitch detection from the microphone, reference pitch) | Free | S1, S8 | `practice.tuner.toggle` | practice | P2 | 12–24 | missing |
+| PRAC-5 | Practice log kept automatically while playing: minutes per day, streaks, pieces practised and when | Free | S1, S8 | `practice.log.*` | practice, doc | P2 | 8–16 | missing |
+| PRAC-6 | Daily practice goals | Free | S1, S8 | `practice.goal.set` | practice | P2 | 2–4 | missing |
 | PRAC-7 | Pause and resume logging | Free | S1 | `practice.log.pause` | practice | P2 | 1–2 | missing |
-| PRAC-8 | Practice notes inside scores | Free | S1 | `score.note.add` | doc | P2 | 3–6 | missing |
-| PRAC-9 | Shareable PDF practice report | Free | S1 | `practice.report.export` | practice; pdf ♻ pdfcraft-create | P2 | 3–6 | missing |
+| PRAC-8 | Practice notes: write a note about today's practice from inside the score (searchable, see LIB-6) | Free | S1, S8 | `score.note.add` | doc | P2 | 3–6 | missing |
+| PRAC-9 | Shareable PDF practice report | Free | S1, S8 | `practice.report.export` | practice; pdf ♻ pdfcraft-create | P2 | 3–6 | missing |
 | PRAC-10 | Practice log backup and restore | Free | S1 | `practice.log.export`, `practice.log.import` | practice, format | P2 | 2–4 | missing |
 | PRAC-11 | Visual metronome pulse (silent performance cue) | Free | inferred | `practice.metronome.visual` | ui-egui | P3 | 2–4 | missing |
 
@@ -208,7 +210,7 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | IMP-2 | Wi-Fi flatbed and feeder scanners (eSCL / AirScan) | Free | S1 | `scan.network` | scan | P2 | 12–24 | missing |
 | IMP-3 | Import photos / images (PNG, JPEG, HEIC, TIFF) as pages | Free | S1 | `library.import.images` | io ♻ pdfcraft-create | P1 | 2–4 | missing |
 | IMP-4 | IMSLP search and import of public-domain scores | Pro | S1, S3, S4 | `imslp.search`, `imslp.import` | imslp | P2 | 12–24 | missing |
-| IMP-5 | Import a forScore library from a `.4sc` file: pages, ink, stamps, layers | Free | S1, S4 | `library.import.forscore` | fsc, io | P1 | 30–60 | missing |
+| IMP-5 | Import a forScore library from a `.4sc` file: pages, ink, stamps, layers | Free | S1, S4, S8 | `library.import.forscore` | fsc, io | P1 | 30–60 | missing |
 | IMP-6 | Import report: what was imported, skipped, or could not be read | Free | inferred | n/a (result of import) | io | P0 | 2–4 | missing |
 | IMP-7 | Import PDF annotations made in other PDF apps (ISO 32000 ink, highlight, free-text annots) | Free | ours | `library.import.files` | pdf ♻ pdfcraft-annot | P1 | 4–8 | missing |
 | IMP-8 | Import MusicXML / MIDI rendered to pages | n/a | ours | `library.import.musicxml` | engrave | P3 | 80–160 | missing |
@@ -232,16 +234,18 @@ Sum of the estimates: **~910–1,830 agent-hours** for every row, after PDFCraft
 | SYNC-4 | Account deletion removes server copies, keeps local ones | Sync | S1 | `sync.account.delete` | sync | P2 | 2–4 | missing |
 | SYNC-5 | Fast first download on a new device; background downloads | Sync | S1 | n/a (performance) | sync | P2 | 8–16 | missing |
 | SYNC-6 | Conflict-free merging of concurrent markings on two devices | Sync | inferred | n/a (CRDT) | sync | P1 | 20–40 | missing |
-| SYNC-7 | Sync through a folder the user already syncs (iCloud Drive, OneDrive, Dropbox, Syncthing) or WebDAV, no account | n/a | ours (S3 review) | `sync.backend.set` | sync | P1 | 16–30 | missing |
+| SYNC-7 | Sync through a folder the user already syncs (iCloud Drive, OneDrive, Dropbox, Syncthing) or WebDAV, no account | n/a | ours (S3 review); enScore's free folder mirror is SYNC-8 | `sync.backend.set` | sync | P1 | 16–30 | missing |
+| SYNC-8 | Mirror a library folder two ways with a folder on the computer or in OneDrive, no account or subscription | Free | S8 | `library.folder.mirror.set` | sync, io | P1 | 8–16 | missing |
 
 ## PLAT: platforms, UI and languages
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
 | PLAT-1 | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | Free | S1–S3 | n/a | apps | P0 (desktop), P1 (Android, web), P2 (iOS) | 80–200 | missing |
-| PLAT-2 | E-ink / e-reader mode (no animation, high contrast, partial refresh friendly) | Free | S3, S6 | `ui.display.eInk` | ui-egui | P2 | 8–16 | missing |
-| PLAT-3 | Twelve or more interface languages (see [`localization-parity.md`](localization-parity.md)) | Free | S1 | n/a | ui-egui | P1 | 40–80 | missing |
+| PLAT-2 | E-ink / e-reader mode (no animation, high contrast, partial refresh friendly) | Free | S3, S6, S8 | `ui.display.eInk` | ui-egui | P2 | 8–16 | missing |
+| PLAT-3 | Fifteen interface languages (see [`localization-parity.md`](localization-parity.md)) | Free | S1, S8 | n/a | ui-egui | P1 | 40–80 | missing |
 | PLAT-4 | Light and dark app themes, independent of the page filter | Free | S4 | `ui.theme.set` | ui-egui | P0 | 4–8 | missing |
+| PLAT-5 | Apple Vision (visionOS): the iPad build runs there, with gaze-and-pinch input for turns and tools | Free | S1, S8 | n/a | apps | P2 | 4–8 | missing |
 
 ## Reuse from PDFCraft
 
@@ -271,6 +275,24 @@ Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-p
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
 caching for instant turns, and corpus checks.
 
+## Reconciled with the Microsoft Store description (S8)
+
+On 2026-10-28 every row was checked against the full Microsoft Store description
+([observation note](observations/public-listings-2026-10-28.md#what-the-microsoft-store-description-adds-s8)).
+Most of what it lists was already here (MIDI Program Change, Bank Select and Song Select, the
+practice log, the shared setlist file, e-ink, the tuner, multiple windows); those rows now cite S8.
+
+| Change | Rows |
+|---|---|
+| Added | PLAY-7 (recording starts at score open), MIDI-5 (different sounds per setlist), SYNC-8 (two-way folder mirror with the computer or OneDrive), PLAT-5 (Apple Vision) |
+| Corrected | PAGE-7: Score Snips paste the bars that come *after* a turn *before* it, not the other way round |
+| Corrected | PLAT-3: fifteen languages, not "twelve or more" |
+| Refined | TURN-6 (half-page turns are recorded), ANNO-3 (highlighter blending), MIDI-2 (a list of messages), PRAC-5 and PRAC-8 (automatic log, a note about today's practice), LIST-5 (lands ready to play) |
+
+SYNC-8 changes one assumption: enScore offers folder mirroring for free, so a folder backend is
+parity work, not only ours (SYNC-7 shares its backend). PLAT-1 already listed e-readers through
+PLAT-2; Apple Vision was missing.
+
 ## Ours only (not in enScore)
 
 Rows tagged `ours` above (IMP-7, IMP-8, SYNC-7) and these capabilities come from the Crafting Apps
@@ -286,5 +308,6 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Reconciled with the Microsoft Store description (S8): added PLAY-7, MIDI-5, SYNC-8, PLAT-5 (118 → 122 rows); corrected PAGE-7 and PLAT-3; all rows ~910–1,830 → ~920–1,860 h |
 | 2026-10-28 | minor | 13 rows marked ♻ PDFCraft reuse; estimates lowered (all rows ~990–1,990 → ~910–1,830 h) |
 | 2026-10-28 | major | First version: 118 rows from public listings (S1–S6) |

@@ -1,6 +1,6 @@
 # Hardware parity: pedals, MIDI, styluses and displays
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (HW-12 and HW-13 from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Status and evidence as in [`ui-parity.md`](ui-parity.md). Every **done** row names the device
 models and OS versions it was tested on.
@@ -25,7 +25,8 @@ USB keyboard pedal.
 |---|---|---|---|---|
 | HW-10 | MIDI input (USB, BLE MIDI, network RTP-MIDI, Web MIDI) with device picker | MIDI-4 | missing | |
 | HW-11 | MIDI learn maps a CC, note or program message to turn/command | TURN-5, MIDI-1 | missing | |
-| HW-12 | On score open, send Program Change, Bank Select (CC 0/32) and Song Select | MIDI-2, MIDI-3 | missing | |
+| HW-12 | On score open, send Program Change, Bank Select (CC 0/32) and Song Select, one message or an ordered list | MIDI-2, MIDI-3 | missing | |
+| HW-13 | A setlist entry overrides the score's MIDI messages, so one piece calls up different sounds in different setlists | MIDI-5 | missing | |
 
 ## Styluses
 
@@ -53,4 +54,5 @@ USB keyboard pedal.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | HW-12 takes a list of messages; HW-13 per-setlist MIDI (MIDI-5), from the Microsoft Store description |
 | 2026-10-28 | major | First version |

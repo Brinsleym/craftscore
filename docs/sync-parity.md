@@ -1,8 +1,8 @@
 # Sync and backup parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (SY-12 two-way folder mirror from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
-enScore sells Sync as a subscription and requires an account. ScoreCraft's sync is free, works
+enScore sells Sync as a subscription and requires an account, and also offers a free two-way folder mirror with the computer or OneDrive (S8). ScoreCraft's sync is free, works
 without an account through storage the user already has, and offers a self-hostable server.
 Design: [`architecture.md` §9](architecture.md#9-sync).
 
@@ -21,9 +21,11 @@ Design: [`architecture.md` §9](architecture.md#9-sync).
 | SY-9 | Backup to a single archive and restore, local or remote | SYNC-2 | missing |
 | SY-10 | Removing an account or backend removes remote copies, keeps local ones | SYNC-4 | missing |
 | SY-11 | Sync never interrupts performance mode | ours | missing |
+| SY-12 | Two-way mirror between a library folder and a folder on the computer or in OneDrive, free and account-free as in enScore | SYNC-8 | missing |
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | SY-12 folder mirror (SYNC-8) from the Microsoft Store description |
 | 2026-10-28 | major | First version |

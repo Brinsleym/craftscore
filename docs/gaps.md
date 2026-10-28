@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (G1 becomes integration of PDFCraft's crates, 80–160 → 20–40 h; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Microsoft Store description: G9, G10, G11, G12, G15 updated; earlier: G1 becomes integration of PDFCraft's crates; first version) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -25,7 +25,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 | G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 40–80 h | [feature-map](feature-map.md#list-setlists) |
 | G8 | Import, export, print and forScore migration | file format | blocks beta | 70–140 h + human | [file-format-parity](file-format-parity.md) |
 | G9 | Mobile platforms | platforms | blocks beta | 80–200 h + human | [hardware-parity](hardware-parity.md) |
-| G10 | Sync and backup | sync | blocks beta | 120–240 h | [sync-parity](sync-parity.md) |
+| G10 | Sync and backup | sync | blocks beta | 130–250 h | [sync-parity](sync-parity.md) |
 | G11 | MIDI | hardware | medium | 20–40 h + human | [hardware-parity](hardware-parity.md#midi) |
 | G12 | Audio playback and practice tools | features | medium | 60–120 h | [practice-parity](practice-parity.md) |
 | G13 | Scanning | features | medium | 36–64 h + human | [file-format-parity](file-format-parity.md#scanning) |
@@ -78,7 +78,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 ### G7. Setlists, Score Shortcuts and Score Snips
 
 - **Missing:** setlists with page ranges and tempos, continuous flow, shared setlist bundles;
-  tappable repeat/coda jumps; snips of bars shown after a turn.
+  tappable repeat/coda jumps; snips that paste the bars after a turn before it.
 - **Rows:** LIST-1..7, NAV-1..4, PAGE-7, PAGE-8, TURN-7.
 - **Note:** paid (Pro) in enScore; free in ScoreCraft.
 
@@ -93,8 +93,9 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 ### G12. Audio playback and practice tools
 
 - **Missing:** recordings attached to scores, time-stretch, pitch-shift, loops, recorded turns;
-  metronome with subdivisions and sounds; tuner; practice log, goals, report.
-- **Rows:** PLAY-1..6, TURN-6, PRAC-1..11.
+  recordings that start when the score opens; metronome with subdivisions and sounds; tuner;
+  practice log, goals, report.
+- **Rows:** PLAY-1..7, TURN-6, PRAC-1..11.
 
 ### G13. Scanning
 
@@ -138,9 +139,10 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G11. MIDI
 
-- **Missing:** MIDI input for turns, output of Program Change, Bank Select and Song Select, device
-  selection (USB, BLE MIDI, network).
-- **Rows:** TURN-5, MIDI-1..4.
+- **Missing:** MIDI input for turns, output of Program Change, Bank Select and Song Select (one
+  message or a list) when a score opens, different messages for the same score in different
+  setlists, device selection (USB, BLE MIDI, network).
+- **Rows:** TURN-5, MIDI-1..5.
 
 ## Platform gaps
 
@@ -148,21 +150,22 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 - **Missing:** Android and iOS/iPadOS shells, share-sheet import, Files integration, pen input,
   keep-awake, app store packaging.
-- **Rows:** PLAT-1.
+- **Rows:** PLAT-1, PLAT-5 (Apple Vision runs the iPad build).
 - **Human:** store accounts, signing, device testing. iOS support in egui/winit is the least mature
   target; decision D3.
 
 ### G10. Sync and backup
 
 - **Missing:** op-log sync with CRDT merge; folder, WebDAV and self-hosted server backends; backup
-  and restore; account-free operation.
-- **Rows:** SYNC-1..7.
+  and restore; account-free operation; enScore's free two-way folder mirror with the computer or
+  OneDrive (SYNC-8, shares the folder backend with SYNC-7).
+- **Rows:** SYNC-1..8.
 
 ## Localization gaps
 
 ### G15. Localization
 
-- **Missing:** every language but English. enScore lists 15 locales.
+- **Missing:** every language but English. enScore offers fifteen languages.
 - **Rows:** PLAT-3. Detail in [`localization-parity.md`](localization-parity.md).
 - **Human:** native-speaker review per language.
 
@@ -185,5 +188,6 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Microsoft Store description (S8): G9 adds PLAT-5, G10 adds SYNC-8 (120–240 → 130–250 h), G11 adds MIDI-5, G12 adds PLAY-7, G7 snip wording corrected |
 | 2026-10-28 | minor | G1 re-planned as PDFCraft integration (80–160 → 20–40 h) |
 | 2026-10-28 | major | First version: G1–G17 from the feature map |
