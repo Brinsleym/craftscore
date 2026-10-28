@@ -14,6 +14,16 @@ this file records the outcome. Newest first.
 | D5 | Sync server protocol | HTTP + JSON ops vs a compact binary protocol over WebSocket | M8 |
 | D6 | Product name | "ScoreCraft" (working name, following the `{Function}Craft` convention) or another name; must not include "enScore" | before the first release |
 
+## 2026-10-28: Workspace toolchain and lint baseline (M0)
+
+**Decision.** Edition 2024, `rust-version = "1.85"` (the first release with edition 2024), resolver
+3. Never-crash lints live once in `[workspace.lints]` (`unsafe_code = "forbid"`; clippy `unwrap_used`,
+`expect_used`, `panic`, `unimplemented`, `todo`, `unreachable` deny, `indexing_slicing` warn, which
+CI's `-D warnings` makes an error) and every crate root repeats the `#![deny(...)]`. Cargo cannot
+mix `[lints] workspace = true` with a per-crate override, so `scorecraft-devices` copies the table
+with `unsafe_code = "deny"`; `cargo xtask layers` fails if the copy drifts. Reason: one place to
+tighten the rules, and a checker that catches a crate that opts out.
+
 ## 2026-10-28: D1 reuse PDFCraft's PDF crates
 
 **Decision.** ScoreCraft does not write its own PDF engine. `scorecraft-pdf` is an adapter over

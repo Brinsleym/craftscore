@@ -1,0 +1,14 @@
+[package]
+name = "scorecraft-io"
+description = "Import and export orchestration: PDF, images, folders, "
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

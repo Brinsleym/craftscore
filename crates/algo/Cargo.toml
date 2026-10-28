@@ -1,0 +1,14 @@
+[package]
+name = "scorecraft-algo"
+description = "Imaging for scans: edge detection, perspective, deskew, clean-up and the Enhance filter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

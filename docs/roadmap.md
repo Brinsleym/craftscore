@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (new S8 rows placed in M8–M10; earlier: M2 becomes PDFCraft integration; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 started: workspace, crate stubs, `xtask layers` and `wasm`; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -9,7 +9,7 @@ in [`gaps.md`](gaps.md); the one-page summary is [`ROADMAP.md`](../ROADMAP.md).
 Status legend: ✅ done · 🟡 in progress · ⬜ not started. Hours are agent wall-clock hours for one
 agent working sequentially, uncalibrated ([calibration](target-app-parity.md#remaining-effort-and-calibration)).
 
-**Stage: pre-alpha** (no code). Alpha needs the gate below: ~310–630 h.
+**Stage: pre-alpha** (workspace skeleton only). Alpha needs the gate below: ~310–630 h.
 
 ## Alpha gate
 
@@ -36,7 +36,7 @@ Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on
 
 | M | Status | Name | Where we are |
 |---|---|---|---|
-| M0 | ⬜ | Skeleton | docs only (this PR) |
+| M0 | 🟡 | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers` and `wasm` (2026-10-28); CI, registry, parity, scorecard and testkit next |
 | M1 | ⬜ | Foundation | |
 | M2 | ⬜ | PDF integration (PDFCraft) | |
 | M3 | ⬜ | Reader app | |
@@ -53,9 +53,10 @@ Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on
 
 Ranked; pick from the top unless an issue is assigned to you.
 
-1. **M0 skeleton** ([G3](gaps.md#g3-stability-and-data-safety)): workspace, every crate stub
-   registered in `xtask/src/layers.rs`, lints, `clippy.toml`, `rustfmt.toml`, `xtask` (`layers`,
-   `wasm`, `ci`, `parity`, `scorecard`), CI on Linux, macOS, Windows and wasm, testkit with a
+1. **M0 skeleton** ([G3](gaps.md#g3-stability-and-data-safety)): ~~workspace, every crate stub
+   registered in `xtask/src/layers.rs`, lints, `clippy.toml`, `rustfmt.toml`, `xtask layers` and
+   `wasm`~~ (done 2026-10-28); still to do: `xtask ci`, `parity` and `scorecard`, CI on Linux,
+   macOS, Windows and wasm, the engine command registry with `panic_hunt`, testkit with a
    synthetic PDF generator.
 2. **PDFCraft integration** ([G1](gaps.md#g1-pdf-engine-parse-render-write),
    [decision D1](decisions.md#2026-10-28-d1-reuse-pdfcrafts-pdf-crates)): pin a PDFCraft revision,
@@ -102,6 +103,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0 in progress: Cargo workspace (edition 2024, MSRV 1.85), every crate in the architecture map as a stub, workspace never-crash lints, `cargo xtask layers` and `cargo xtask wasm` |
 | 2026-10-28 | minor | S8 rows (PLAY-7, MIDI-5, SYNC-8, PLAT-5) placed in M7, M8 and M10; later milestones 480–950 → 490–980 h; alpha gate unchanged |
 | 2026-10-28 | minor | M2 becomes PDFCraft integration (80–160 → 20–40 h); alpha ~350–720 → ~310–630 h |
 | 2026-10-28 | major | First version |

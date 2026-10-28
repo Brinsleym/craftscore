@@ -27,6 +27,13 @@ cargo xtask ci                                      # what CI runs on Linux
 (cd apps/scorecraft-web && trunk serve)             # the browser build
 ```
 
+### Repository tasks
+
+| Task | What it checks |
+|---|---|
+| `cargo xtask layers` | every package is registered in `xtask/src/layers.rs`, depends only on lower layers, uses the workspace lints and carries the never-crash `#![deny(...)]` at its root; PDFCraft and UI-toolkit allow-lists |
+| `cargo xtask wasm` | every L0–L6 crate checks for `wasm32-unknown-unknown` |
+
 ### Faster test loops
 
 - `cargo test -p <crate> --lib --tests` skips examples and doctests.

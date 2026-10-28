@@ -1,0 +1,5 @@
+# Panic-style lints are denied in production code (docs/standards/never-crash.md) and allowed in tests.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
