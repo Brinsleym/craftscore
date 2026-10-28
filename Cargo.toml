@@ -1,0 +1,70 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/*", "xtask"]
+default-members = ["crates/*", "apps/*"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Brinsleym/enscore-cleanroom"
+
+[workspace.dependencies]
+# Workspace crates. Layering (who may depend on whom) is checked by `cargo xtask layers`.
+scorecraft-geom = { path = "crates/geom" }
+scorecraft-raster = { path = "crates/raster" }
+scorecraft-pdf = { path = "crates/pdf" }
+scorecraft-codecs = { path = "crates/codecs" }
+scorecraft-midi = { path = "crates/midi" }
+scorecraft-fsc = { path = "crates/fsc" }
+scorecraft-doc = { path = "crates/doc" }
+scorecraft-ops = { path = "crates/ops" }
+scorecraft-ink = { path = "crates/ink" }
+scorecraft-layout = { path = "crates/layout" }
+scorecraft-text = { path = "crates/text" }
+scorecraft-search = { path = "crates/search" }
+scorecraft-algo = { path = "crates/algo" }
+scorecraft-audio = { path = "crates/audio" }
+scorecraft-practice = { path = "crates/practice" }
+scorecraft-render = { path = "crates/render" }
+scorecraft-gpu = { path = "crates/gpu" }
+scorecraft-format = { path = "crates/format" }
+scorecraft-io = { path = "crates/io" }
+scorecraft-sync = { path = "crates/sync" }
+scorecraft-metadata = { path = "crates/metadata" }
+scorecraft-imslp = { path = "crates/imslp" }
+scorecraft-scan = { path = "crates/scan" }
+scorecraft-input = { path = "crates/input" }
+scorecraft-devices = { path = "crates/devices" }
+scorecraft-engine = { path = "crates/engine" }
+scorecraft-ui-egui = { path = "crates/ui-egui" }
+scorecraft-automation = { path = "crates/automation" }
+scorecraft-testkit = { path = "crates/testkit" }
+
+# Third-party (tooling only so far)
+toml = "0.9"
+
+# Never-crash rules (docs/standards/never-crash.md). clippy.toml relaxes the panic lints in tests.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unimplemented = "deny"
+todo = "deny"
+unreachable = "deny"
+indexing_slicing = "warn"
+
+[profile.release]
+# Keep unwinding natively: the app shell's last-resort guard catches an escaped panic
+# around dispatch, import and export (never-crash rule 7).
+panic = "unwind"
+lto = "thin"
+codegen-units = 1
+
+[profile.dev.package."*"]
+# Dependencies optimised in dev builds so page rendering stays usable while debugging.
+opt-level = 2

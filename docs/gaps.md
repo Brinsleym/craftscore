@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Microsoft Store description: G9, G10, G11, G12, G15 updated; earlier: G1 becomes integration of PDFCraft's crates; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (G3: never-crash lints on every crate, enforced by `cargo xtask layers`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -123,7 +123,9 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G3. Stability and data safety
 
-- **Missing:** never-crash lints on every crate, `panic_hunt`, fuzz targets for `pdf`, `fsc`,
+- **Done (2026-10-28):** never-crash lints on every crate (workspace `[lints]`, crate-root
+  `#![deny(...)]`, `clippy.toml`), checked by `cargo xtask layers` (measured: 36 of 36 packages).
+- **Missing:** `panic_hunt`, fuzz targets for `pdf`, `fsc`,
   `midi`, the library loader and setlist bundles, atomic saves, crash recovery, the last-resort
   panic guard.
 - **Impact:** a crash on stage or lost markings ends trust permanently.
@@ -188,6 +190,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | G3: never-crash lints land on every crate with the M0 workspace; estimate unchanged |
 | 2026-10-28 | minor | Microsoft Store description (S8): G9 adds PLAT-5, G10 adds SYNC-8 (120–240 → 130–250 h), G11 adds MIDI-5, G12 adds PLAY-7, G7 snip wording corrected |
 | 2026-10-28 | minor | G1 re-planned as PDFCraft integration (80–160 → 20–40 h) |
 | 2026-10-28 | major | First version: G1–G17 from the feature map |

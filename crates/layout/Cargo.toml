@@ -1,0 +1,14 @@
+[package]
+name = "scorecraft-layout"
+description = "Page layout: single, two-page, half-page and alternating turns, zoom, crop and snips"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

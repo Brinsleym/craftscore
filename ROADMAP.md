@@ -2,7 +2,7 @@
 
 **Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~310–630 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (4 features added from the Microsoft Store description; earlier: PDF backend reuses PDFCraft; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 started: Cargo workspace and layering check; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -27,7 +27,8 @@ repository has merged-PR history. About 75% of the work parallelizes.
 | Remaining to **full parity** | **~1,000–1,980 h** | estimated |
 
 **Why pre-alpha.** The project has its process, clean-room rules, architecture and feature map, and
-no code. The first milestone is the workspace skeleton (M0).
+a Cargo workspace of empty crate stubs with the layering check. No feature code yet; the first
+milestone, the workspace skeleton (M0), is in progress.
 
 ## By dimension
 
@@ -65,6 +66,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-28 | M0 started: Cargo workspace with all 29 crates and 6 apps as stubs, never-crash lints on every crate, `cargo xtask layers` and `cargo xtask wasm` green |
 | 2026-10-28 | Feature map reconciled with the Microsoft Store description: 4 features added (per-setlist MIDI, recording at score open, two-way folder mirror, Apple Vision), Score Snips corrected |
 | 2026-10-28 | PDF backend to reuse PDFCraft's crates (decision D1); 13 features marked as reuse |
 | 2026-10-28 | Documentation and process: clean-room rules, feature map (118 rows), architecture, parity docs, RFC process |
@@ -73,6 +75,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0 started (workspace skeleton); numbers unchanged |
 | 2026-10-28 | minor | Microsoft Store description: 122 rows; beta and full estimates up slightly |
 | 2026-10-28 | minor | PDFCraft reuse: estimates lowered |
 | 2026-10-28 | major | First version, per [`docs/standards/progress-docs.md`](docs/standards/progress-docs.md) |

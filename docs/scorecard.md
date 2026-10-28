@@ -15,7 +15,7 @@ Checklist statuses are verified against the code; numbers here supersede estimat
 | [Reader](#reader) | 0 | 0 | 12 | from [ui-parity](ui-parity.md) |
 | [Annotation](#annotation) | 0 | 0 | 18 | from [annotation-parity](annotation-parity.md) |
 | [Automation](#automation) | 0 | 0 | 4 | 0 of 122 feature-map rows live |
-| [Reliability](#reliability) | 0 | 0 | 5 | never-crash lints on 0 crates |
+| [Reliability](#reliability) | 1 | 0 | 4 | never-crash lints on 36 of 36 packages |
 | [Distribution](#distribution) | 0 | 0 | 6 | |
 
 ## Performance
@@ -64,7 +64,7 @@ Rows ANN-1..33 in [annotation-parity](annotation-parity.md).
 
 | Id | Target | Status |
 |---|---|---|
-| REL-1 | Never-crash lints on every production crate | missing |
+| REL-1 | Never-crash lints on every production crate | done (2026-10-28, checked by `cargo xtask layers`) |
 | REL-2 | `panic_hunt` covers every command | missing |
 | REL-3 | Fuzz targets: pdf, fsc, midi, library loader, setlist bundle | missing |
 | REL-4 | Atomic saves and crash recovery tested by kill-during-save | missing |

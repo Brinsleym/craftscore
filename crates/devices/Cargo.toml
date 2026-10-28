@@ -1,0 +1,26 @@
+[package]
+name = "scorecraft-devices"
+description = "Platform services: MIDI ports, audio I/O, camera and keep-awake"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+
+# The one crate allowed FFI (architecture §3): `unsafe_code` is `deny` instead of the
+# workspace's `forbid`, so a feature-gated block can `#[allow]` it with a SAFETY comment.
+# Everything else mirrors `[workspace.lints]`; `cargo xtask layers` checks they match.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unimplemented = "deny"
+todo = "deny"
+unreachable = "deny"
+indexing_slicing = "warn"
