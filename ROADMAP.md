@@ -2,7 +2,7 @@
 
 **Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~250–530 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (owner's priorities after the M0 review; earlier: M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -57,7 +57,7 @@ enScore lists fifteen languages. ScoreCraft ships English first; the rest follow
 |---|---|---:|
 | 1 | M2 PDF integration: adapter over PDFCraft's crates | 20–40 h |
 | 2 | M1 foundation | 40–80 h |
-| 3 | M3 reader app | 60–110 h |
+| 3 | M3 reader app, with page turns and the pedal | 66–122 h |
 | 4 | M4 ink | 80–150 h |
 
 Detail: [docs/roadmap.md](docs/roadmap.md).
@@ -66,6 +66,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-28 | M0 review acted on: Rust 1.95 (PDFCraft's) with a pinned toolchain, one egui on craft-ui checked in CI, parity counts only implemented rows, CLI keeps partial results; owner's answers recorded (Windows tablet first, pedal in M3, Google Drive sync, Swift pen host on iPad) |
 | 2026-10-28 | M0 done: generated scorecard (`cargo xtask scorecard`), testkit synthetic and hostile PDFs |
 | 2026-10-28 | M0: engine command registry and `Session::dispatch`, generated parity checklist (measured 0 of 122), `panic_hunt` in CI, CLI `commands` and `run` |
 | 2026-10-28 | M0 started: Cargo workspace with all 29 crates and 6 apps as stubs, never-crash lints on every crate, `cargo xtask layers` and `cargo xtask wasm` green |
@@ -77,6 +78,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Owner's priorities: pedal mapping moves into M3; headline numbers unchanged |
 | 2026-10-28 | minor | M0 done: remaining estimates drop by the M0 skeleton (60–100 h): alpha ~250–530 h, beta ~710–1,430 h, full ~940–1,880 h; upcoming starts at M2 |
 | 2026-10-28 | minor | M0 started (workspace skeleton); numbers unchanged |
 | 2026-10-28 | minor | Microsoft Store description: 122 rows; beta and full estimates up slightly |

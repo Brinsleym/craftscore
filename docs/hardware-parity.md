@@ -1,6 +1,6 @@
 # Hardware parity: pedals, MIDI, styluses and displays
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (HW-12 and HW-13 from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Windows tablet is the first test platform, pedals in M3; earlier: HW-12 and HW-13 from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Status and evidence as in [`ui-parity.md`](ui-parity.md). Every **done** row names the device
 models and OS versions it was tested on.
@@ -17,7 +17,7 @@ models and OS versions it was tested on.
 | HW-4 | Pedals work while the on-screen keyboard is hidden (mobile) | TURN-4 | missing | |
 
 Test devices to collect: AirTurn (DUO, BT200 series), PageFlip (Firefly, Butterfly), Donner, a generic
-USB keyboard pedal.
+USB keyboard pedal. The owner's Windows tablet is the first test platform (pedals land in M3).
 
 ## MIDI
 
@@ -54,5 +54,6 @@ USB keyboard pedal.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | The owner's Windows tablet is the first pedal and pen test platform; pedals move to M3 |
 | 2026-10-28 | minor | HW-12 takes a list of messages; HW-13 per-setlist MIDI (MIDI-5), from the Microsoft Store description |
 | 2026-10-28 | major | First version |

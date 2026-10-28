@@ -209,20 +209,20 @@ None yet.
 
 | Id | P | Feature | Commands |
 |---|---|---|---|
-| SYNC-1 | P1 | Sync scores, markings, lists and bookmarks across devices | `sync.now`, `sync.status` |
+| SYNC-1 | P1 | Sync scores, markings, lists, bookmarks and settings across devices: over Wi-Fi between devices, or through Google Drive; optional sign-in | `sync.now`, `sync.status` |
 | SYNC-2 | P1 | Cloud backup of the whole library | `backup.create`, `backup.restore` |
 | SYNC-3 | P1 | Offline-first: the device is the source of truth; the server holds a copy | none |
 | SYNC-4 | P2 | Account deletion removes server copies, keeps local ones | `sync.account.delete` |
-| SYNC-5 | P2 | Fast first download on a new device; background downloads | none |
+| SYNC-5 | P2 | Download everything ahead of time on every device, in the background; nothing waits on the network when a score opens | none |
 | SYNC-6 | P1 | Conflict-free merging of concurrent markings on two devices | none |
-| SYNC-7 | P1 | Sync through a folder the user already syncs (iCloud Drive, OneDrive, Dropbox, Syncthing) or WebDAV, no account | `sync.backend.set` |
+| SYNC-7 | P1 | Sync through storage the user already has, no ScoreCraft account: Google Drive first, then OneDrive and Dropbox, a folder the OS syncs, or WebDAV | `sync.backend.set` |
 | SYNC-8 | P1 | Mirror a library folder two ways with a folder on the computer or in OneDrive, no account or subscription | `library.folder.mirror.set` |
 
 ### PLAT
 
 | Id | P | Feature | Commands |
 |---|---|---|---|
-| PLAT-1 | P0 (desktop), P1 (Android, web), P2 (iOS) | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | none |
+| PLAT-1 | P0 (Windows tablet, then desktop), P1 (Android, web), P2 (iPad, with a Swift pen host) | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | none |
 | PLAT-2 | P2 | E-ink / e-reader mode (no animation, high contrast, partial refresh friendly) | `ui.display.eInk` |
 | PLAT-3 | P1 | Fifteen interface languages (see [`localization-parity.md`](localization-parity.md)) | none |
 | PLAT-4 | P0 | Light and dark app themes, independent of the page filter | `ui.theme.set` |

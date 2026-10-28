@@ -4,7 +4,10 @@ ScoreCraft is an open-source, native sheet music reader: a clean-room reimplemen
 **enScore**, written in **Rust only** (no JavaScript or TypeScript). **No Tauri, Electron or
 webview shells:** the desktop and mobile apps are native egui/eframe on wgpu, and the web build is
 the same Rust compiled to WebAssembly (trunk + wasm-bindgen). Never add a webview or JS UI
-framework as a dependency, build step or packaging target. The product name is always written
+framework as a dependency, build step or packaging target. The one non-Rust code is the iPad's
+thin Swift host for the Apple Pencil (decision D3): it forwards pen samples and holds no UI logic.
+The UI is ScoreCraft's own, built on the Craft suite's `craft-ui` with exactly one egui in the
+build; never take PDFCraft's UI or `craft-update` ([architecture §16](docs/architecture.md#16-ui-framework-craft-ui-and-one-egui)). The product name is always written
 **ScoreCraft** in user-facing text (UI, window titles, About, installers, release names, docs
 prose), following the Crafting Apps' `{Function}Craft` convention. Machine names stay lowercase:
 crates (`scorecraft-*`), binaries, file names, ids (`app.scorecraft`). The goal is enScore parity
