@@ -34,7 +34,12 @@ cargo xtask ci                                      # what CI runs on Linux
 | `cargo xtask ci` | what the Linux CI jobs run: `fmt --check`, clippy with `-D warnings`, `test --workspace`, `layers`, `wasm` |
 | `cargo xtask layers` | every package is registered in `xtask/src/layers.rs`, depends only on lower layers, uses the workspace lints and carries the never-crash `#![deny(...)]` at its root; PDFCraft and UI-toolkit allow-lists |
 | `cargo xtask parity` | regenerates `crates/engine/src/feature_catalog.rs` and [`parity-checklist.md`](parity-checklist.md) from the feature map and the registry; fails below `FLOOR`; `--check` fails if either is stale |
+| `cargo xtask scorecard` | regenerates [`scorecard.md`](scorecard.md) from `perf/budgets.toml`, `scorecard/*.toml`, the parity docs' status columns and measured counts; `--check` fails if stale |
 | `cargo xtask wasm` | every L0–L6 crate checks for `wasm32-unknown-unknown` |
+
+Synthetic test PDFs come from `scorecraft_testkit::pdf` (`PdfBuilder` for valid scores of any
+size, page count and rotation; `pdf::hostile::all()` for malformed files). To look at one in
+another reader: `cargo run -p scorecraft-testkit --example write_sample -- out.pdf`.
 
 ### Faster test loops
 

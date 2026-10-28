@@ -1,7 +1,9 @@
-//! scorecraft-testkit: Test helpers: synthetic PDFs, stroke generators and fixtures. Dev-dependency only.
+//! scorecraft-testkit: test helpers: synthetic PDFs, stroke generators and fixtures.
 //!
-//! Layer test in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Dev-dependency only (`cargo xtask layers` enforces it). Everything here is generated at test
+//! time, so no score files are committed ([`docs/development.md`] "Test corpora").
+//!
+//! [`docs/development.md`]: ../../../docs/development.md
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -11,7 +13,9 @@
     clippy::unreachable
 )]
 
-/// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
+pub mod pdf;
+
+/// The crate's package name, used in diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 
 #[cfg(test)]

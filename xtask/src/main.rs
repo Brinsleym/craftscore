@@ -11,6 +11,7 @@
 mod ci;
 mod layers;
 mod parity;
+mod scorecard;
 mod wasm;
 
 use std::path::{Path, PathBuf};
@@ -22,6 +23,7 @@ tasks:
   ci       run fmt, clippy, tests, layers and wasm, as the Linux CI jobs do
   layers   check crate layering, lints and crate-root attributes (docs/architecture.md §3)
   parity   regenerate the feature catalog and docs/parity-checklist.md (--check: fail if stale)
+  scorecard regenerate docs/scorecard.md (--check: fail if stale)
   wasm     cargo check every L0–L6 crate for wasm32-unknown-unknown";
 
 fn workspace_root() -> PathBuf {
@@ -38,6 +40,7 @@ fn main() -> ExitCode {
         Some("ci") => ci::run(&root),
         Some("layers") => layers::run(&root),
         Some("parity") => parity::run(&root, args.iter().any(|a| a == "--check")),
+        Some("scorecard") => scorecard::run(&root, args.iter().any(|a| a == "--check")),
         Some("wasm") => wasm::run(&root),
         Some("-h" | "--help" | "help") | None => {
             println!("{USAGE}");

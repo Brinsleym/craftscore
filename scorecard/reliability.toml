@@ -1,0 +1,29 @@
+title = "Reliability"
+key = "lints"
+
+[[row]]
+id = "REL-1"
+target = "Never-crash lints on every production crate"
+status = "done"
+note = "2026-10-28, checked by `cargo xtask layers`"
+
+[[row]]
+id = "REL-2"
+target = "`panic_hunt` covers every command"
+status = "done"
+note = "2026-10-28: every registered command, 267 adversarial params each; in CI"
+
+[[row]]
+id = "REL-3"
+target = "Fuzz targets: pdf, fsc, midi, library loader, setlist bundle"
+status = "missing"
+
+[[row]]
+id = "REL-4"
+target = "Atomic saves and crash recovery tested by kill-during-save"
+status = "missing"
+
+[[row]]
+id = "REL-5"
+target = "Settings that do nothing: 0"
+status = "missing"
