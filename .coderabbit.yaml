@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  auto_review:
+    # Dependabot bumps are checked by CI; skip CodeRabbit reviews on them.
+    ignore_usernames:
+      - "dependabot[bot]"
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Check the clean-room rules in docs/clean-room.md: no code, assets, sounds, icons or text
+        from enScore, forScore or other proprietary software; sources named; new assets have a
+        licence file and an ATTRIBUTION.md row. Check docs/standards/never-crash.md: no unwrap,
+        expect, panic or unchecked indexing in non-test code, no unsafe outside crates/devices.

@@ -1,0 +1,27 @@
+[book]
+authors = ["ScoreCraft contributors"]
+language = "en"
+src = "src"
+title = "ScoreCraft Documentation"
+
+[build]
+build-dir = "output"
+create-missing = false
+
+[output.html]
+git-repository-icon = "fa-github"
+git-repository-url = "https://github.com/Brinsleym/enscore-cleanroom"
+edit-url-template = "https://github.com/Brinsleym/enscore-cleanroom/edit/main/book/{path}"
+preferred-dark-theme = "navy"
+smart-punctuation = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+heading-split-level = 3

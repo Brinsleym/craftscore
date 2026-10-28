@@ -1,0 +1,14 @@
+ScoreCraft
+Copyright (c) 2026 the ScoreCraft contributors.
+Licensed under the MIT License or the Apache License, Version 2.0, at your option
+(LICENSE-MIT, LICENSE-APACHE).
+
+ScoreCraft is an independent clean-room project. It is not affiliated with, endorsed by or
+sponsored by enScore, forScore, IMSLP or any hardware maker. "enScore", "forScore" and other
+product names are trademarks of their respective owners and are used only to describe
+compatibility and comparison.
+
+Third-party material
+
+This repository does not yet bundle third-party material. When it does, each item is listed here
+with its licence, and the per-file list (author, source, licence) is in ATTRIBUTION.md.
