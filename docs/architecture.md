@@ -1,6 +1,6 @@
 # ScoreCraft architecture
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version: design plan before any code) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (PDF backend reuses PDFCraft's crates, §15; earlier: major, first version, design plan before any code) · **Target:** enScore 3.7 (2026)
 
 ## Current state (2026-10-28)
 
@@ -76,7 +76,7 @@ scorecraft/
 │  │  ── L0 foundation (standalone, wasm-safe) ──
 │  ├─ geom/        scorecraft-geom      points, rects, affine transforms, page boxes, bezier
 │  ├─ raster/      scorecraft-raster    page bitmaps, tiles, mip pyramids, damage regions
-│  ├─ pdf/         scorecraft-pdf       PDF read / render / write; own format-level model; depends on nothing in the workspace (publishable)
+│  ├─ pdf/         scorecraft-pdf       thin adapter over PDFCraft's crates (§15): open, render tiles, text, outline, annotations, write; the only door to pdfcraft-*
 │  ├─ codecs/      scorecraft-codecs    raster decode/encode for imported images (PNG, JPEG, TIFF, HEIC, WebP)
 │  ├─ midi/        scorecraft-midi      MIDI 1.0 messages, parser, learn-mode matching; no I/O (standalone)
 │  ├─ fsc/         scorecraft-fsc       forScore .4sc reader, from the black-box spec only (standalone, read only)
@@ -134,7 +134,8 @@ L0  geom  raster  pdf  codecs  midi  fsc
 - A crate may depend only on **lower** layers. `cargo xtask layers` checks every `Cargo.toml`
   against the table in `xtask/src/layers.rs`; a new crate must be registered there.
 - `pdf`, `midi` and `fsc` depend on **nothing** in the workspace, so they can be published and
-  fuzzed alone.
+  fuzzed alone. `pdf` depends on PDFCraft's crates (external, pinned), and is the only
+  workspace crate that may, apart from the three exceptions in §15.
 - Nothing below `ui-egui` may use egui, eframe, winit or a file dialog crate.
 - `devices` is the only crate that may contain FFI, behind Cargo features, with
   `unsafe_code = "deny"` and a `SAFETY:` comment on every block; every other crate forbids
@@ -222,10 +223,11 @@ stack.
 
 ## 7. Rendering
 
-- **PDF.** `scorecraft-pdf` parses lazily (xref streams, object streams, incremental updates,
-  repaired xref for damaged files) and rasterises pages through a pure-Rust pipeline. Which
-  rasteriser we build on (our own on top of `vello_cpu`/`kurbo`, or an existing permissively
-  licensed pure-Rust renderer) is open decision D1 in [`decisions.md`](decisions.md).
+- **PDF.** `scorecraft-pdf` wraps PDFCraft: `pdfcraft-cos` parses lazily and tolerantly (xref
+  streams, object streams, incremental updates, xref repair, decryption through `pdfcraft-crypt`),
+  and `pdfcraft-render` rasterises pages on the CPU through PDFCraft's vendored, patched `hayro`
+  family (JBIG2, CCITT, DCT, JPX, Type 1/TrueType/CFF/Type 3). See §15 and decision D1 in
+  [`decisions.md`](decisions.md).
 - **Caching.** Rendered tiles are cached per (page, zoom bucket, filter). The current, next and
   previous pages (and the next setlist piece's first page) are pre-rendered in background jobs so a
   turn is a cache hit. Budgets live in `perf/budgets.toml` ([`scorecard.md`](scorecard.md#performance)).
@@ -298,7 +300,9 @@ must change behaviour (the scorecard counts "settings that do nothing").
 
 - Unit tests in every crate; integration tests per engine area; `panic_hunt` fuzzes every
   command with adversarial params.
-- `pdf` and `fsc` get round-trip, synthetic-generator, malformed-input and `cargo fuzz` targets.
+- `fsc` gets round-trip, synthetic-generator, malformed-input and `cargo fuzz` targets; `pdf` gets
+  adapter tests on `pdfcraft-testkit` fixtures and a fuzz target over the adapter (PDFCraft fuzzes
+  its own parser).
 - Real-file corpora (public-domain PDFs from IMSLP and Mutopia, the PDF Association's test
   suites, our own `.4sc` samples) live in a separate corpus repository, pinned and
   sha256-verified ([`development.md`](development.md#test-corpora)).
@@ -307,12 +311,98 @@ must change behaviour (the scorecard counts "settings that do nothing").
 
 ## 14. Open decisions
 
-Tracked with dates in [`decisions.md`](decisions.md): D1 PDF rasteriser, D2 on-disk record
-encoding (JSON vs CBOR), D3 iOS shell, D4 OCR model for title detection, D5 sync server protocol
-(HTTP + JSON ops vs. a binary protocol), D6 product name.
+Tracked with dates in [`decisions.md`](decisions.md): D1 PDF backend (**decided:** reuse PDFCraft,
+§15), D2 on-disk record encoding (JSON vs CBOR), D3 iOS shell, D4 OCR for title detection
+(leaning to `pdfcraft-ocr`), D5 sync server protocol (HTTP + JSON ops vs. a binary protocol),
+D6 product name.
+
+## 15. Reusing PDFCraft
+
+Scores are PDFs, and [PDFCraft](https://github.com/storytold/pdfcraft) (the Crafting Apps'
+clean-room, pure-Rust reimplementation of Adobe Acrobat) already has a hardened PDF stack. We
+reuse it for the whole PDF backend and keep ScoreCraft's own code for what a score reader adds
+(library, layout and turns, ink, setlists, sync).
+
+**Licence.** PDFCraft is **MIT OR Apache-2.0**, the same as ScoreCraft, so its crates can be
+depended on, modified and redistributed with ScoreCraft under our licence. Obligations: keep
+PDFCraft's copyright notice ("ArtCraft Team and the PdfCraft contributors") and its third-party
+notices in our `NOTICE` (hayro Apache-2.0 OR MIT; the Foxit standard-14 fonts and Adobe CMap
+resources bundled by hayro under BSD-3-Clause; lopdf MIT; the CC0 colour profile in
+hayro-interpret; the OCR models' licences if `pdfcraft-ocr` ships). Not covered by the licence and
+never copied: PDFCraft's ArtCraft brand files (`docs/brand/`). PDFCraft is itself clean-room
+(behaviour of Acrobat from public specs), so reusing it keeps ScoreCraft clean
+([clean-room §2](clean-room.md#2-allowed-sources)).
+
+**How we consume it: git dependencies pinned by revision, not a vendored copy.** PDFCraft's crates
+are not on crates.io (checked 2026-10-28). Cargo can take individual crates from its workspace:
+
+```toml
+[workspace.dependencies]
+pdfcraft-cos    = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+# … one line per crate below, all at the same rev
+
+# PDFCraft patches hayro in its own vendor/ through [patch.crates-io]. Patches apply only at the
+# workspace root, so ScoreCraft must repeat them, pointing at the same rev:
+[patch.crates-io]
+hayro           = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+hayro-interpret = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+hayro-syntax    = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+hayro-cmap      = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+hayro-postscript = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+hayro-jbig2     = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+lopdf           = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+vello_common    = { git = "https://github.com/storytold/pdfcraft", rev = "<pinned sha>" }
+```
+
+Why not vendor: a pinned revision gets PDFCraft's fuzz and corpus fixes by bumping one SHA, and
+fixes we need go upstream as PRs to PDFCraft, where its tests and reviewers check them. We vendor
+a crate into `vendor/` (with its licence files and a `vendor/README.md` row naming each patch, as
+PDFCraft does) only if we need a change PDFCraft won't take, or if PDFCraft becomes unavailable.
+Which of the two we use is recorded per crate in [`decisions.md`](decisions.md).
+
+**What we take** (PDFCraft 0.14.0, `main` at `20eebc1c`, 2026-10-27):
+
+| PDFCraft crate | Its layer | What it gives ScoreCraft | Used by | Feature-map rows |
+|---|---|---|---|---|
+| `pdfcraft-geom` | L0 | points, rects, page transforms | `pdf` | all page geometry |
+| `pdfcraft-filters` | L0 | Flate, LZW, predictors, ASCII85/Hex, RunLength | `pdf` (via cos) | READ-1 |
+| `pdfcraft-crypt` | L0 | standard security handler R2–R6 (RC4, AES) | `pdf` (via cos) | encrypted scores |
+| `pdfcraft-cos` | L1 | lazy, tolerant parser with xref repair, copy-on-write edits, incremental and full saves; wasm-safe, no `unsafe`, no panics | `pdf` | READ-1, READ-14, EXP-2 |
+| `pdfcraft-model` | L2 | page tree with inherited attributes, `/Rotate`, `/UserUnit`, page boxes | `pdf` | READ-1..3, NAV-5 |
+| `pdfcraft-content` | L2 | content-stream operators and serializer | `pdf` | PAGE-6 |
+| `pdfcraft-fonts` | L2 | standard-14 metrics, encodings, shaping for generated text | `pdf` | ANNO-8 export, PRAC-9 |
+| `pdfcraft-render` | L3 | CPU rasterisation (patched hayro), text and object inspection | `pdf` | READ-1, READ-14, LIB-6 |
+| `pdfcraft-annot` | L3 | ISO 32000 §12.5 annotation builders, appearance streams, reading existing annots | `pdf` | EXP-2, IMP-7, ANNO-1..9 export |
+| `pdfcraft-organize` | L4 | rotate, delete, move, insert pages; combine documents | `pdf` | EXP-3, PAGE-1..4 on export |
+| `pdfcraft-create` | L4 | blank PDFs, PDFs from images and text | `pdf` | PAGE-6, IMP-1, IMP-3, PRAC-9 |
+| `pdfcraft-print` | L4 | page selection, sizing, n-up composition (spools through `craft-print`) | `io` | EXP-1 |
+| `pdfcraft-ocr` | L4 | text recognition (ocrs) as a searchable layer | `metadata`, `scan` | LIB-6, LIB-7, IMP-1 |
+| `pdfcraft-testkit` | test | synthetic PDF fixtures | dev-dependency | tests |
+| `pdfcraft-oracle` | test | external oracle processes for output checks | dev-dependency | PDF-5 |
+
+**What we don't take:** PDFCraft's engine, UI, automation, forms, JavaScript, XFA, signing,
+redaction, preflight, accessibility, export-to-Office and optimizer crates, and its egui/winit
+forks. They serve an Acrobat-class editor, not a reader, and would pull Acrobat-specific
+commands into our engine.
+
+**Rules.**
+
+- Only `scorecraft-pdf` depends on `pdfcraft-*`, except `io` (`pdfcraft-print`), `metadata` and
+  `scan` (`pdfcraft-ocr`). `cargo xtask layers` enforces the allow-list, so swapping or forking the
+  backend touches those crates only. No `pdfcraft-*` type appears in `scorecraft-pdf`'s public API.
+- All `pdfcraft-*` crates and the `[patch.crates-io]` entries use **one** revision. Bumping it is
+  its own PR that runs `cargo xtask test-corpus` and the render budgets.
+- PDFCraft's never-crash, no-`unsafe` and wasm rules match ours, so its crates count as compliant
+  for our scorecard; anything that panics through them is a bug we reproduce, fix upstream and pin.
+- Rendering latency for turns is ours: `scorecraft-render` caches and pre-renders tiles that
+  `pdfcraft-render` produces; `gpu` uploads and composites them with ink.
+- If PDFCraft's licence ever changed, the pinned revisions stay MIT OR Apache-2.0; we would vendor
+  the last such revision.
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | §15: the PDF backend reuses PDFCraft's crates (git dependencies pinned by revision); `pdf` becomes an adapter |
 | 2026-10-28 | major | First version: design plan adapted from PhotoCraft's architecture for a score reader |

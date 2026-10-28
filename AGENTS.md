@@ -43,7 +43,8 @@ project, not part of the storytold organisation; the shared standards it needs a
 ```text
 crates/
   geom raster codecs           L0 foundation (geometry, page bitmaps, image codecs)
-  pdf midi fsc                 L0 standalone format crates (no workspace deps; publishable)
+  pdf                          L0 adapter over PDFCraft's PDF crates (the only door to pdfcraft-*; architecture §15)
+  midi fsc                     L0 standalone format crates (no workspace deps; publishable)
   doc                          L1 library model (scores, page refs, annotations, setlists: pure data)
   ops ink layout text search   L2 history, stroke engine, page layout and turns, text/stamps, index
   algo audio practice          L2 scan imaging, audio playback DSP, metronome / tuner / practice log
@@ -64,7 +65,9 @@ xtask/                         cargo xtask layers | wasm | ci | stats | corpus |
 ```
 
 **Layering is enforced** by `cargo xtask layers`. A crate may depend only on lower layers. `pdf`,
-`midi` and `fsc` depend on nothing in the workspace. Nothing below `ui-egui` may use egui, eframe,
+`midi` and `fsc` depend on nothing in the workspace. Only `pdf` (plus `io` for `pdfcraft-print` and
+`metadata`/`scan` for `pdfcraft-ocr`) may depend on PDFCraft's crates, all at one pinned revision;
+PDF bugs are fixed upstream in [PDFCraft](https://github.com/storytold/pdfcraft), then re-pinned. Nothing below `ui-egui` may use egui, eframe,
 winit or a file-dialog crate. A new crate must be registered in `xtask/src/layers.rs`.
 
 ## 3. Golden rules

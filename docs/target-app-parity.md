@@ -1,6 +1,6 @@
 # ScoreCraft vs enScore: target-app parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first assessment, before any code: everything at 0%, methodology, weights and estimates set) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (4 rows added from the Microsoft Store description; earlier: estimates lowered for PDFCraft reuse; first assessment before any code) · **Target:** enScore 3.7 (2026)
 
 The authoritative answer to "how close is ScoreCraft to enScore, and how much work is left". The
 one-page summary is [`ROADMAP.md`](../ROADMAP.md); the ranked work list is [`gaps.md`](gaps.md);
@@ -15,14 +15,14 @@ the feature catalog is [`feature-map.md`](feature-map.md); the measured checklis
 
 | Number | Value | Kind |
 |---|---|---|
-| **Feature breadth** (does each enScore feature exist?) | **0%** (0 of 118 feature-map rows) | measured by hand (no commands registered) |
+| **Feature breadth** (does each enScore feature exist?) | **0%** (0 of 122 feature-map rows) | measured by hand (no commands registered) |
 | **Ready for real work** (could a musician replace enScore with it on stage?) | **0%** | estimated, weights below |
 | **Practising musician** (reads, marks, turns with a pedal, uses setlists) | 0% | estimated, [method](#practising-musician) |
 | **Essentials user** (open a PDF, turn pages, mark it up) | 0% | estimated, [method](#essentials-user) |
 | **Stage** | **pre-alpha** | the [alpha gate](roadmap.md#alpha-gate) does not pass |
-| Remaining to **alpha** | **~350–720 agent-hours** | estimated, uncalibrated: P0 rows (290–620 h) plus the M0 skeleton (60–100 h) |
-| Remaining to **beta** | **~830–1,650 agent-hours** | estimated, uncalibrated: alpha + P1 rows (375–730 h) + stability and performance (100–200 h) |
-| Remaining to **full parity** | **~1,070–2,120 agent-hours** | estimated, uncalibrated: beta + P2 rows (240–470 h); P3 (ours only) adds 80–170 h |
+| Remaining to **alpha** | **~310–630 agent-hours** | estimated, uncalibrated: P0 rows (250–530 h, after PDFCraft reuse) plus the M0 skeleton (60–100 h) |
+| Remaining to **beta** | **~770–1,530 agent-hours** | estimated, uncalibrated: alpha + P1 rows (360–700 h) + stability and performance (100–200 h) |
+| Remaining to **full parity** | **~1,000–1,980 agent-hours** | estimated, uncalibrated: beta + P2 rows (230–450 h); P3 (ours only) adds 80–170 h |
 
 "Agent-hours" are wall-clock hours for one agent working sequentially, including tests, as in
 PhotoCraft's docs. They are **uncalibrated** until this repository has merged-PR history
@@ -36,7 +36,7 @@ parts.
   version history), **3.5.15** on Android, Microsoft Store build **2026.10.21.305** on Windows,
   measured on 2026-10-28.
 - **From public sources only** ([clean-room](clean-room.md#2-allowed-sources)): the store
-  listings, release notes and partner pages summarised in
+  listings (including the full Microsoft Store description, S8), release notes and partner pages summarised in
   [`observations/public-listings-2026-10-28.md`](observations/public-listings-2026-10-28.md). Unlike
   PhotoCraft's measurement of Photoshop, **no installed package was inspected**, so items enScore
   ships without describing publicly are missing from the denominator until someone observes them
@@ -54,9 +54,9 @@ parts.
 | Library, page editing, navigation (LIB, PAGE, NAV) | 15% | 0 / 28 | 0% | measured |
 | Setlists (LIST) | 10% | 0 / 7 | 0% | measured |
 | Import, export, scanning, IMSLP, forScore (IMP, EXP) | 10% | 0 / 12 | 0% | measured |
-| Practice, audio, MIDI (PRAC, PLAY, MIDI) | 10% | 0 / 21 | 0% | measured |
-| Sync and backup (SYNC) | 5% | 0 / 7 | 0% | measured |
-| Platforms and languages (PLAT) | 5% | 0 / 4 | 0% | measured |
+| Practice, audio, MIDI (PRAC, PLAY, MIDI) | 10% | 0 / 23 | 0% | measured |
+| Sync and backup (SYNC) | 5% | 0 / 8 | 0% | measured |
+| Platforms and languages (PLAT) | 5% | 0 / 5 | 0% | measured |
 | **Weighted** | 100% | | **0%** | |
 
 Weights reflect what a performing musician relies on most; they are set here once and only moved by
@@ -66,10 +66,10 @@ RFC.
 
 | Dimension | Weight | % ready | Remaining (agent-h) | Evidence | Detail |
 |---|---:|---:|---:|---|---|
-| Features in depth | 25% | 0% | 900–1,800 | no commands | [feature-map](feature-map.md) |
+| Features in depth | 25% | 0% | 840–1,690 | no commands | [feature-map](feature-map.md) |
 | Page-turn reliability and latency | 15% | 0% | 60–120 | no renderer; budgets defined in [scorecard](scorecard.md#performance) | [ui-parity](ui-parity.md) |
 | Ink feel (latency, pressure, smoothing) | 10% | 0% | 40–80 | no ink engine | [annotation-parity](annotation-parity.md) |
-| PDF fidelity (renders what other readers render) | 15% | 0% | 80–160 | no `pdf` crate | [file-format-parity](file-format-parity.md) |
+| PDF fidelity (renders what other readers render) | 15% | 0% | 20–40 | no adapter yet; engine reused from PDFCraft | [file-format-parity](file-format-parity.md) |
 | Stability (never crash, never lose markings) | 10% | 0% | 60–120 | no code | [gaps G3](gaps.md#g3-stability-and-data-safety) |
 | Hardware (pedals, MIDI, stylus, e-ink) | 10% | 0% | 50–100 | none | [hardware-parity](hardware-parity.md) |
 | Platforms (desktop, Android, iOS, web) | 10% | 0% | 80–200 | none | [gaps G9](gaps.md#g9-mobile-platforms) |
@@ -91,7 +91,7 @@ Ready % = share of READ-1, READ-2, TURN-1, TURN-3, ANNO-1, ANNO-6, ANNO-13, ANNO
 
 | Area | % ready | Hours | Notes |
 |---|---:|---:|---|
-| PDF engine (parse, render, write) | 0% | 80–160 | the largest single risk; open decision D1 |
+| PDF engine (parse, render, write) | 0% | 20–40 | reused from PDFCraft (decision D1); the adapter and turn caching are ours |
 | Reader layout and turns | 0% | 40–80 | half-page and alternating turns are the signature feature |
 | Ink engine and markup tools | 0% | 80–150 | latency and pressure feel need real devices |
 | Library store, search, metadata | 0% | 60–120 | must scale to 10,000 scores |
@@ -114,7 +114,7 @@ subsystem, from its first 1,004 merged PRs) as a prior. After about 50 merged PR
 the prior with this repository's own numbers (median PR hours by size, as PhotoCraft's
 calibration table does) and re-estimate every row.
 
-**Totals.** Sum of feature-map estimates: P0 290–620, P1 375–730, P2 240–470, P3 80–170
+**Totals.** Sum of feature-map estimates after PDFCraft reuse: P0 250–530, P1 360–700, P2 230–450, P3 80–170
 (agent-hours). Infrastructure not in the rows: M0 skeleton and xtask 60–100, stability and
 performance hardening before beta 100–200.
 
@@ -132,4 +132,6 @@ performance hardening before beta 100–200.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Microsoft Store description (S8): 118 → 122 rows; beta ~760–1,520 → ~770–1,530 h, full ~980–1,960 → ~1,000–1,980 h; alpha unchanged |
+| 2026-10-28 | minor | PDFCraft reuse: alpha ~350–720 → ~310–630 h, beta ~830–1,650 → ~760–1,520 h, full ~1,070–2,120 → ~980–1,960 h |
 | 2026-10-28 | major | First assessment: 0 of 118 rows, pre-alpha, estimates from the feature map |

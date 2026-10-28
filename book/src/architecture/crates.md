@@ -10,6 +10,6 @@ L1  doc
 L0  geom  raster  pdf  codecs  midi  fsc
 ```
 
-A crate depends only on lower layers, enforced by `cargo xtask layers`. `pdf`, `midi` and `fsc`
-are standalone. `devices` is the only crate allowed FFI. Details:
+A crate depends only on lower layers, enforced by `cargo xtask layers`. `midi` and `fsc`
+are standalone; `pdf` is the adapter over PDFCraft's crates. `devices` is the only crate allowed FFI. Details:
 [`docs/architecture.md` §2–3](https://github.com/Brinsleym/enscore-cleanroom/blob/main/docs/architecture.md#2-workspace-layout).

@@ -5,3 +5,6 @@
   LGPL crates.
 - `Cargo.lock` is committed; git dependencies are pinned by revision.
 - Dependabot proposes updates; CI checks them.
+- PDFCraft's crates are git dependencies at one pinned revision, with its `[patch.crates-io]`
+  entries for the patched hayro family repeated in our root `Cargo.toml`; bumping the revision is
+  its own PR with a corpus run.

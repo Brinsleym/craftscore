@@ -14,7 +14,7 @@ Checklist statuses are verified against the code; numbers here supersede estimat
 | [File compatibility](#file-compatibility) | 0 | 0 | 6 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 12 | from [ui-parity](ui-parity.md) |
 | [Annotation](#annotation) | 0 | 0 | 18 | from [annotation-parity](annotation-parity.md) |
-| [Automation](#automation) | 0 | 0 | 4 | 0 of 118 feature-map rows live |
+| [Automation](#automation) | 0 | 0 | 4 | 0 of 122 feature-map rows live |
 | [Reliability](#reliability) | 0 | 0 | 5 | never-crash lints on 0 crates |
 | [Distribution](#distribution) | 0 | 0 | 6 | |
 

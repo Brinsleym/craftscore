@@ -1,6 +1,6 @@
 # File-format parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Which files ScoreCraft reads and writes, against what enScore's public listings say it handles.
 Status: **done** (with round-trip or corpus tests), **partial**, **missing**. Directions: R read,
@@ -12,9 +12,9 @@ W write.
 
 | Format | enScore | ScoreCraft target | Crate | Spec | Rows | Status |
 |---|---|---|---|---|---|---|
-| PDF | R, W (export with ink, print, reports) | R, W | `pdf` | ISO 32000-1 / 32000-2 | READ-1, EXP-2, PRAC-9 | missing |
-| PDF annotations (Ink, Highlight, FreeText, Square/Circle) | export only (inferred) | R, W | `pdf`, `io` | ISO 32000 §12.5 | IMP-7, EXP-2 | missing |
-| Images (JPEG, PNG, HEIC, TIFF) as pages | R (Photos, camera) | R | `codecs` | format specs | IMP-3 | missing |
+| PDF | R, W (export with ink, print, reports) | R, W | `pdf` ♻ pdfcraft-cos, -render, -create, -organize | ISO 32000-1 / 32000-2 | READ-1, EXP-2, PRAC-9 | missing |
+| PDF annotations (Ink, Highlight, FreeText, Square/Circle) | export only (inferred) | R, W | `pdf` ♻ pdfcraft-annot | IMP-7, EXP-2 | missing |
+| Images (JPEG, PNG, HEIC, TIFF) as pages | R (Photos, camera) | R | `codecs`; ♻ pdfcraft-create (PNG, JPEG, TIFF) | format specs | IMP-3 | missing |
 | forScore `.4sc` | R | R only ([why](gaps.md#not-clean-room-feasible-so-far)) | `fsc` | black-box, [two-team](clean-room.md#5-interchange-formats-without-a-public-spec) | IMP-5 | missing |
 | enScore setlist / library share file | R, W (container not described publicly) | R, W our own bundle; enScore's own file read once observed | `io` | ours below | LIST-5 | missing |
 | Audio recordings | R (attach) | R: WAV, FLAC, MP3, AAC/M4A, Ogg/Opus | `audio` | format specs | PLAY-1 | missing |
@@ -56,6 +56,10 @@ blobs by hash and asks before overwriting markings.
 
 ## PDF fidelity targets
 
+The PDF engine is PDFCraft's ([architecture §15](architecture.md#15-reusing-pdfcraft)). These
+targets are checked on our score corpus through the `scorecraft-pdf` adapter; failures are
+reported and fixed upstream in PDFCraft, then pinned.
+
 | Id | Target | Status |
 |---|---|---|
 | PDF-1 | ≥ 99% of the pinned public-domain score corpus opens; none crash | missing |
@@ -69,4 +73,5 @@ blobs by hash and asks before overwriting markings.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | PDF rows reuse PDFCraft's crates |
 | 2026-10-28 | major | First version |

@@ -1,8 +1,8 @@
 # Localization parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (fifteen languages confirmed by the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
-enScore's App Store listing names 15 locales; the listings call it "twelve languages". ScoreCraft's
+enScore offers fifteen languages: the Microsoft Store description says fifteen, and the App Store listing names 15 locales (an earlier listing said twelve). ScoreCraft's
 UI strings go through `tl!` and `crates/ui-egui/src/i18n/<lang>.tsv`; coverage will be measured by
 `cargo xtask i18n-coverage`. Translations are clean-room: written from the meaning of our English
 text ([`ui-design.md`](ui-design.md#localisation)).
@@ -34,4 +34,5 @@ and Italian key names).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Fifteen languages, per the Microsoft Store description |
 | 2026-10-28 | major | First version |
