@@ -78,6 +78,18 @@ scorecraft-cli commands --json
 scorecraft-cli mcp
 ```
 
+`run` prints one JSON line per step. It stops at the first failing step: the results of the steps
+that ran are still printed, followed by `{"error":{"code":…,"message":…,"command":…,"step":n}}`
+(the control protocol's error shape), and it exits with status 1.
+
+**Windows PowerShell** (5.1) strips the inner double quotes from `'{"x":1}'` when it calls a
+native program, so the CLI receives `{x:1}`. Put params in a file, or pipe them in:
+
+```powershell
+scorecraft-cli run --cmd engine.commands.list --params-file params.json
+'{"filter":"view."}' | scorecraft-cli run --cmd engine.commands.list --params-file -
+```
+
 The desktop app's control channel (`scorecraft --control`) reads UI state, sends pointer, key,
 pedal and MIDI events, and takes offscreen screenshots ([`control-protocol.md`](control-protocol.md)).
 
