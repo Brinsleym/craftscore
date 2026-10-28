@@ -287,12 +287,19 @@ pub fn check_package(pkg: &Package, workspace_lints: Option<&Table>) -> Vec<Stri
     check_lints(name, &pkg.manifest, workspace_lints, &mut errors);
 
     if !pkg.root_source.is_empty() {
+        // Commented-out lines don't count: `// #![deny(...)]` must not pass.
+        let code: String = pkg
+            .root_source
+            .lines()
+            .filter(|l| !l.trim_start().starts_with("//"))
+            .collect::<Vec<_>>()
+            .join("\n");
         let missing: Vec<&str> = ROOT_DENIES
             .iter()
             .copied()
-            .filter(|l| !pkg.root_source.contains(l))
+            .filter(|l| !code.contains(l))
             .collect();
-        if !pkg.root_source.contains("#![deny(") || !missing.is_empty() {
+        if !code.contains("#![deny(") || !missing.is_empty() {
             errors.push(format!(
                 "{name}: crate root must carry #![deny({})] (missing: {})",
                 ROOT_DENIES.join(", "),
@@ -500,6 +507,13 @@ mod tests {
         let mut p = pkg("scorecraft-geom", "[dependencies]\n");
         p.root_source = "//! no lints here".to_owned();
         assert_eq!(check_package(&p, Some(&ws_lints())).len(), 2);
+    }
+
+    #[test]
+    fn commented_out_root_attribute_is_rejected() {
+        let mut p = pkg("scorecraft-geom", LINTS);
+        p.root_source = format!("// {DENY}");
+        assert_eq!(check_package(&p, Some(&ws_lints())).len(), 1);
     }
 
     #[test]

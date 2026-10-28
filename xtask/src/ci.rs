@@ -18,6 +18,8 @@ pub const STEPS: &[(&str, &[&str])] = &[
         ],
     ),
     ("test", &["test", "--workspace", "--all-targets"]),
+    // `--all-targets` skips doctests.
+    ("doctest", &["test", "--workspace", "--doc"]),
     (
         "panic_hunt",
         &[
