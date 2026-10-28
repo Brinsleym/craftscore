@@ -242,7 +242,10 @@ fn code_list(cmds: &[String]) -> String {
 
 fn write_or_check(root: &Path, rel: &str, content: &str, check: bool) -> Result<bool, String> {
     let path = root.join(rel);
-    let current = fs::read_to_string(&path).unwrap_or_default();
+    // Ignore CRLF from a checkout that converted line endings; the content is what matters.
+    let current = fs::read_to_string(&path)
+        .unwrap_or_default()
+        .replace("\r\n", "\n");
     if current == content {
         return Ok(false);
     }
