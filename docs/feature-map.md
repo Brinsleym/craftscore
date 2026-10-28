@@ -13,6 +13,10 @@ are listed in [`observations/public-listings-2026-10-28.md`](observations/public
 Add a row when a new enScore release or an observation note shows a new capability; never delete a
 row, mark it `dropped` with a reason.
 
+User screenshots of the running app are indexed by photo number in
+[`observations/screenshots/`](observations/screenshots/README.md) (Library and Lists so far), with the
+feature-map ids each one informs. Cite them as "screenshot 13" in observation notes and specs.
+
 ## Columns
 
 - **Id**: stable. Prefix = area. Used in specs, scorecard rows, commits (`READ-5: half-page turns`).
