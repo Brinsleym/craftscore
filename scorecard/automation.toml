@@ -1,0 +1,23 @@
+title = "Automation"
+key = "parity"
+
+[[row]]
+id = "AUTO-1"
+target = "Every feature-map row dispatches a command id (UI, CLI, control channel, MCP share them)"
+status = "missing"
+
+[[row]]
+id = "AUTO-2"
+target = "`scorecraft-cli` import/info/export/run/batch/commands/mcp"
+status = "partial"
+note = "2026-10-28: `commands`, `run`"
+
+[[row]]
+id = "AUTO-3"
+target = "Control channel with offscreen screenshots"
+status = "missing"
+
+[[row]]
+id = "AUTO-4"
+target = "An agent completes 10 scripted reader tasks over MCP"
+status = "missing"

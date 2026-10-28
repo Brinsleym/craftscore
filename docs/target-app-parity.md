@@ -1,6 +1,6 @@
 # ScoreCraft vs enScore: target-app parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (4 rows added from the Microsoft Store description; earlier: estimates lowered for PDFCraft reuse; first assessment before any code) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton done, remaining hours lowered; earlier: 4 rows added from the Microsoft Store description; estimates lowered for PDFCraft reuse) · **Target:** enScore 3.7 (2026)
 
 The authoritative answer to "how close is ScoreCraft to enScore, and how much work is left". The
 one-page summary is [`ROADMAP.md`](../ROADMAP.md); the ranked work list is [`gaps.md`](gaps.md);
@@ -20,9 +20,9 @@ the feature catalog is [`feature-map.md`](feature-map.md); the measured checklis
 | **Practising musician** (reads, marks, turns with a pedal, uses setlists) | 0% | estimated, [method](#practising-musician) |
 | **Essentials user** (open a PDF, turn pages, mark it up) | 0% | estimated, [method](#essentials-user) |
 | **Stage** | **pre-alpha** | the [alpha gate](roadmap.md#alpha-gate) does not pass |
-| Remaining to **alpha** | **~310–630 agent-hours** | estimated, uncalibrated: P0 rows (250–530 h, after PDFCraft reuse) plus the M0 skeleton (60–100 h) |
-| Remaining to **beta** | **~770–1,530 agent-hours** | estimated, uncalibrated: alpha + P1 rows (360–700 h) + stability and performance (100–200 h) |
-| Remaining to **full parity** | **~1,000–1,980 agent-hours** | estimated, uncalibrated: beta + P2 rows (230–450 h); P3 (ours only) adds 80–170 h |
+| Remaining to **alpha** | **~250–530 agent-hours** | estimated, uncalibrated: P0 rows (250–530 h, after PDFCraft reuse); the M0 skeleton is done (2026-10-28) |
+| Remaining to **beta** | **~710–1,430 agent-hours** | estimated, uncalibrated: alpha + P1 rows (360–700 h) + stability and performance (100–200 h) |
+| Remaining to **full parity** | **~940–1,880 agent-hours** | estimated, uncalibrated: beta + P2 rows (230–450 h); P3 (ours only) adds 80–170 h |
 
 "Agent-hours" are wall-clock hours for one agent working sequentially, including tests, as in
 PhotoCraft's docs. They are **uncalibrated** until this repository has merged-PR history
@@ -132,6 +132,7 @@ performance hardening before beta 100–200.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0 skeleton done (PRs #5–#8): alpha ~310–630 → ~250–530 h, beta ~770–1,530 → ~710–1,430 h, full ~1,000–1,980 → ~940–1,880 h |
 | 2026-10-28 | minor | Microsoft Store description (S8): 118 → 122 rows; beta ~760–1,520 → ~770–1,530 h, full ~980–1,960 → ~1,000–1,980 h; alpha unchanged |
 | 2026-10-28 | minor | PDFCraft reuse: alpha ~350–720 → ~310–630 h, beta ~830–1,650 → ~760–1,520 h, full ~1,070–2,120 → ~980–1,960 h |
 | 2026-10-28 | major | First assessment: 0 of 118 rows, pre-alpha, estimates from the feature map |

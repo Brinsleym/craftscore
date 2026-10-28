@@ -1,4 +1,4 @@
-//! `cargo xtask ci`: what the Linux CI jobs run (plus `parity --check`), in order, stopping at the first failure.
+//! `cargo xtask ci`: what the Linux CI jobs run (plus `parity --check` and `scorecard --check`), in order, stopping at the first failure.
 
 use std::path::Path;
 use std::process::Command;
@@ -53,6 +53,7 @@ pub fn run(root: &Path) -> Result<(), String> {
     }
     crate::layers::run(root)?;
     crate::parity::run(root, true)?;
+    crate::scorecard::run(root, true)?;
     crate::wasm::run(root)?;
     println!("ci: all steps passed");
     Ok(())

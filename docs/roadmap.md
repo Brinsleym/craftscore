@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 started: workspace, crate stubs, `xtask layers` and `wasm`; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -9,7 +9,7 @@ in [`gaps.md`](gaps.md); the one-page summary is [`ROADMAP.md`](../ROADMAP.md).
 Status legend: ✅ done · 🟡 in progress · ⬜ not started. Hours are agent wall-clock hours for one
 agent working sequentially, uncalibrated ([calibration](target-app-parity.md#remaining-effort-and-calibration)).
 
-**Stage: pre-alpha** (workspace skeleton only). Alpha needs the gate below: ~310–630 h.
+**Stage: pre-alpha** (workspace skeleton only). Alpha needs the gate below: ~250–530 h.
 
 ## Alpha gate
 
@@ -27,7 +27,7 @@ The workflows a performing musician runs every week, checked end to end on the m
 | Share: export a PDF with markings that opens in other PDF readers | no | EXP-2 (♻ pdfcraft-annot) | 4–8 |
 | Count in: metronome with tap tempo | no | PRAC-1 | 6–12 |
 
-Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on every crate,
+Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lints on every crate,
 `panic_hunt` green, fuzzed `pdf` and library loader.
 
 **Result: does not pass** (2026-10-28, no code).
@@ -36,7 +36,7 @@ Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on
 
 | M | Status | Name | Where we are |
 |---|---|---|---|
-| M0 | 🟡 | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run` (2026-10-28); scorecard and testkit next |
+| M0 | ✅ | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run`; generated scorecard; testkit synthetic and hostile PDFs (2026-10-28, PRs #5–#8) |
 | M1 | ⬜ | Foundation | |
 | M2 | ⬜ | PDF integration (PDFCraft) | |
 | M3 | ⬜ | Reader app | |
@@ -53,11 +53,10 @@ Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on
 
 Ranked; pick from the top unless an issue is assigned to you.
 
-1. **M0 skeleton** ([G3](gaps.md#g3-stability-and-data-safety)): ~~workspace, every crate stub
+1. ~~**M0 skeleton**~~ ([G3](gaps.md#g3-stability-and-data-safety)), done 2026-10-28: ~~workspace, every crate stub
    registered in `xtask/src/layers.rs`, lints, `clippy.toml`, `rustfmt.toml`, `xtask layers` and
    `wasm`, `xtask ci`, CI on Linux, macOS, Windows and wasm, `xtask parity`, the engine command registry with `panic_hunt`~~ (done
-   2026-10-28); still to do: `xtask scorecard`, testkit with a
-   synthetic PDF generator.
+   2026-10-28), `xtask scorecard` and testkit with a synthetic PDF generator~~.
 2. **PDFCraft integration** ([G1](gaps.md#g1-pdf-engine-parse-render-write),
    [decision D1](decisions.md#2026-10-28-d1-reuse-pdfcrafts-pdf-crates)): pin a PDFCraft revision,
    repeat its hayro patches, write the `scorecraft-pdf` adapter, and run a 200-file public-domain
@@ -70,13 +69,12 @@ Ranked; pick from the top unless an issue is assigned to you.
 
 | Rank | Milestone | Estimate |
 |---|---|---:|
-| 1 | M0 skeleton and CI | 60–100 h |
-| 2 | M1 foundation (geom, raster, doc, ops, format v1) | 40–80 h |
-| 3 | M2 PDF integration (PDFCraft) | 20–40 h |
-| 4 | M3 reader app (layouts, turns, control channel, desktop + web) | 60–110 h |
-| 5 | M4 ink | 80–150 h |
-| 6 | M5 library | 60–120 h |
-| 7 | M6 performance (setlists, pedals, shortcuts, snips, metronome) | 50–100 h |
+| 1 | M1 foundation (geom, raster, doc, ops, format v1) | 40–80 h |
+| 2 | M2 PDF integration (PDFCraft) | 20–40 h |
+| 3 | M3 reader app (layouts, turns, control channel, desktop + web) | 60–110 h |
+| 4 | M4 ink | 80–150 h |
+| 5 | M5 library | 60–120 h |
+| 6 | M6 performance (setlists, pedals, shortcuts, snips, metronome) | 50–100 h |
 | Later | M7 mobile, M8 sync, M9 interop, M10 practice and MIDI, M11 parity | 490–980 h |
 
 ## Milestone definitions
@@ -103,6 +101,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0 done; alpha ~310–630 → ~250–530 h: `cargo xtask scorecard` generates the scorecard from `perf/budgets.toml` and `scorecard/*.toml`; testkit writes synthetic and hostile PDFs |
 | 2026-10-28 | minor | M0: engine `Session::dispatch` and command registry, generated feature catalog and parity checklist (0 of 122, floor 0), `panic_hunt`, CLI `commands`/`run` |
 | 2026-10-28 | minor | M0: GitHub Actions CI (fmt, layers, clippy and tests on three OSes, wasm32, MSRV) and `cargo xtask ci` |
 | 2026-10-28 | minor | M0 in progress: Cargo workspace (edition 2024, MSRV 1.85), every crate in the architecture map as a stub, workspace never-crash lints, `cargo xtask layers` and `cargo xtask wasm` |

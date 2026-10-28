@@ -1,0 +1,31 @@
+title = "Distribution"
+
+[[row]]
+id = "DIST-1"
+target = "macOS universal, signed and notarized"
+status = "missing"
+
+[[row]]
+id = "DIST-2"
+target = "Windows x64 and arm64 MSI, signed"
+status = "missing"
+
+[[row]]
+id = "DIST-3"
+target = "Linux AppImage, Flatpak, deb, rpm"
+status = "missing"
+
+[[row]]
+id = "DIST-4"
+target = "Android APK / AAB"
+status = "missing"
+
+[[row]]
+id = "DIST-5"
+target = "iOS / iPadOS (TestFlight, App Store)"
+status = "missing"
+
+[[row]]
+id = "DIST-6"
+target = "Static web build"
+status = "missing"

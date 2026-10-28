@@ -1,0 +1,63 @@
+# Performance budgets (docs/scorecard.md#performance). Reference devices: a 2022 mid-range
+# Android tablet, a base iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
+# `cargo xtask perf` will measure these into perf/baseline.json; until then they are unmeasured.
+
+[[scenario]]
+id = "P1"
+name = "Turn to a pre-rendered page: input to first frame"
+budget = "≤ 16 ms"
+
+[[scenario]]
+id = "P2"
+name = "First render of a vector page at screen resolution (2× DPI)"
+budget = "≤ 120 ms"
+
+[[scenario]]
+id = "P3"
+name = "First render of a 600 dpi scanned page (JBIG2)"
+budget = "≤ 250 ms"
+
+[[scenario]]
+id = "P4"
+name = "Open a 300-page score to first page"
+budget = "≤ 400 ms"
+
+[[scenario]]
+id = "P5"
+name = "Pen-down to first ink (predicted)"
+budget = "≤ 1 frame"
+
+[[scenario]]
+id = "P6"
+name = "Library of 10,000 scores: cold open to grid"
+budget = "≤ 1.5 s"
+
+[[scenario]]
+id = "P7"
+name = "Search 10,000 scores (metadata)"
+budget = "≤ 50 ms"
+
+[[scenario]]
+id = "P8"
+name = "Full-text search 10,000 scores"
+budget = "≤ 300 ms"
+
+[[scenario]]
+id = "P9"
+name = "Import a folder of 500 PDFs (without OCR)"
+budget = "≤ 60 s"
+
+[[scenario]]
+id = "P10"
+name = "Export a 20-page score with ink"
+budget = "≤ 2 s"
+
+[[scenario]]
+id = "P11"
+name = "Memory while reading a 300-page score"
+budget = "≤ 400 MB"
+
+[[scenario]]
+id = "P12"
+name = "Setlist transition to next piece's first page"
+budget = "≤ 16 ms (pre-rendered)"

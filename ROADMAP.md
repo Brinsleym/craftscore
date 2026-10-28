@@ -1,8 +1,8 @@
 # ScoreCraft roadmap
 
-**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~310–630 h away)
+**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~250–530 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 started: Cargo workspace and layering check; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -22,13 +22,14 @@ repository has merged-PR history. About 75% of the work parallelizes.
 | **Ready for real work** | **0%** | estimated |
 | Practising musician | 0% | estimated ([method](docs/target-app-parity.md#practising-musician)) |
 | Essentials user | 0% | estimated ([method](docs/target-app-parity.md#essentials-user)) |
-| Remaining to **alpha** | **~310–630 h** | estimated |
-| Remaining to **beta** | **~770–1,530 h** | estimated |
-| Remaining to **full parity** | **~1,000–1,980 h** | estimated |
+| Remaining to **alpha** | **~250–530 h** | estimated |
+| Remaining to **beta** | **~710–1,430 h** | estimated |
+| Remaining to **full parity** | **~940–1,880 h** | estimated |
 
 **Why pre-alpha.** The project has its process, clean-room rules, architecture and feature map, and
-a Cargo workspace of empty crate stubs with the layering check. No feature code yet; the first
-milestone, the workspace skeleton (M0), is in progress.
+the M0 skeleton: a Cargo workspace with every crate, CI on three OSes plus wasm, the engine's
+command registry, and generated parity and scorecard docs. No feature code yet; next is the PDF
+adapter over PDFCraft (M2) and the foundation crates (M1).
 
 ## By dimension
 
@@ -54,11 +55,10 @@ enScore lists fifteen languages. ScoreCraft ships English first; the rest follow
 
 | Rank | Milestone | Estimate |
 |---|---|---:|
-| 1 | M0 skeleton and CI | 60–100 h |
-| 2 | M2 PDF integration: adapter over PDFCraft's crates | 20–40 h |
-| 3 | M1 foundation | 40–80 h |
-| 4 | M3 reader app | 60–110 h |
-| 5 | M4 ink | 80–150 h |
+| 1 | M2 PDF integration: adapter over PDFCraft's crates | 20–40 h |
+| 2 | M1 foundation | 40–80 h |
+| 3 | M3 reader app | 60–110 h |
+| 4 | M4 ink | 80–150 h |
 
 Detail: [docs/roadmap.md](docs/roadmap.md).
 
@@ -66,6 +66,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-28 | M0 done: generated scorecard (`cargo xtask scorecard`), testkit synthetic and hostile PDFs |
 | 2026-10-28 | M0: engine command registry and `Session::dispatch`, generated parity checklist (measured 0 of 122), `panic_hunt` in CI, CLI `commands` and `run` |
 | 2026-10-28 | M0 started: Cargo workspace with all 29 crates and 6 apps as stubs, never-crash lints on every crate, `cargo xtask layers` and `cargo xtask wasm` green |
 | 2026-10-28 | Feature map reconciled with the Microsoft Store description: 4 features added (per-setlist MIDI, recording at score open, two-way folder mirror, Apple Vision), Score Snips corrected |
@@ -76,6 +77,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0 done: remaining estimates drop by the M0 skeleton (60–100 h): alpha ~250–530 h, beta ~710–1,430 h, full ~940–1,880 h; upcoming starts at M2 |
 | 2026-10-28 | minor | M0 started (workspace skeleton); numbers unchanged |
 | 2026-10-28 | minor | Microsoft Store description: 122 rows; beta and full estimates up slightly |
 | 2026-10-28 | minor | PDFCraft reuse: estimates lowered |
