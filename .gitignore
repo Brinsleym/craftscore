@@ -12,3 +12,7 @@ target/
 *.log
 __pycache__/
 .DS_Store
+
+# Reference screenshots of enScore stay out of git (docs/clean-room.md §3); only the index is committed
+/docs/observations/screenshots/**/*.png
+/docs/observations/screenshots/**/*.jpg

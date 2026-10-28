@@ -6,7 +6,8 @@ Behavioural specs in [`../spec/`](../spec/README.md) link to these notes.
 
 ## Rules
 
-- Describe behaviour in your own words. No code, no assets, no screenshots committed, no copied UI
+- Describe behaviour in your own words. No code, no assets, no screenshots committed (keep them
+  locally under [`screenshots/`](screenshots/README.md), which is gitignored, and cite them by number), no copied UI
   text beyond a short quote of public marketing copy (put it in quotes and link it).
 - Observe only as a user would: the screen, the sounds, the files you export. Never the app's
   bundle, data directory, logs, memory or network traffic ([clean-room §3](../clean-room.md#3-forbidden-sources-and-actions)).
@@ -42,3 +43,4 @@ Numbered steps: what the user does, what enScore does in response.
 | File | Feature-map ids | Source |
 |---|---|---|
 | [public-listings-2026-10-28.md](public-listings-2026-10-28.md) | all | Public store listings and partner pages |
+| [screenshots/README.md](screenshots/README.md) | LIB, LIST, IMP | Index of 17 user screenshots of the Library and Lists sections (images not committed) |

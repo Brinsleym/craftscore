@@ -66,7 +66,9 @@ In order of preference:
 - Reading GPL/AGPL/LGPL implementations of a format or algorithm we are writing (read only the
   public spec or a permissive description).
 - Pasting proprietary UI text, screenshots or assets into this repository. Screenshots used for
-  observation stay on the observer's machine and are described in words.
+  observation stay on the observer's machine and are described in words. Their index (photo
+  number, file name, description) is committed in
+  [`observations/screenshots/`](observations/screenshots/README.md); the image files are gitignored.
 - Using AI tools to "recall" proprietary code. Agents must not be asked to reproduce enScore's or
   forScore's internals, and an agent that produces suspicious, unexplained detail about a
   proprietary format's internals must cite a public source or the change is rejected.
