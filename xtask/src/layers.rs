@@ -8,7 +8,9 @@
 //! - only the allow-listed crates depend on `pdfcraft-*`;
 //! - nothing below L6 uses a UI toolkit or file-dialog crate;
 //! - every crate uses the workspace lints (`devices` mirrors them with `unsafe_code = "deny"`);
-//! - every crate root carries the never-crash `#![deny(...)]` attribute.
+//! - every crate root carries the never-crash `#![deny(...)]` attribute;
+//! - the resolved graph holds one egui (and one of each UI and PDF backend crate), none of the
+//!   banned PDFCraft or craft-libs crates, and no UI crate below L6 even indirectly (`graph.rs`).
 
 use std::fmt;
 use std::fs;
@@ -97,7 +99,7 @@ const PDFCRAFT_ALLOWED: &[(&str, &[&str])] = &[
 const PDFCRAFT_DEV_ANYWHERE: &[&str] = &["pdfcraft-testkit", "pdfcraft-oracle"];
 
 /// UI toolkits and file dialogs: L6 and apps only.
-const UI_ONLY: &[&str] = &[
+pub const UI_ONLY: &[&str] = &[
     "egui",
     "eframe",
     "egui-wgpu",
@@ -377,6 +379,7 @@ pub fn check(root: &Path) -> Result<Vec<String>, String> {
             ));
         }
     }
+    errors.extend(crate::graph::check(root)?);
     Ok(errors)
 }
 

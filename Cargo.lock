@@ -325,6 +325,7 @@ name = "xtask"
 version = "0.0.1"
 dependencies = [
  "scorecraft-engine",
+ "serde_json",
  "toml",
 ]
 

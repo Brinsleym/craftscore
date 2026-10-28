@@ -1,6 +1,6 @@
 # ScoreCraft architecture
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (PDF backend reuses PDFCraft's crates, §15; earlier: major, first version, design plan before any code) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (§16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
 
 ## Current state (2026-10-28)
 
@@ -261,13 +261,29 @@ stack.
 
 ## 9. Sync
 
-- **Offline-first.** The device's library is the source of truth; sync exchanges ops and blobs.
+Owner's design (2026-10-28). Sync has two parts, built in this order:
+
+1. **Google Drive sync.** The whole library (score files and folders), app configuration and
+   annotations sync to the user's own Google Drive. Google Drive comes first; OneDrive and
+   Dropbox follow later behind the same backend trait.
+2. **Device-to-device sync.** Optional sign-in links a user's devices across platforms. Devices
+   sync the library, configuration and annotations directly over the local Wi-Fi network, and
+   through Google Drive (one device uploads, the others download) when they aren't on the same
+   network.
+
+- **Download everything, offline first.** Every device keeps a full local copy of every score,
+  annotation and setting it syncs, and downloads all of it ahead of time. Nothing is fetched on
+  demand when a score opens: a musician in a concert hall never waits on the network. Sync runs
+  in the background and never during performance mode.
+- **The device's library is the source of truth**; sync exchanges ops and blobs.
 - **Merge.** Annotations are an add-wins set with tombstones; metadata fields are last-writer-wins
   registers keyed by hybrid logical clock; list entry order uses a sequence CRDT. Two devices
   marking the same page offline both keep their strokes.
-- **Backends** behind one trait: a shared folder the OS already syncs (iCloud Drive, OneDrive,
-  Dropbox, Syncthing), WebDAV, and `scorecraft-sync-server` (self-hostable). No account is ever
-  required. Optional end-to-end encryption of ops and blobs.
+- **Backends** behind one trait: Google Drive first (its API, with the user's own Google account,
+  opt-in), then OneDrive and Dropbox; local Wi-Fi peers (discovered on the LAN, paired once,
+  encrypted); and later a shared folder the OS already syncs, WebDAV and the self-hostable
+  `scorecraft-sync-server`. A ScoreCraft account is never required: device pairing is optional
+  and works without one. Optional end-to-end encryption of ops and blobs.
 - **Backup** is a snapshot of the library directory into a single archive, local or to a backend.
 
 ## 10. Input
@@ -279,6 +295,11 @@ stack.
   Select and Song Select on score open.
 - **Pen.** Pressure, tilt and eraser end come from winit where it reports them and from platform
   hooks in `devices` where it doesn't (as PhotoCraft's `tablet` crate does on macOS and Windows).
+  The owner performs from a **Windows tablet**, so Windows Ink (pressure, eraser, barrel button,
+  palm rejection, touch and pen together) is the first pen platform to get right. On **iPad**, a
+  thin native Swift host owns the Apple Pencil (pressure, tilt, hover, predicted touches, low
+  latency) and hands samples to the Rust ink engine; everything else stays in Rust and egui
+  (decision D3).
 - **Palm rejection.** Pen-only mode ignores touch on the page while a pen is in range.
 
 ## 11. Engine runtime model
@@ -311,10 +332,10 @@ must change behaviour (the scorecard counts "settings that do nothing").
 
 ## 14. Open decisions
 
-Tracked with dates in [`decisions.md`](decisions.md): D1 PDF backend (**decided:** reuse PDFCraft,
-§15), D2 on-disk record encoding (JSON vs CBOR), D3 iOS shell, D4 OCR for title detection
-(leaning to `pdfcraft-ocr`), D5 sync server protocol (HTTP + JSON ops vs. a binary protocol),
-D6 product name.
+Tracked with dates in [`decisions.md`](decisions.md): D1 PDF backend (**decided:** reuse PDFCraft's
+headless crates, §15), D2 on-disk record encoding (JSON vs CBOR), D3 iOS shell (**decided:** thin
+Swift host for the pen), D4 OCR for title detection (leaning to `pdfcraft-ocr`), D5 sync protocol
+(now device-to-device over Wi-Fi and Google Drive, §9), D6 product name (**decided:** ScoreCraft).
 
 ## 15. Reusing PDFCraft
 
@@ -381,10 +402,26 @@ Which of the two we use is recorded per crate in [`decisions.md`](decisions.md).
 | `pdfcraft-testkit` | test | synthetic PDF fixtures | dev-dependency | tests |
 | `pdfcraft-oracle` | test | external oracle processes for output checks | dev-dependency | PDF-5 |
 
-**What we don't take:** PDFCraft's engine, UI, automation, forms, JavaScript, XFA, signing,
-redaction, preflight, accessibility, export-to-Office and optimizer crates, and its egui/winit
-forks. They serve an Acrobat-class editor, not a reader, and would pull Acrobat-specific
-commands into our engine.
+**What we don't take:** PDFCraft's engine, UI, automation, platform, forms, JavaScript, XFA,
+signing, redaction, preflight, accessibility, export-to-Office, editing, comparison, measuring and
+optimizer crates. They serve an Acrobat-class editor, not a reader, and would pull
+Acrobat-specific commands and dependencies (a JavaScript engine, native crypto) into our build.
+ScoreCraft is a different app: it shares PDFCraft's framework and the implementation of what the
+two have in common, nothing more. `cargo xtask layers` rejects these crates anywhere in the
+resolved graph (`xtask/src/graph.rs`, `BANNED`).
+
+**PDFCraft's patches.** PDFCraft's root `[patch.crates-io]` has two parts: path patches into its
+`vendor/` (the hayro family, lopdf, vello_common), and git patches that swap in the storytold forks
+of egui (14 crates) and winit. We repeat only the first part; the egui and winit forks are a UI
+matter, settled in §16. Cargo finds the vendored crates inside the PDFCraft repository even though
+its workspace excludes `vendor/` (checked 2026-10-28).
+
+**Test build (2026-10-28).** A scratch crate taking `pdfcraft-render`, `pdfcraft-model`,
+`pdfcraft-annot` and `pdfcraft-organize` at `20eebc1c` with the hayro, lopdf and vello_common
+patches checks natively and for `wasm32-unknown-unknown` on Rust 1.99.1: 165 packages, no C code,
+no egui, no craft-libs crates. Adding `craft-ui` (§16) still checks on both targets with one egui
+and one hayro. PDFCraft's full graph (794 packages, with `aws-lc-sys` and `boa_engine`) comes only
+from the crates we don't take.
 
 **Rules.**
 
@@ -400,9 +437,59 @@ commands into our engine.
 - If PDFCraft's licence ever changed, the pinned revisions stay MIT OR Apache-2.0; we would vendor
   the last such revision.
 
+## 16. UI framework: craft-ui and one egui
+
+ScoreCraft has its **own UI**, designed for reading and performing scores, not PDFCraft's. It is
+independent of the storytold suite but canonical with it: it is built from the suite's shared
+framework, so it looks and behaves like a Craft app.
+
+- **One egui in every build.** Two egui versions can't share types, so the resolved graph may
+  hold exactly one egui (and one eframe, epaint, winit, wgpu). `cargo xtask layers` fails
+  otherwise (`xtask/src/graph.rs`, `ONE_VERSION`).
+- **ScoreCraft's egui** is the egui that `craft-ui` is built on: the suite's fork
+  (`storytold/egui`, egui 0.37 at the revision craft-libs pins, with its winit fork), patched at
+  our workspace root at that same revision. We follow craft-libs' revision, not PDFCraft's, and
+  bump both together when they differ. ScoreCraft's customisation lives above egui, in
+  `scorecraft-ui-egui`: theme tokens, the reader canvas, page-turn and ink widgets, tap zones,
+  performance mode. A change egui itself needs goes upstream to `storytold/egui` first; only if it
+  can't land there do we keep a ScoreCraft branch of that fork, still one egui.
+- **What we take from craft-libs** (git dependencies pinned to one craft-libs revision, like
+  PDFCraft): `craft-ui` (controls, icons, fonts, docking), `craft-i18n` (translations, M11),
+  `craft-keymap` (shortcuts), `craft-settings` (config storage), `craft-atomic` (crash-safe saves,
+  M1), `craft-print` (via `pdfcraft-print`) and `craft-quit`/`craft-menu` for the native macOS
+  menu bar. Only `ui-egui` and apps take the egui-facing ones; the data-only ones (`atomic`,
+  `settings`, `i18n`, and `keymap` without its `egui` and `ui` features) may be used from their
+  layer; `cargo xtask layers` catches an egui reached below L6.
+- **What we never take:** `craft-update` (ScoreCraft does not self-update through the suite's
+  updater; releases go through the platform stores and packages), and PDFCraft's `pdfcraft-ui-egui`
+  and `pdfcraft-engine`. Both are in `BANNED`.
+- **craft-pdf.** craft-libs also has `craft-pdf`, the suite's shared PDF reader and renderer. It
+  patches hayro from its own `vendor/`, so it can't be combined with PDFCraft's hayro patches in
+  one build. We use PDFCraft's crates now because ScoreCraft also needs annotation export,
+  page organising and PDF creation, which only PDFCraft has; when PDFCraft moves onto `craft-pdf`,
+  we follow it.
+
+## 17. Platforms and the web runtime
+
+- **Windows tablet first.** The owner performs from a Windows tablet: pen and touch on Windows
+  are the first platform to get right, then macOS and Linux desktops, Android tablets, and iPad
+  (with the Swift pen host, §10).
+- **The web build is a nice-to-have of medium priority.** It ships after the desktop reader, and
+  every L0–L6 crate keeps checking for `wasm32-unknown-unknown` so it stays possible.
+- **No crash guard on the web.** On `wasm32-unknown-unknown` a panic aborts; it can't be caught.
+  The native last-resort guard around dispatch, import and export does not exist there, so on the
+  web the never-crash rules are the only defence. Panic-free code (lints, `panic_hunt`, fuzzing)
+  is what keeps the browser build on stage.
+- **No threads by default on the web.** Background jobs (rendering the neighbouring pages,
+  import, OCR, sync) run on a rayon pool natively. In the browser they run in web workers, or in
+  small slices on the main thread between frames, so a page turn still never waits on rendering.
+  The job API in `engine` hides which one runs. Turn budgets get a web column in
+  `perf/budgets.toml` once the web reader exists.
+
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | §15: headless PDFCraft crates only, test build results, banned crates; §16: own UI on craft-ui with exactly one egui (the suite's fork), no craft-update; §17: Windows tablet first, web runtime limits; §9: sync is Google Drive plus device-to-device, download everything; §10: Windows Ink first, Swift pen host on iPad |
 | 2026-10-28 | minor | §15: the PDF backend reuses PDFCraft's crates (git dependencies pinned by revision); `pdf` becomes an adapter |
 | 2026-10-28 | major | First version: design plan adapted from PhotoCraft's architecture for a score reader |

@@ -9,6 +9,7 @@
 )]
 
 mod ci;
+mod graph;
 mod layers;
 mod parity;
 mod scorecard;
