@@ -43,4 +43,4 @@ Numbered steps: what the user does, what enScore does in response.
 | File | Feature-map ids | Source |
 |---|---|---|
 | [public-listings-2026-10-28.md](public-listings-2026-10-28.md) | all | Public store listings and partner pages |
-| [screenshots/README.md](screenshots/README.md) | LIB, LIST, IMP | Index of 17 user screenshots of the Library and Lists sections (images not committed) |
+| [screenshots/README.md](screenshots/README.md) | LIB, LIST, IMP | Index of 17 user screenshots (Library, Lists) and 6 store promo images (images not committed) |

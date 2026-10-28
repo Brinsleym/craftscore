@@ -41,9 +41,27 @@ files).
 | 16 | [`lists/16-lists-recital-two-scores.png`](lists/16-lists-recital-two-scores.png) | "Recital" list with two scores: cover image, score count, open-list button, entries with reorder handles | LIST-1, LIST-4 |
 | 17 | [`lists/17-lists-more-menu-zoom.png`](lists/17-lists-more-menu-zoom.png) | Zoom of the list's "…" menu expanded (visible in photo 16): rename, change image, delete list | LIST-1 |
 
+## Store promo
+
+Not user screenshots: these are enScore's own promotional images (store listing art),
+saved by Brinsley on 2026-10-28. They count as the developer's public material
+([clean-room §2.2](../../clean-room.md#2-allowed-sources)) and are still not committed. The store
+description that came with them is kept beside the images in the shared files
+(`store-promo/microsoft-store-description.txt`); summarise it in your own words in
+[`../public-listings-2026-10-28.md`](../public-listings-2026-10-28.md) rather than copying it.
+
+| # | File | What it shows | Feature-map ids |
+|---|---|---|---|
+| 18 | [`store-promo/18-store-promo-library-light-mode.png`](store-promo/18-store-promo-library-light-mode.png) | Library in light mode (right side cut off) | LIB-14, PLAT-4 |
+| 19 | [`store-promo/19-store-promo-annotation.png`](store-promo/19-store-promo-annotation.png) | Annotation showcase (right side cut off) | ANNO-1, ANNO-3, ANNO-5 |
+| 20 | [`store-promo/20-store-promo-metronome-page-colours.png`](store-promo/20-store-promo-metronome-page-colours.png) | Metronome, dark mode, sepia pages, and page colouring for low vision and dyslexia | PRAC-1, READ-7, PLAT-4 |
+| 21 | [`store-promo/21-store-promo-imslp-search.png`](store-promo/21-store-promo-imslp-search.png) | IMSLP search (bottom cut off) | IMP-4 |
+| 22 | [`store-promo/22-store-promo-snips-and-shortcuts.png`](store-promo/22-store-promo-snips-and-shortcuts.png) | Cutting and pasting bars (Score Snips) and tappable repeats (Score Shortcuts) | PAGE-7, NAV-1 |
+| 23 | [`store-promo/23-store-promo-horn-folder-sync.png`](store-promo/23-store-promo-horn-folder-sync.png) | A "Horn" folder in the library, advertising backup and sync | LIB-3, SYNC-1 |
+
 ## Adding screenshots
 
-- One subdirectory per app section, in lower case (`library/`, `lists/`, later `recordings/`,
+- One subdirectory per app section, in lower case (`library/`, `lists/`, `store-promo/`, later `recordings/`,
   `practice/`, `search/`, `settings/`, …).
 - Name files `<photo number, two digits>-<section>-<short description>.png`, and keep numbering
   global across sections so a photo number is unique.
