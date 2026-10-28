@@ -42,7 +42,8 @@ scorecraft-ui-egui = { path = "crates/ui-egui" }
 scorecraft-automation = { path = "crates/automation" }
 scorecraft-testkit = { path = "crates/testkit" }
 
-# Third-party (tooling only so far)
+# Third-party
+serde_json = "1"
 toml = "0.9"
 
 # Never-crash rules (docs/standards/never-crash.md). clippy.toml relaxes the panic lints in tests.

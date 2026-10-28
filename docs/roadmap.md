@@ -36,7 +36,7 @@ Plus the skeleton (M0, 60–100 h) and the stability floor: never-crash lints on
 
 | M | Status | Name | Where we are |
 |---|---|---|---|
-| M0 | 🟡 | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85 (2026-10-28); registry, parity, scorecard and testkit next |
+| M0 | 🟡 | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run` (2026-10-28); scorecard and testkit next |
 | M1 | ⬜ | Foundation | |
 | M2 | ⬜ | PDF integration (PDFCraft) | |
 | M3 | ⬜ | Reader app | |
@@ -55,8 +55,8 @@ Ranked; pick from the top unless an issue is assigned to you.
 
 1. **M0 skeleton** ([G3](gaps.md#g3-stability-and-data-safety)): ~~workspace, every crate stub
    registered in `xtask/src/layers.rs`, lints, `clippy.toml`, `rustfmt.toml`, `xtask layers` and
-   `wasm`, `xtask ci`, CI on Linux, macOS, Windows and wasm~~ (done 2026-10-28); still to do:
-   `xtask parity` and `scorecard`, the engine command registry with `panic_hunt`, testkit with a
+   `wasm`, `xtask ci`, CI on Linux, macOS, Windows and wasm, `xtask parity`, the engine command registry with `panic_hunt`~~ (done
+   2026-10-28); still to do: `xtask scorecard`, testkit with a
    synthetic PDF generator.
 2. **PDFCraft integration** ([G1](gaps.md#g1-pdf-engine-parse-render-write),
    [decision D1](decisions.md#2026-10-28-d1-reuse-pdfcrafts-pdf-crates)): pin a PDFCraft revision,
@@ -103,6 +103,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | M0: engine `Session::dispatch` and command registry, generated feature catalog and parity checklist (0 of 122, floor 0), `panic_hunt`, CLI `commands`/`run` |
 | 2026-10-28 | minor | M0: GitHub Actions CI (fmt, layers, clippy and tests on three OSes, wasm32, MSRV) and `cargo xtask ci` |
 | 2026-10-28 | minor | M0 in progress: Cargo workspace (edition 2024, MSRV 1.85), every crate in the architecture map as a stub, workspace never-crash lints, `cargo xtask layers` and `cargo xtask wasm` |
 | 2026-10-28 | minor | S8 rows (PLAY-7, MIDI-5, SYNC-8, PLAT-5) placed in M7, M8 and M10; later milestones 480–950 → 490–980 h; alpha gate unchanged |

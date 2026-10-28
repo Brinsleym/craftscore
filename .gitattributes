@@ -1,0 +1,6 @@
+# LF everywhere, so generated files (feature catalog, parity checklist, scorecard) compare
+# byte-for-byte on Windows checkouts too.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

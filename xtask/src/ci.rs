@@ -1,4 +1,4 @@
-//! `cargo xtask ci`: what the Linux CI jobs run, in order, stopping at the first failure.
+//! `cargo xtask ci`: what the Linux CI jobs run (plus `parity --check`), in order, stopping at the first failure.
 
 use std::path::Path;
 use std::process::Command;
@@ -18,6 +18,18 @@ pub const STEPS: &[(&str, &[&str])] = &[
         ],
     ),
     ("test", &["test", "--workspace", "--all-targets"]),
+    (
+        "panic_hunt",
+        &[
+            "test",
+            "-p",
+            "scorecraft-engine",
+            "--test",
+            "panic_hunt",
+            "--",
+            "--ignored",
+        ],
+    ),
 ];
 
 fn cargo(root: &Path, label: &str, args: &[&str]) -> Result<(), String> {
@@ -40,6 +52,7 @@ pub fn run(root: &Path) -> Result<(), String> {
         cargo(root, label, args)?;
     }
     crate::layers::run(root)?;
+    crate::parity::run(root, true)?;
     crate::wasm::run(root)?;
     println!("ci: all steps passed");
     Ok(())

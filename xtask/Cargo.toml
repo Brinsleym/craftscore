@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+scorecraft-engine = { workspace = true }
 toml = { workspace = true }
 
 [lints]

@@ -14,8 +14,8 @@ Checklist statuses are verified against the code; numbers here supersede estimat
 | [File compatibility](#file-compatibility) | 0 | 0 | 6 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 12 | from [ui-parity](ui-parity.md) |
 | [Annotation](#annotation) | 0 | 0 | 18 | from [annotation-parity](annotation-parity.md) |
-| [Automation](#automation) | 0 | 0 | 4 | 0 of 122 feature-map rows live |
-| [Reliability](#reliability) | 1 | 0 | 4 | never-crash lints on 36 of 36 packages |
+| [Automation](#automation) | 0 | 1 | 3 | 0 of 122 feature-map rows live (measured, `cargo xtask parity`) |
+| [Reliability](#reliability) | 2 | 0 | 3 | never-crash lints on 36 of 36 packages |
 | [Distribution](#distribution) | 0 | 0 | 6 | |
 
 ## Performance
@@ -56,7 +56,7 @@ Rows ANN-1..33 in [annotation-parity](annotation-parity.md).
 | Id | Target | Status |
 |---|---|---|
 | AUTO-1 | Every feature-map row dispatches a command id (UI, CLI, control channel, MCP share them) | missing |
-| AUTO-2 | `scorecraft-cli` import/info/export/run/batch/commands/mcp | missing |
+| AUTO-2 | `scorecraft-cli` import/info/export/run/batch/commands/mcp | partial (2026-10-28: `commands`, `run`) |
 | AUTO-3 | Control channel with offscreen screenshots | missing |
 | AUTO-4 | An agent completes 10 scripted reader tasks over MCP | missing |
 
@@ -65,7 +65,7 @@ Rows ANN-1..33 in [annotation-parity](annotation-parity.md).
 | Id | Target | Status |
 |---|---|---|
 | REL-1 | Never-crash lints on every production crate | done (2026-10-28, checked by `cargo xtask layers`) |
-| REL-2 | `panic_hunt` covers every command | missing |
+| REL-2 | `panic_hunt` covers every command | done (2026-10-28: every registered command, 267 adversarial params each; in CI) |
 | REL-3 | Fuzz targets: pdf, fsc, midi, library loader, setlist bundle | missing |
 | REL-4 | Atomic saves and crash recovery tested by kill-during-save | missing |
 | REL-5 | Settings that do nothing: 0 | missing |
