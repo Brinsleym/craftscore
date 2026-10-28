@@ -66,6 +66,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-28 | M0: engine command registry and `Session::dispatch`, generated parity checklist (measured 0 of 122), `panic_hunt` in CI, CLI `commands` and `run` |
 | 2026-10-28 | M0 started: Cargo workspace with all 29 crates and 6 apps as stubs, never-crash lints on every crate, `cargo xtask layers` and `cargo xtask wasm` green |
 | 2026-10-28 | Feature map reconciled with the Microsoft Store description: 4 features added (per-setlist MIDI, recording at score open, two-way folder mirror, Apple Vision), Score Snips corrected |
 | 2026-10-28 | PDF backend to reuse PDFCraft's crates (decision D1); 13 features marked as reuse |
