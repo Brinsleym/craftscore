@@ -68,6 +68,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | The metronome's click: sample-accurate synthesis (`scorecraft-audio`) through the default audio output on Windows and macOS (`scorecraft-devices`, cpal); every alpha workflow is now code complete |
 | 2026-10-31 | The Score panel in the app: details (title, composer, tags…), the page editor (turn, hide, reorder, delete) and bookmarks; the alpha gate re-graded: code complete but for the metronome click, fuzzing and the tablet checks |
 | 2026-10-31 | M6 part 4: shortcut outlines in markup mode; snips exported as vector copies of their source page; snip resizing |
 | 2026-10-31 | M6 part 4: lists in the app: the Lists panel (make, fill, reorder, play) and a now-playing strip; each next score keeps the window and layout |

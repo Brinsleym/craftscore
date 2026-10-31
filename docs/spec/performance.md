@@ -55,9 +55,12 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 
 - A metronome at 20–300 beats per minute, in 2, 3, 4 or 6, with an accent on the first beat, as
   a click and a light pulse along the top edge of the reader (brighter, in the accent colour, on
-  the first beat of the bar, fading within the first 40% of the beat). The pulse is in the app
-  (M6 part 2); the click waits on audio output (`scorecraft-audio`), which the app doesn't have
-  yet. Changing the tempo while it runs keeps the beat count going. Tapping the tempo button four times sets
+  the first beat of the bar, fading within the first 40% of the beat). The click is a 30 ms sine
+  burst (1,760 Hz on the first beat, 1,100 Hz on the others), synthesised sample-accurately by
+  `scorecraft-audio` and played through the default output on Windows and macOS
+  (`scorecraft-devices`, `audio` feature); a build or device without audio output shows why in
+  the metronome menu and keeps the pulse. Changing the tempo while it runs keeps the beat count
+  going. Tapping the tempo button four times sets
   the tempo from the average of the last three intervals; taps more than 2 s apart start again.
   A playing list's entry tempo sets it when the entry opens.
 
@@ -99,6 +102,7 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 | PERF-10 | A snip of the top of page 2 at the foot of page 1 | it is created, moved below the page, and the move undone | same size, top at the tap; kept on the page; back where it was |
 | PERF-11 | Page 1 | a snip of page 2 is placed on it | page 1's picture changes |
 | PERF-12 | The app, a list "Gig" with the open score, picked in the Lists panel | *Play* | the reader shows; the list plays |
+| PERF-13 | A click track at 120 BPM in 3 at 48 kHz, stereo | two seconds are filled, then it stops | loud accented clicks at frames 0 and 72,000, a quieter one at 24,000, silence between, both channels alike; then silence |
 | PERF-5 | An import of two new PDFs, one already imported, three other files and one broken PDF | it finishes | "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: …)." |
 
 PERF-1 to PERF-4 are engine tests (`crates/engine/src/play_cmds/tests.rs`); PERF-5 is a shell
@@ -117,6 +121,7 @@ PERF-1 also checks that the window and layout carry over to the next score.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | The metronome's click: synthesis and audio output on Windows and macOS; PERF-13 |
 | 2026-10-31 | patch | M6 part 4: shortcut outlines, snips in export, snip resizing |
 | 2026-10-31 | patch | M6 part 4: the Lists panel and the now-playing strip; scores in a list keep the window and layout; PERF-12 |
 | 2026-10-31 | patch | M6 part 3: shortcuts and snips from the rectangle, how they behave; PERF-9..11 |

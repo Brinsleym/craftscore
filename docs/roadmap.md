@@ -25,12 +25,12 @@ The workflows a performing musician runs every week, checked end to end on the m
 | Perform a setlist: build a list, play it through with the pedal, pieces flow, no crash | code complete (M6: Lists panel, `list.play`); needs a run-through on the device | LIST-1, LIST-4, LIST-6, NAV-5 | 15–30 |
 | Edit pages: reorder, rotate, hide, delete; bookmarks | code complete: the Score panel turns, hides, reorders and deletes pages and keeps bookmarks; needs the device run-through | PAGE-1..4, LIB-11 | 10–20 |
 | Share: export a PDF with markings that opens in other PDF readers | code complete (M4 part 5); check the files in other readers | EXP-2 (♻ pdfcraft-annot) | 4–8 |
-| Count in: metronome with tap tempo | partial: the pulse and tap tempo are in; the click waits on audio output | PRAC-1 | 6–12 |
+| Count in: metronome with tap tempo | code complete: pulse, tap tempo and the click (Windows and macOS); check the click on the device | PRAC-1 | 6–12 |
 
 Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lints on every crate,
 `panic_hunt` green, fuzzed `pdf` and library loader.
 
-**Result: does not pass** (2026-10-31: code complete for reading, markup, setlists and export; left: the metronome click and the end-to-end checks on the Windows tablet; the `pdf` and library loaders have deterministic mutation tests (`cargo-fuzz` targets on nightly are the next step)).
+**Result: does not pass** (2026-10-31: code complete for reading, markup, setlists and export; left: the end-to-end checks on the Windows tablet; the `pdf` and library loaders have deterministic mutation tests (`cargo-fuzz` targets on nightly are the next step)).
 
 ## Milestones
 
@@ -76,7 +76,7 @@ Ranked; pick from the top unless an issue is assigned to you.
 | 1 | ~~M3 reader app~~ (done 2026-10-31) | — |
 | 2 | M4 ink: code complete (engine, the pen in the desktop app, export); a Windows tablet check left | 5–20 h |
 | 3 | M5 library: code complete; P6 and P7 on the reference device, polish from use | 5–15 h |
-| 4 | M6 performance (code complete but for the metronome click; the gate checks left) | 8–20 h |
+| 4 | M6 performance: code complete; the gate checks on the device left | 5–15 h |
 | Later | M7 mobile, M8 sync, M9 interop, M10 practice and MIDI, M11 parity; last of all, turning the ruler (ANNO-18) | 490–980 h |
 
 ## Milestone definitions

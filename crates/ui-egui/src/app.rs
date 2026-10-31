@@ -34,6 +34,11 @@ pub trait Platform {
     fn pick_folder(&mut self) -> Option<String> {
         None
     }
+    /// Plays the metronome's click at (BPM, beats per bar), or stops it with `None`. An error
+    /// says why there is no sound (the pulse still shows).
+    fn set_click(&mut self, _click: Option<(f64, u8)>) -> Result<(), String> {
+        Err("this build has no audio output".into())
+    }
 }
 
 /// A platform that does nothing (tests, snapshots).
@@ -80,6 +85,9 @@ pub struct App {
     /// `library.score.get` for the open score, while the Score panel is open; cleared by every
     /// command so the panel never shows stale pages.
     score_cache: Option<Value>,
+    /// The click last asked of the platform, and why there is none, if there is none.
+    sent_click: Option<Option<(f64, u8)>>,
+    click_error: Option<String>,
 }
 
 fn bool_param(params: &Value, key: &str) -> Result<Option<bool>, EngineError> {
@@ -131,6 +139,8 @@ impl App {
             library: crate::library_view::LibraryView::new(),
             score_panel: crate::score_panel::ScorePanel::new(),
             score_cache: None,
+            sent_click: None,
+            click_error: None,
         }
     }
 
@@ -272,6 +282,32 @@ impl App {
         serde_json::to_value(&self.state).map_err(|e| EngineError::Io(e.to_string()))
     }
 
+    /// Keeps the platform's click in step with the metronome (PRAC-1).
+    fn sync_click(&mut self) {
+        let st = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+            .unwrap_or(Value::Null);
+        let want = (st.get("running").and_then(Value::as_bool) == Some(true)).then(|| {
+            (
+                st.get("bpm").and_then(Value::as_f64).unwrap_or(100.0),
+                st.get("beats")
+                    .and_then(Value::as_u64)
+                    .and_then(|b| u8::try_from(b).ok())
+                    .unwrap_or(4),
+            )
+        });
+        if self.sent_click == Some(want) {
+            return;
+        }
+        self.sent_click = Some(want);
+        match self.platform.set_click(want) {
+            Ok(()) => self.click_error = None,
+            Err(e) if want.is_some() => self.click_error = Some(e),
+            Err(_) => {}
+        }
+    }
+
     /// Keeps the screen awake while wanted and a score is open (READ-9).
     fn sync_keep_awake(&mut self) {
         let want = self.state.keep_awake.wanted && self.session.has_score();
@@ -304,6 +340,7 @@ impl App {
             self.sent_full_screen = Some(self.state.full_screen);
         }
         self.sync_keep_awake();
+        self.sync_click();
         self.shortcuts(&ctx);
         self.dropped_files(&ctx);
 
@@ -499,6 +536,9 @@ impl App {
                 .clicked()
             {
                 run.push(("practice.metronome.toggle", json!({})));
+            }
+            if let Some(e) = &self.click_error {
+                ui.label(RichText::new(format!("No click: {e}")).weak());
             }
             if ui.button("Tap tempo").clicked() {
                 run.push(("practice.metronome.tap", json!({})));
