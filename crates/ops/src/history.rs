@@ -197,6 +197,13 @@ impl History {
         self.stacks.get(&scope).map_or(0, |s| s.undo.len())
     }
 
+    /// Drops a scope's redo steps (a step that was undone because it could not be saved).
+    pub fn forget_redo(&mut self, scope: Scope) {
+        if let Some(s) = self.stacks.get_mut(&scope) {
+            s.redo.clear();
+        }
+    }
+
     /// Forgets a scope's steps (a score emptied from Recently Deleted).
     pub fn forget(&mut self, scope: Scope) {
         self.stacks.remove(&scope);

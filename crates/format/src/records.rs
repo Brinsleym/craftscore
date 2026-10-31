@@ -22,6 +22,7 @@ pub const FORMAT_VERSION: u32 = 1;
 
 /// `manifest.json`: identifies the folder as a library.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Manifest {
     pub format: String,
     pub version: u32,
@@ -42,6 +43,7 @@ pub struct LibraryRecord {
 
 /// `scores/<id>.json`: a score without its annotations.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScoreRecord {
     pub id: ScoreId,
     pub source: Source,

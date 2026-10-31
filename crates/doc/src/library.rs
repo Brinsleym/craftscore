@@ -18,7 +18,11 @@ pub struct Folder {
 
 /// What a setlist entry plays.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
 pub enum EntryItem {
     /// A score from the library (LIST-6: lists refer to scores, never copy them).
     Score {
@@ -54,6 +58,7 @@ impl ListEntry {
 
 /// A setlist (LIST-1).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Setlist {
     pub id: ListId,
     pub name: String,

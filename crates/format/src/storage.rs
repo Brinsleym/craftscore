@@ -23,6 +23,25 @@ pub trait Storage {
     fn describe(&self) -> String;
 }
 
+/// A boxed storage is a storage, so a session can hold a folder or memory behind one type.
+impl Storage for Box<dyn Storage + Send> {
+    fn read(&self, path: &str) -> Result<Option<Vec<u8>>, StoreError> {
+        (**self).read(path)
+    }
+    fn write_atomic(&mut self, path: &str, data: &[u8]) -> Result<(), StoreError> {
+        (**self).write_atomic(path, data)
+    }
+    fn remove(&mut self, path: &str) -> Result<(), StoreError> {
+        (**self).remove(path)
+    }
+    fn list(&self, dir: &str) -> Result<Vec<String>, StoreError> {
+        (**self).list(dir)
+    }
+    fn describe(&self) -> String {
+        (**self).describe()
+    }
+}
+
 /// Rejects absolute paths, `..`, empty components and backslashes, so no record id or file name
 /// can reach outside the library.
 pub fn check_path(path: &str) -> Result<(), StoreError> {

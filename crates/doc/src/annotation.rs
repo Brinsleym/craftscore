@@ -197,6 +197,7 @@ pub struct Snip {
 
 /// A Score Shortcut (NAV-1): a tappable area (on a repeat or D.S. sign) that jumps to a target.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Shortcut {
     pub at: PageArea,
     pub target: PageKey,

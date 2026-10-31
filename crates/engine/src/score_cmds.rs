@@ -7,7 +7,7 @@ use scorecraft_pdf::{Document, OutlineEntry};
 use scorecraft_render::ScoreView;
 use serde_json::{Value, json};
 
-use crate::commands::{CommandSpec, always, opt_str, params_object, reject_unknown_keys, req_str};
+use crate::commands::{CommandSpec, always, opt_str, params_object, reject_unknown_keys};
 use crate::{EngineError, Session};
 
 /// The largest score file `score.open` reads.
@@ -23,6 +23,8 @@ pub struct OpenScore {
     pub(crate) name: String,
     /// The 0-based page last rendered.
     pub(crate) page: usize,
+    /// The library score it was opened from, if any.
+    pub(crate) library_score: Option<scorecraft_doc::ScoreId>,
 }
 
 pub fn specs() -> Vec<CommandSpec> {
@@ -31,7 +33,7 @@ pub fn specs() -> Vec<CommandSpec> {
         label: "Open Score…",
         menu: "File",
         shortcut: Some("Ctrl+O"),
-        params: r#"{"path":path,"password":string?}"#,
+        params: r#"{"path":path?,"score":id?,"password":string?}"#,
         ours: false,
         enabled: always,
         run: open,
@@ -41,19 +43,32 @@ pub fn specs() -> Vec<CommandSpec> {
 fn open(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "score.open";
     let p = params_object(ID, params)?;
-    reject_unknown_keys(ID, p, &["path", "password"])?;
-    let path = req_str(ID, p, "path")?;
+    reject_unknown_keys(ID, p, &["path", "score", "password"])?;
     let password = opt_str(ID, p, "password")?;
-    let bytes = read_score(path)?;
-    let name = std::path::Path::new(path)
-        .file_name()
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    session.open_score_bytes(Arc::new(bytes), password, &name)
+    let score: Option<scorecraft_doc::ScoreId> = crate::commands::opt_id(ID, p, "score")?;
+    match (opt_str(ID, p, "path")?, score) {
+        (Some(path), None) => {
+            let bytes = read_score(path)?;
+            let name = std::path::Path::new(path)
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            session.open_score_bytes(Arc::new(bytes), password, &name)
+        }
+        (None, Some(id)) => session.open_library_score(id, password),
+        (Some(_), Some(_)) => Err(crate::commands::bad(
+            ID,
+            "give `path` or `score`, not both".into(),
+        )),
+        (None, None) => Err(crate::commands::bad(
+            ID,
+            "`path` or `score` is required".into(),
+        )),
+    }
 }
 
 /// Reads a regular file of at most [`MAX_SCORE_BYTES`].
-fn read_score(path: &str) -> Result<Vec<u8>, EngineError> {
+pub(crate) fn read_score(path: &str) -> Result<Vec<u8>, EngineError> {
     let shown = crate::commands::truncate(path, 256);
     let io = |e: std::io::Error| EngineError::Io(format!("{shown}: {e}"));
     let file = std::fs::File::open(path).map_err(io)?;
@@ -99,7 +114,41 @@ impl Session {
             view,
             name: name.to_owned(),
             page: 0,
+            library_score: None,
         });
+        Ok(info)
+    }
+
+    /// Opens a library score in the reader and records when it was opened (LIB-15). The reader
+    /// shows the file's pages until page layout lands (M3); page edits apply there.
+    pub fn open_library_score(
+        &mut self,
+        id: scorecraft_doc::ScoreId,
+        password: Option<&str>,
+    ) -> Result<Value, EngineError> {
+        const ID: &str = "score.open";
+        let now = self.now_ms();
+        let l = self.lib_mut(ID)?;
+        let s = l
+            .lib
+            .scores
+            .get(&id)
+            .ok_or(scorecraft_ops::OpError::NoScore(id))?;
+        let blob = s.source.blob;
+        let name = s.display_title().to_owned();
+        let bytes = l.store.blob(blob)?;
+        let mut info = self.open_score_bytes(Arc::new(bytes), password, &name)?;
+        if let Some(open) = self.score.as_mut() {
+            open.library_score = Some(id);
+        }
+        let l = self.lib_mut(ID)?;
+        if let Some(s) = l.lib.scores.get_mut(&id) {
+            s.opened_ms = Some(now);
+        }
+        // Not an undo step; a failed save here only loses the "recently opened" time.
+        let saved = l.save_untracked(scorecraft_ops::Touched::Score(id)).is_ok();
+        crate::commands::set(&mut info, "score", json!(id.to_string()));
+        crate::commands::set(&mut info, "openedSaved", json!(saved));
         Ok(info)
     }
 

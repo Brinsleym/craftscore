@@ -3,12 +3,15 @@ use serde_json::Value;
 use crate::EngineError;
 use crate::commands::{CommandInfo, CommandSpec, registry};
 
-/// One engine session: the registry now; the library, open readers, history, jobs and
-/// preferences as their milestones land (`docs/architecture.md` §4.1, §11).
+/// One engine session: the registry, the open library with its undo history, and the open
+/// score; jobs and preferences as their milestones land (`docs/architecture.md` §4.1, §11).
 pub struct Session {
     commands: Vec<CommandSpec>,
     /// The open score, if any. One at a time until the library lands (M5).
     pub(crate) score: Option<crate::score_cmds::OpenScore>,
+    /// The open library, if any (M1): model, store, undo history.
+    pub(crate) library: Option<crate::library::LibrarySession>,
+    pub(crate) clock: crate::library::Clock,
 }
 
 impl Default for Session {
@@ -22,6 +25,8 @@ impl Session {
         Session {
             commands: registry(),
             score: None,
+            library: None,
+            clock: crate::library::default_clock(),
         }
     }
 

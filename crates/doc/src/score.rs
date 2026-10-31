@@ -20,6 +20,7 @@ pub enum SourceKind {
 
 /// The imported file. Never rewritten (rule 3): edits are data beside it.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Source {
     #[serde(default)]
     pub kind: SourceKind,
@@ -137,6 +138,7 @@ pub struct TurnMark {
 
 /// An audio recording attached to the score (PLAY-1..6).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AudioTrack {
     pub blob: BlobRef,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -170,6 +172,7 @@ pub struct MidiOnOpen {
 
 /// A score in the library.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Score {
     pub id: ScoreId,
     pub source: Source,

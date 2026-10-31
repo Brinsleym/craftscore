@@ -1151,7 +1151,12 @@ dependencies = [
 name = "scorecraft-engine"
 version = "0.0.1"
 dependencies = [
+ "chrono",
  "scorecraft-codecs",
+ "scorecraft-doc",
+ "scorecraft-format",
+ "scorecraft-geom",
+ "scorecraft-ops",
  "scorecraft-pdf",
  "scorecraft-render",
  "scorecraft-testkit",

@@ -76,6 +76,10 @@ pub fn registry() -> Vec<CommandSpec> {
     v.extend(crate::engine_cmds::specs());
     v.extend(crate::score_cmds::specs());
     v.extend(crate::view_cmds::specs());
+    v.extend(crate::library_cmds::specs());
+    v.extend(crate::page_cmds::specs());
+    v.extend(crate::list_cmds::specs());
+    v.extend(crate::edit_cmds::specs());
     v
 }
 
@@ -197,6 +201,130 @@ pub fn opt_bool(
             command,
             format!("`{key}` must be a boolean, got {}", kind(other)),
         )),
+    }
+}
+
+/// Required id param (`"score": "0190…"`), parsed as a UUID.
+pub fn req_id<T: std::str::FromStr<Err = String>>(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+) -> Result<T, EngineError> {
+    let s = req_str(command, params, key)?;
+    s.parse::<T>()
+        .map_err(|e| bad(command, format!("`{key}`: {e}")))
+}
+
+/// Optional id param; `null` and absent are `None`.
+pub fn opt_id<T: std::str::FromStr<Err = String>>(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+) -> Result<Option<T>, EngineError> {
+    match opt_str(command, params, key)? {
+        None => Ok(None),
+        Some(s) => s
+            .parse::<T>()
+            .map(Some)
+            .map_err(|e| bad(command, format!("`{key}`: {e}"))),
+    }
+}
+
+/// Required whole-number param in `min..=max`.
+pub fn req_int(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+    min: u64,
+    max: u64,
+) -> Result<u64, EngineError> {
+    opt_int(command, params, key, min, max)?
+        .ok_or_else(|| bad(command, format!("`{key}` is required")))
+}
+
+/// Optional list of strings, at most `max` long.
+pub fn opt_str_list(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+    max: usize,
+) -> Result<Option<Vec<String>>, EngineError> {
+    match params.and_then(|m| m.get(key)) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Array(items)) => {
+            if items.len() > max {
+                return Err(bad(command, format!("`{key}` has more than {max} items")));
+            }
+            items
+                .iter()
+                .map(|v| match v {
+                    Value::String(s) => Ok(s.clone()),
+                    other => Err(bad(
+                        command,
+                        format!("`{key}` items must be strings, got {}", kind(other)),
+                    )),
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map(Some)
+        }
+        Some(other) => Err(bad(
+            command,
+            format!("`{key}` must be a list of strings, got {}", kind(other)),
+        )),
+    }
+}
+
+/// Optional list of whole numbers in `min..=max`, at most `max_len` long.
+pub fn opt_int_list(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+    (min, max): (u64, u64),
+    max_len: usize,
+) -> Result<Option<Vec<u64>>, EngineError> {
+    match params.and_then(|m| m.get(key)) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Array(items)) => {
+            if items.len() > max_len {
+                return Err(bad(
+                    command,
+                    format!("`{key}` has more than {max_len} items"),
+                ));
+            }
+            items
+                .iter()
+                .map(|v| match v.as_u64() {
+                    Some(x) if (min..=max).contains(&x) => Ok(x),
+                    _ => Err(bad(
+                        command,
+                        format!("`{key}` items must be whole numbers from {min} to {max}"),
+                    )),
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map(Some)
+        }
+        Some(other) => Err(bad(
+            command,
+            format!("`{key}` must be a list of numbers, got {}", kind(other)),
+        )),
+    }
+}
+
+/// A string param no longer than `max` characters (names, titles).
+pub fn check_len(command: &str, key: &str, s: &str, max: usize) -> Result<(), EngineError> {
+    if s.chars().count() > max {
+        return Err(bad(
+            command,
+            format!("`{key}` is longer than {max} characters"),
+        ));
+    }
+    Ok(())
+}
+
+/// Sets `key` on a JSON object result (no-op on anything else).
+pub fn set(v: &mut Value, key: &str, value: Value) {
+    if let Some(o) = v.as_object_mut() {
+        o.insert(key.to_owned(), value);
     }
 }
 

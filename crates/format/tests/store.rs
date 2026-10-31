@@ -57,7 +57,7 @@ fn create_refuses_an_existing_library_and_open_needs_one() {
     ));
     mem.plant(
         "manifest.json",
-        br#"{"format":"scorecraft-library","version":99,"library":"00000000-0000-0000-0000-000000000000","created_ms":0}"#,
+        br#"{"format":"scorecraft-library","version":99,"library":"00000000-0000-0000-0000-000000000000","createdMs":0}"#,
     );
     assert!(matches!(
         Store::open(mem.clone()),
