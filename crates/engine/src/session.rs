@@ -12,6 +12,10 @@ pub struct Session {
     /// The open library, if any (M1): model, store, undo history.
     pub(crate) library: Option<crate::library::LibrarySession>,
     pub(crate) clock: crate::library::Clock,
+    /// Which key or pedal does what (TURN-4).
+    pub(crate) pedal_map: scorecraft_input::PedalMap,
+    /// One turn per physical press.
+    pub(crate) key_gate: scorecraft_input::KeyGate,
 }
 
 impl Default for Session {
@@ -27,6 +31,8 @@ impl Session {
             score: None,
             library: None,
             clock: crate::library::default_clock(),
+            pedal_map: scorecraft_input::PedalMap::default(),
+            key_gate: scorecraft_input::KeyGate::new(scorecraft_input::DEFAULT_DEBOUNCE_MS),
         }
     }
 

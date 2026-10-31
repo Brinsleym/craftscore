@@ -77,6 +77,7 @@ pub fn registry() -> Vec<CommandSpec> {
     v.extend(crate::score_cmds::specs());
     v.extend(crate::view_cmds::specs());
     v.extend(crate::reader_cmds::specs());
+    v.extend(crate::input_cmds::specs());
     v.extend(crate::library_cmds::specs());
     v.extend(crate::page_cmds::specs());
     v.extend(crate::list_cmds::specs());
