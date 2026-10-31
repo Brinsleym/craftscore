@@ -1,6 +1,6 @@
 # ScoreCraft architecture
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (current state: page cache and pre-rendering; earlier: PDF adapter on PDFCraft 0.15.0 with the vello_cpu patch; earlier: §16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (current state: first engine commands; earlier: page cache and pre-rendering; earlier: PDF adapter on PDFCraft 0.15.0 with the vello_cpu patch; earlier: §16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
 
 ## Current state (2026-10-31)
 
@@ -15,6 +15,10 @@
   background thread with its own document handle; the web build runs the same queue on its one
   thread. Dark and sepia use PDFCraft's reading colours, so text and line art change colour and
   images keep theirs.
+- **Engine and CLI.** `score.open` and `view.render` are the first feature commands (READ-1).
+  The session holds one open score until the library lands (M5). `view.render` renders through
+  the page cache, can write a PNG through `scorecraft-codecs`, and queues the neighbouring pages
+  for pre-rendering. `scorecraft-cli info` and `render` are shorthands for them.
 
 Otherwise this page is the **design plan**: the workspace, the layering rules that
 keep the engine independent of the UI, the document model and how rendering, input, sync and
@@ -507,6 +511,7 @@ framework, so it looks and behaves like a Craft app.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Current state: `score.open` and `view.render` in the engine, CLI `info` and `render` |
 | 2026-10-31 | patch | Current state: `scorecraft-render` page cache, pre-rendering and dark/sepia filters |
 | 2026-10-31 | patch | Current state: `scorecraft-pdf` on `pdfcraft-render` 0.15.0 (`65ff3a00`) with the `vello_cpu` patch; §15 pinned build |
 | 2026-10-28 | minor | §15: headless PDFCraft crates only, test build results, banned crates; §16: own UI on craft-ui with exactly one egui (the suite's fork), no craft-update; §17: Windows tablet first, web runtime limits; §9: sync is Google Drive plus device-to-device, download everything; §10: Windows Ink first, Swift pen host on iPad |

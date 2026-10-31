@@ -49,6 +49,7 @@ pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a
 
 # Third-party
 bytemuck = "1"
+png = "0.18"
 serde_json = "1"
 toml = "0.9"
 

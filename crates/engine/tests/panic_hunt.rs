@@ -3,8 +3,10 @@
 //! `cargo test -p scorecraft-engine --test panic_hunt -- --ignored`
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::Arc;
 
 use scorecraft_engine::{Session, registry};
+use scorecraft_testkit::pdf::{PageSpec, PdfBuilder};
 use serde_json::{Value, json};
 
 fn adversarial_params() -> Vec<Value> {
@@ -33,7 +35,8 @@ fn adversarial_params() -> Vec<Value> {
     // Every plausible key with every hostile value.
     let keys = [
         "filter", "score", "page", "pages", "index", "id", "layer", "mode", "tool", "value",
-        "path", "out", "from", "to", "count", "zoom", "x", "y", "rect", "list", "entry",
+        "path", "out", "from", "to", "count", "zoom", "x", "y", "rect", "list", "entry", "dpi",
+        "password", "prefetch",
     ];
     let values = [
         Value::Null,
@@ -71,7 +74,29 @@ fn no_command_panics_on_adversarial_params() {
             }
         }
     }
+    // Again with a score open, so commands that need one get past `enabled`.
+    let mut session = with_score();
+    for spec in registry() {
+        for p in &params {
+            let outcome = catch_unwind(AssertUnwindSafe(|| session.dispatch(spec.id, p)));
+            if outcome.is_err() {
+                failures.push(format!("{} panicked on {} (score open)", spec.id, short(p)));
+                session = with_score();
+            }
+            if !session.has_score() {
+                session = with_score();
+            }
+        }
+    }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+fn with_score() -> Session {
+    let bytes = PdfBuilder::new().pages(3, PageSpec::default()).build();
+    let mut session = Session::new();
+    let opened = session.open_score_bytes(Arc::new(bytes), None, "hunt.pdf");
+    assert!(opened.is_ok(), "{opened:?}");
+    session
 }
 
 #[test]

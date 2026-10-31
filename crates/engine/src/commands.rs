@@ -74,6 +74,8 @@ pub fn always(_: &Session) -> bool {
 pub fn registry() -> Vec<CommandSpec> {
     let mut v = Vec::new();
     v.extend(crate::engine_cmds::specs());
+    v.extend(crate::score_cmds::specs());
+    v.extend(crate::view_cmds::specs());
     v
 }
 
@@ -127,6 +129,85 @@ pub fn opt_str<'a>(
     }
 }
 
+/// Required string param.
+pub fn req_str<'a>(
+    command: &str,
+    params: Option<&'a serde_json::Map<String, Value>>,
+    key: &str,
+) -> Result<&'a str, EngineError> {
+    opt_str(command, params, key)?.ok_or_else(|| EngineError::BadParams {
+        command: command.to_owned(),
+        message: format!("`{key}` is required"),
+    })
+}
+
+/// Optional finite number param.
+pub fn opt_f64(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+) -> Result<Option<f64>, EngineError> {
+    match params.and_then(|m| m.get(key)) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Number(n)) => match n.as_f64() {
+            Some(x) if x.is_finite() => Ok(Some(x)),
+            _ => Err(bad(command, format!("`{key}` must be a finite number"))),
+        },
+        Some(other) => Err(bad(
+            command,
+            format!("`{key}` must be a number, got {}", kind(other)),
+        )),
+    }
+}
+
+/// Optional whole-number param in `min..=max`.
+pub fn opt_int(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+    min: u64,
+    max: u64,
+) -> Result<Option<u64>, EngineError> {
+    match params.and_then(|m| m.get(key)) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Number(n)) => match n.as_u64() {
+            Some(x) if (min..=max).contains(&x) => Ok(Some(x)),
+            _ => Err(bad(
+                command,
+                format!("`{key}` must be a whole number from {min} to {max}"),
+            )),
+        },
+        Some(other) => Err(bad(
+            command,
+            format!("`{key}` must be a number, got {}", kind(other)),
+        )),
+    }
+}
+
+/// Optional boolean param.
+pub fn opt_bool(
+    command: &str,
+    params: Option<&serde_json::Map<String, Value>>,
+    key: &str,
+) -> Result<Option<bool>, EngineError> {
+    match params.and_then(|m| m.get(key)) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Bool(b)) => Ok(Some(*b)),
+        Some(other) => Err(bad(
+            command,
+            format!("`{key}` must be a boolean, got {}", kind(other)),
+        )),
+    }
+}
+
+/// A bad-params error for `command`.
+pub fn bad(command: &str, message: String) -> EngineError {
+    EngineError::BadParams {
+        command: command.to_owned(),
+        message,
+    }
+}
+
 fn kind(v: &Value) -> &'static str {
     match v {
         Value::Null => "null",
@@ -139,7 +220,7 @@ fn kind(v: &Value) -> &'static str {
 }
 
 /// Shortens hostile input before it goes into an error message (char-boundary safe).
-fn truncate(s: &str, max_chars: usize) -> String {
+pub fn truncate(s: &str, max_chars: usize) -> String {
     let mut out: String = s.chars().take(max_chars).collect();
     if s.chars().nth(max_chars).is_some() {
         out.push('…');

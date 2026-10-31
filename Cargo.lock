@@ -1090,12 +1090,16 @@ name = "scorecraft-cli"
 version = "0.0.1"
 dependencies = [
  "scorecraft-engine",
+ "scorecraft-testkit",
  "serde_json",
 ]
 
 [[package]]
 name = "scorecraft-codecs"
 version = "0.0.1"
+dependencies = [
+ "png",
+]
 
 [[package]]
 name = "scorecraft-devices"
@@ -1109,6 +1113,10 @@ version = "0.0.1"
 name = "scorecraft-engine"
 version = "0.0.1"
 dependencies = [
+ "scorecraft-codecs",
+ "scorecraft-pdf",
+ "scorecraft-render",
+ "scorecraft-testkit",
  "serde_json",
 ]
 

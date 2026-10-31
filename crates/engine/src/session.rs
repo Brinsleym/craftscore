@@ -7,6 +7,8 @@ use crate::commands::{CommandInfo, CommandSpec, registry};
 /// preferences as their milestones land (`docs/architecture.md` §4.1, §11).
 pub struct Session {
     commands: Vec<CommandSpec>,
+    /// The open score, if any. One at a time until the library lands (M5).
+    pub(crate) score: Option<crate::score_cmds::OpenScore>,
 }
 
 impl Default for Session {
@@ -19,6 +21,7 @@ impl Session {
     pub fn new() -> Self {
         Session {
             commands: registry(),
+            score: None,
         }
     }
 

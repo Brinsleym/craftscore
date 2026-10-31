@@ -18,7 +18,9 @@ mod engine_cmds;
 mod error;
 pub mod feature_catalog;
 pub mod parity;
+mod score_cmds;
 mod session;
+mod view_cmds;
 
 pub use commands::{CommandInfo, CommandSpec, registry};
 pub use error::EngineError;
