@@ -156,7 +156,7 @@ The corpus test (`crates/pdf/tests/corpus.rs`) is opt-in through the `corpus` ca
 It checks PDF-1 and PDF-2 in [file-format-parity](file-format-parity.md#pdf-fidelity-targets).
 
 - **PDF-1:** every distinct score opens or asks for its password.
-- **PDF-2:** every page renders at 150 dpi, and the first three also at 300 dpi. Each render is compared with PDFium's after both are reduced to 4 × 4-pixel grey blocks.
+- **PDF-2:** every page renders at 150 dpi, and the first three also at 300 dpi. Each render is compared with PDFium's after both are reduced to 4 × 4-pixel grey blocks. PDFium draws images without smoothing for the references (`no_smoothimage`), as ScoreCraft does for every image whose /Interpolate flag is off; otherwise every scan fails on its anti-aliased edges alone.
 
 `cargo xtask corpus --references` renders the PDFium references. It needs Python 3 with
 `pip install pypdfium2 pillow`.
@@ -164,7 +164,8 @@ It checks PDF-1 and PDF-2 in [file-format-parity](file-format-parity.md#pdf-fide
 `cargo xtask test-corpus` fetches the corpus, renders references if they are missing, and runs the
 test. The report goes to `corpus/report.md`. To test a private library, run
 `cargo xtask test-corpus --library "C:\path\to\scores" --max-pages 20`, and the report goes to
-`corpus/report-library.md`.
+`corpus/report-library.md`. With `SCORECRAFT_CORPUS_DUMP=1` set, the test also writes ScoreCraft's
+full-resolution grey render of each page that misses its reference to `corpus/diff/`.
 
 The corpus test needs files that CI can't download, so it runs on contributors' machines. The
 adapter's fuzzing runs in two places:

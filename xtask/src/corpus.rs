@@ -250,7 +250,9 @@ pub fn references(root: &Path, o: &Options) -> Result<(), String> {
     if status.success() {
         Ok(())
     } else {
-        Err("reference renders failed: is `pip install pypdfium2 pillow` done?".into())
+        Err(format!(
+            "reference.py failed ({status}); see its output above (it needs `pip install pypdfium2 pillow`)"
+        ))
     }
 }
 
@@ -284,7 +286,8 @@ pub fn test(root: &Path, args: &[String]) -> Result<(), String> {
     if o.library.is_none() {
         fetch_all(root)?;
     }
-    if !reference_dir(root, &o).is_dir() {
+    // reference.py writes `.complete-v2` last, so an interrupted run is redone.
+    if !reference_dir(root, &o).join(".complete-v2").is_file() {
         references(root, &o)?;
     }
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());

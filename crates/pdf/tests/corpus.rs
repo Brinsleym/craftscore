@@ -112,6 +112,23 @@ fn reduce(b: &Bitmap) -> Grey {
     Grey { w, h, px }
 }
 
+/// Full-resolution BT.601 grey of `b`, as a binary PGM in `path`: what `SCORECRAFT_CORPUS_DUMP`
+/// writes for each page that misses its reference, to diff against PDFium's own render.
+fn write_grey_pgm(path: &Path, b: &Bitmap) {
+    let mut out = format!("P5\n{} {}\n255\n", b.width, b.height).into_bytes();
+    for y in 0..b.height {
+        for x in 0..b.width {
+            let [r, g, bl, _] = b.pixel(x, y).unwrap();
+            let l = (u32::from(r) * 299 + u32::from(g) * 587 + u32::from(bl) * 114 + 500) / 1000;
+            out.push(l as u8);
+        }
+    }
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    let _ = std::fs::write(path, out);
+}
+
 fn read_pgm(path: &Path) -> Option<Grey> {
     let data = std::fs::read(path).ok()?;
     let mut fields = Vec::new();
@@ -165,7 +182,7 @@ struct Outcome {
     ms_300: Vec<u128>,
 }
 
-fn check_score(bytes: Vec<u8>, ref_dir: &Path, max_pages: usize) -> Outcome {
+fn check_score(bytes: Vec<u8>, ref_dir: &Path, max_pages: usize, dump: Option<&Path>) -> Outcome {
     let mut o = Outcome::default();
     let mut doc = match Document::open(Arc::new(bytes)) {
         Ok(d) => d,
@@ -218,6 +235,9 @@ fn check_score(bytes: Vec<u8>, ref_dir: &Path, max_pages: usize) -> Outcome {
                             page + 1,
                             big * 100.0
                         ));
+                        if let Some(dir) = dump {
+                            write_grey_pgm(&dir.join(format!("p{:03}-{dpi}.pgm", page + 1)), &bmp);
+                        }
                     }
                 }
                 None => o
@@ -251,6 +271,12 @@ fn corpus_opens_and_matches_the_reference() {
         .join("reference")
         .join(if private { "library" } else { "public-domain" });
     let max_pages = max_pages();
+    // `SCORECRAFT_CORPUS_DUMP=1` keeps our full-resolution render of every page that misses its
+    // reference, under the gitignored `corpus/diff/`.
+    let dumps = std::env::var_os("SCORECRAFT_CORPUS_DUMP").map(|_| {
+        dir.join("diff")
+            .join(if private { "library" } else { "public-domain" })
+    });
 
     let mut report = format!(
         "Source: {}\n\n| Score | Pages | Rendered | Matched | Worst mean | Notes |\n|---|---:|---:|---:|---:|---|\n",
@@ -275,10 +301,14 @@ fn corpus_opens_and_matches_the_reference() {
         if !seen.insert(hash_id(&bytes)) {
             continue;
         }
-        let mut o = check_score(bytes, &refs.join(&id), max_pages);
+        let dump = dumps.as_ref().map(|d| d.join(&id));
+        let mut o = check_score(bytes, &refs.join(&id), max_pages, dump.as_deref());
         // A file PDFium can't open either (it left no reference) is not a PDF any reader takes:
         // report it, but leave it out of the rates.
-        let unreadable = !o.opened && !o.locked && refs.is_dir() && !refs.join(&id).is_dir();
+        let unreadable = !o.opened
+            && !o.locked
+            && refs.join(".complete-v2").is_file()
+            && !refs.join(&id).is_dir();
         if unreadable {
             o.notes
                 .push("PDFium can't open it either; not counted".into());

@@ -10,7 +10,15 @@ BT.601 weights and box-averaged over 4 x 4 blocks, then written as a binary PGM:
     <out>/<id>/p001-150.pgm
 
 The corpus test (`crates/pdf/tests/corpus.rs`) reduces ScoreCraft's renders the same way and
-compares the two. Run through `cargo xtask corpus --references`, which installs nothing:
+compares the two.
+
+Images are drawn without smoothing (`no_smoothimage`). PDFium smooths every image it scales by
+default; ScoreCraft's renderer (hayro, through PDFCraft) follows each image's /Interpolate flag,
+which defaults to off (ISO 32000-2, 8.9.5.3). On a scanned score that one difference made the
+whole page fail, while with it removed the renders were pixel-identical. Paths and text stay
+anti-aliased on both sides.
+
+Run through `cargo xtask corpus --references`, which installs nothing:
 `pip install pypdfium2 pillow` first.
 """
 
@@ -26,6 +34,8 @@ BLOCK = 4
 FULL_DPI = 150
 DETAIL_DPI = 300
 DETAIL_PAGES = 3
+# Bump the version when the renders change, so `cargo xtask test-corpus` redoes old references.
+MARKER = ".complete-v2"
 
 
 def reduce(image):
@@ -67,15 +77,26 @@ def main():
             print(f"{doc_id}: PDFium cannot open it ({e}); no reference", file=sys.stderr)
             continue
         count = len(pdf) if args.max_pages <= 0 else min(len(pdf), args.max_pages)
+        skipped = []
         for index in range(count):
-            page = pdf[index]
             dpis = [FULL_DPI] + ([DETAIL_DPI] if index < DETAIL_PAGES else [])
-            for dpi in dpis:
-                bitmap = page.render(scale=dpi / 72, fill_color=(255, 255, 255, 255))
-                write_pgm(out / doc_id / f"p{index + 1:03}-{dpi}.pgm", reduce(bitmap.to_pil()))
+            try:
+                page = pdf[index]
+                for dpi in dpis:
+                    bitmap = page.render(
+                        scale=dpi / 72, fill_color=(255, 255, 255, 255), no_smoothimage=True
+                    )
+                    write_pgm(out / doc_id / f"p{index + 1:03}-{dpi}.pgm", reduce(bitmap.to_pil()))
+            except pdfium.PdfiumError:
+                # PDFium can't load or draw this page: it gets no reference, so the corpus test
+                # checks only that ScoreCraft renders it without an error.
+                skipped.append(index + 1)
         (out / doc_id).mkdir(parents=True, exist_ok=True)
         (out / doc_id / "pages.txt").write_text(str(len(pdf)))
-        print(f"{doc_id}: {count} of {len(pdf)} pages")
+        note = f"; PDFium failed on pages {skipped}" if skipped else ""
+        print(f"{doc_id}: {count} of {len(pdf)} pages{note}")
+    # Written last, so an interrupted run is redone instead of half-used.
+    (out / MARKER).write_text("ok")
 
 
 if __name__ == "__main__":
