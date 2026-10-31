@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -16,7 +16,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | # | Gap | Kind | Impact | Estimate | Parity doc |
 |---|---|---|---|---:|---|
-| G1 | PDF engine: parse, render, write (reusing PDFCraft) | file format | blocks alpha | 20–40 h | [file-format-parity](file-format-parity.md) |
+| G1 | PDF engine: parse, render, write (reusing PDFCraft). Reading is in (M2); PDF-2 is partial on six PDFCraft render gaps (blank JBIG2 halftone, rotated-page image placement, short page tree, faint hairlines, light 1-bit downscales, sampling phase), fixed upstream then re-pinned | file format | blocks alpha | 15–30 h | [file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00) |
 | G2 | Reader layout and page turns | features, UI | blocks alpha | 40–80 h | [ui-parity](ui-parity.md) |
 | G3 | Stability and data safety | stability | blocks alpha | 60–120 h | [scorecard](scorecard.md#reliability) |
 | G4 | Ink engine and markup tools | features, UI | blocks alpha | 80–150 h + human | [annotation-parity](annotation-parity.md) |
@@ -192,6 +192,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | G1: reading lands in M2; six PDFCraft render gaps listed, estimate 15–30 h |
 | 2026-10-28 | minor | G3: `panic_hunt` lands with the engine command registry |
 | 2026-10-28 | minor | G3: never-crash lints land on every crate with the M0 workspace; estimate unchanged |
 | 2026-10-28 | minor | Microsoft Store description (S8): G9 adds PLAT-5, G10 adds SYNC-8 (120–240 → 130–250 h), G11 adds MIDI-5, G12 adds PLAY-7, G7 snip wording corrected |

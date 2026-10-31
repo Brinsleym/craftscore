@@ -1,0 +1,7 @@
+{
+  "device": "HP Spectre x360 14 (i5-1135G7, 8 GB)",
+  "P2": "16 ms (corpus, 12 samples)",
+  "P3": "208 ms (corpus, 8 samples)",
+  "P4": "13 ms (synthetic, 3 samples)",
+  "P13": "41 ms (corpus, 20 samples)"
+}

@@ -1,6 +1,6 @@
 # Development guide
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** major (first version, written ahead of milestone M0) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (corpus, private-library, fuzz and perf tasks; earlier: first version, written ahead of milestone M0) · **Target:** enScore 3.7 (2026)
 
 How to build, test, run and drive ScoreCraft. Commands marked _(M0)_ arrive with the workspace
 skeleton ([`roadmap.md`](roadmap.md#milestones)); until then this page is the contract M0 must meet.
@@ -32,9 +32,12 @@ cargo xtask ci                                      # what CI runs on Linux
 | Task | What it checks |
 |---|---|
 | `cargo xtask ci` | what the Linux CI jobs run: `fmt --check`, clippy with `-D warnings`, `test --workspace` (plus doctests), `panic_hunt`, `layers`, `parity --check`, `scorecard --check`, `wasm` |
-| `cargo xtask layers` | every package is registered in `xtask/src/layers.rs`, depends only on lower layers, uses the workspace lints and carries the never-crash `#![deny(...)]` at its root; PDFCraft and UI-toolkit allow-lists |
+| `cargo xtask layers` | every package is registered in `xtask/src/layers.rs`, depends only on lower layers, uses the workspace lints and carries the never-crash `#![deny(...)]` at its root; PDFCraft and UI-toolkit allow-lists; no PDFCraft type in `scorecraft-pdf`'s public API; the fuzz workspace patches PDFCraft's crates like ours |
 | `cargo xtask parity` | regenerates `crates/engine/src/feature_catalog.rs` and [`parity-checklist.md`](parity-checklist.md) from the feature map and the registry; fails below `FLOOR`; `--check` fails if either is stale |
 | `cargo xtask scorecard` | regenerates [`scorecard.md`](scorecard.md) from `perf/budgets.toml`, `scorecard/*.toml`, the parity docs' status columns and measured counts; `--check` fails if stale |
+| `cargo xtask corpus` | `--all` downloads and verifies the pinned public-domain scores; `--references` renders PDFium references |
+| `cargo xtask test-corpus` | the opt-in corpus test (PDF-1, PDF-2), on the pinned corpus or `--library <dir>` |
+| `cargo xtask perf` | the render budgets in `perf/budgets.toml`; `--update-baseline` writes `perf/baseline.json` |
 | `cargo xtask wasm` | every L0–L6 crate checks for `wasm32-unknown-unknown` |
 
 Synthetic test PDFs come from `scorecraft_testkit::pdf` (`PdfBuilder` for valid scores of any
@@ -138,25 +141,50 @@ Every crash fix ships with a regression test that panicked before the fix.
 
 ## Test corpora
 
-Real-file corpora live in `corpus/` (gitignored, **never committed**), fetched at pinned commits and
-sha256-verified by `cargo xtask corpus --all`. Pins are in `xtask/src/corpus_pins.rs`.
+Real-file corpora live in `corpus/` (gitignored, **never committed**). `cargo xtask corpus --all`
+downloads the pinned public-domain scores in [`xtask/corpus-pins.toml`](../xtask/corpus-pins.toml)
+and checks each one's SHA-256.
 
 | Corpus | Contents | Licence rule |
 |---|---|---|
-| `scorecraft-corpus` (our repository, to be created) | Public-domain score PDFs (IMSLP files marked public domain worldwide, Mutopia), scanned and engraved; synthetic hostile PDFs; `.4sc` samples made by the analyst | Only files we may redistribute |
+| Pinned public-domain scores (`xtask/corpus-pins.toml`) | 12 engraved Mutopia pieces and 8 scans from Wikimedia Commons (JPEG, JBIG2, JPX, CCITT), 1 to 36 pages | Public domain worldwide; the pin records where that is stated |
+| A private library (`--library <dir>`) | Whatever a contributor owns: the owner's real scores | Only read, never copied: results go to `corpus/`, files are named by hash |
 | PDF Association test suites | Conformance and edge-case PDFs | As published |
 | Synthetic | Generated in `testkit` at test time | Ours |
 
-The corpus tests are opt-in (cargo feature `corpus`): plain `cargo test` skips them, and with the
-feature on a missing corpus fails with "run `cargo xtask corpus --all`". `cargo xtask test-corpus`
-fetches and runs them. CI always runs them, cached by pin.
+The corpus test (`crates/pdf/tests/corpus.rs`) is opt-in through the `corpus` cargo feature.
+It checks PDF-1 and PDF-2 in [file-format-parity](file-format-parity.md#pdf-fidelity-targets).
+
+- **PDF-1:** every distinct score opens or asks for its password.
+- **PDF-2:** every page renders at 150 dpi, and the first three also at 300 dpi. Each render is compared with PDFium's after both are reduced to 4 × 4-pixel grey blocks. PDFium draws the references at exactly the requested scale (its `PdfPage.render` rounds a Letter page at 150 dpi up to 1651 rows and stretches it) and without image smoothing (`no_smoothimage`), as ScoreCraft does for every image whose /Interpolate flag is off; otherwise every scan fails on its anti-aliased edges alone.
+
+`cargo xtask corpus --references` renders the PDFium references. It needs Python 3 with
+`pip install pypdfium2 pillow`.
+
+`cargo xtask test-corpus` fetches the corpus, renders references if they are missing, and runs the
+test. The report goes to `corpus/report.md`. To test a private library, run
+`cargo xtask test-corpus --library "C:\path\to\scores" --max-pages 20`, and the report goes to
+`corpus/report-library.md`. Public-domain scores that fail on a known PDFCraft render gap are listed in
+`crates/pdf/tests/corpus-known.txt`: they are reported but left out of the PDF-2 rate, and the list
+only shrinks. A private library is held to the PDF-1 floor; its PDF-2 rate is reported only. After
+every PDFCraft pin bump, run both and compare with the numbers in
+[file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00).
+With `SCORECRAFT_CORPUS_DUMP=1` set, the test also writes ScoreCraft's
+full-resolution grey render of each page that misses its reference to `corpus/diff/`.
+
+The corpus test needs files that CI can't download, so it runs on contributors' machines. The
+adapter's fuzzing runs in two places:
+
+- `crates/pdf/tests/mutate.rs` runs 600 deterministic mutations in every CI job.
+- `crates/pdf/fuzz` holds the libFuzzer target: `cargo +nightly fuzz run open_render`.
 
 ## Scorecard and performance budgets
 
 `cargo xtask scorecard` regenerates [`scorecard.md`](scorecard.md) from `scorecard/*.toml`,
 `perf/budgets.toml`, `perf/baseline.json`, corpus floors and a preferences audit. CI runs
-`cargo xtask scorecard --check`. `cargo xtask perf --quick` runs the budget scenarios locally;
-`--update-baseline` publishes a full run from the fixed runner.
+`cargo xtask scorecard --check`. `cargo xtask perf` measures the render budgets (P2, P3, P4, P13) on the corpus, or on
+synthetic scores without it; `--update-baseline` writes `perf/baseline.json` from a reference
+device named by `SCORECRAFT_PERF_DEVICE`.
 
 ## Web build
 

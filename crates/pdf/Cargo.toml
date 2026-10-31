@@ -12,8 +12,13 @@ publish = false
 pdfcraft-render = { workspace = true }
 bytemuck = { workspace = true }
 
+[features]
+# Opt-in tests over the real-file corpus in /corpus (docs/development.md, "Test corpora").
+corpus = []
+
 [dev-dependencies]
 scorecraft-testkit = { workspace = true }
+sha2 = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,6 +1,6 @@
 # File-format parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (corpus results: PDF-1 done, PDF-2 and PDF-3 partial; earlier: PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Which files ScoreCraft reads and writes, against what enScore's public listings say it handles.
 Status: **done** (with round-trip or corpus tests), **partial**, **missing**. Directions: R read,
@@ -62,17 +62,44 @@ reported and fixed upstream in PDFCraft, then pinned.
 
 | Id | Target | Status |
 |---|---|---|
-| PDF-1 | ≥ 99% of the pinned public-domain score corpus opens; none crash | missing |
-| PDF-2 | ≥ 95% render within tolerance of a reference rasteriser at 150 and 300 dpi | missing |
-| PDF-3 | Scanned scores: JBIG2, CCITT G4, DCT, JPX images decode | missing |
+| PDF-1 | ≥ 99% of the pinned public-domain score corpus opens; none crash | done |
+| PDF-2 | ≥ 95% render within tolerance of a reference rasteriser at 150 and 300 dpi | partial |
+| PDF-3 | Scanned scores: JBIG2, CCITT G4, DCT, JPX images decode | partial |
 | PDF-4 | Damaged files: broken xref and truncated streams are repaired or the bad page shows a placeholder | missing |
 | PDF-5 | Exported PDFs pass a validator (veraPDF or qpdf --check) and open in three other readers | missing |
 | PDF-6 | Encrypted PDFs with an empty user password open; others ask for the password | missing |
+
+### Corpus results (2026-10-31, PDFCraft `65ff3a00`)
+
+Run with `cargo xtask test-corpus` on the owner's Windows tablet, against the 20 pinned
+public-domain scores and the owner's private library (about 300 distinct scores, reported by
+count only; see [development](development.md#test-corpora)).
+
+- **PDF-1:** 20/20 public-domain scores and every readable library score open or ask for a
+  password; none crash. Two library files that PDFium can't open either are not counted.
+- **PDF-2:** 15/20 public-domain scores match (all 12 engraved ones); about two thirds of the
+  library. Every remaining failure is in PDFCraft's renderer (hayro), to fix upstream and re-pin:
+  1. A full-page JBIG2 halftone image is drawn blank, with no error (PDF-3). Likely covered by
+     storytold/pdfcraft#2134.
+  2. An image on a page with /Rotate 90 and an offset crop box lands a few pixels off and
+     slightly mis-scaled. Not yet tracked upstream.
+  3. 1-bit images downscaled about 3× come out 5–8% lighter than PDFium's: thin lines are
+     point-sampled away. Tracked: storytold/pdfcraft#2393, #3858.
+  4. Strokes thinner than a device pixel are drawn at their exact coverage (up to 32% lighter
+     staff lines); PDFium widens them to one pixel. Not yet tracked upstream.
+  5. Unsmoothed images pick different source pixels from PDFium (1-px flips along edges). The
+     ink and layout match; only the 4 × 4 tolerance sees it. Tracked with item 3.
+  6. A damaged file yields one page where PDFium finds six (Acrobat recovers it, other readers
+     fail to open it). Damaged-file recovery, PDF-4, rather than a rendering bug.
+- Images are not smoothed when they are scaled, because hayro honours each image's /Interpolate
+  flag. Scans therefore look harder-edged than in PDFium-based readers. An "always smooth
+  images" render option in PDFCraft would fix that and items 3 and 5.
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Corpus results: PDF-1 done; PDF-2 and PDF-3 partial, with the renderer gaps listed |
 | 2026-10-31 | patch | PDF reading is partial: the adapter opens, renders and extracts text |
 | 2026-10-28 | minor | PDF rows reuse PDFCraft's crates |
 | 2026-10-28 | major | First version |

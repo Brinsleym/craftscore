@@ -1,0 +1,38 @@
+# Fuzz targets for scorecraft-pdf (docs/standards/never-crash.md). Outside the workspace because
+# libFuzzer needs nightly and a C++ compiler; run with `cargo +nightly fuzz run open_render`.
+# The [patch.crates-io] table must equal the workspace root's (`cargo xtask layers` checks it).
+[package]
+name = "scorecraft-pdf-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+scorecraft-pdf = { path = ".." }
+
+[[bin]]
+name = "open_render"
+path = "fuzz_targets/open_render.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+
+# PDFCraft patches hayro, lopdf and vello in its vendor/ directory. Patches apply only at the
+# workspace root, so we repeat them, at PDFCraft's revision. Not its egui and winit patches: those
+# are a UI matter (architecture §16).
+[patch.crates-io]
+hayro = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-interpret = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-syntax = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-cmap = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-postscript = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-jbig2 = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+lopdf = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+vello_common = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+vello_cpu = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }

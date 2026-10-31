@@ -61,3 +61,8 @@ budget = "≤ 400 MB"
 id = "P12"
 name = "Setlist transition to next piece's first page"
 budget = "≤ 16 ms (pre-rendered)"
+
+[[scenario]]
+id = "P13"
+name = "First render of a score page at 300 dpi (print, export, deep zoom)"
+budget = "≤ 300 ms"

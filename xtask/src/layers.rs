@@ -381,7 +381,33 @@ pub fn check(root: &Path) -> Result<Vec<String>, String> {
     }
     errors.extend(crate::graph::check(root)?);
     errors.extend(check_pdf_api(&root.join("crates/pdf/src"))?);
+    errors.extend(check_fuzz_patches(
+        &root_manifest,
+        &root.join(FUZZ_MANIFEST),
+    )?);
     Ok(errors)
+}
+
+/// The fuzz workspace, outside ours because libFuzzer needs nightly.
+const FUZZ_MANIFEST: &str = "crates/pdf/fuzz/Cargo.toml";
+
+/// The fuzz workspace must patch PDFCraft's crates exactly as ours does, or it fuzzes a different
+/// hayro than the app ships.
+fn check_fuzz_patches(root_manifest: &Table, fuzz: &Path) -> Result<Vec<String>, String> {
+    let Ok(text) = fs::read_to_string(fuzz) else {
+        return Ok(Vec::new());
+    };
+    let manifest: Table = text
+        .parse()
+        .map_err(|e| format!("parsing {}: {e}", fuzz.display()))?;
+    let patches = |t: &Table| t.get("patch").and_then(|p| p.get("crates-io")).cloned();
+    if patches(&manifest) == patches(root_manifest) {
+        Ok(Vec::new())
+    } else {
+        Ok(vec![format!(
+            "{FUZZ_MANIFEST}: [patch.crates-io] must equal the workspace root's"
+        )])
+    }
 }
 
 /// Public items of `scorecraft-pdf` that name a PDFCraft type (architecture §15: no
