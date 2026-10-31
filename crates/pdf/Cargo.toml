@@ -9,6 +9,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+pdfcraft-render = { workspace = true }
+bytemuck = { workspace = true }
+
+[dev-dependencies]
+scorecraft-testkit = { workspace = true }
 
 [lints]
 workspace = true

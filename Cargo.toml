@@ -42,7 +42,13 @@ scorecraft-ui-egui = { path = "crates/ui-egui" }
 scorecraft-automation = { path = "crates/automation" }
 scorecraft-testkit = { path = "crates/testkit" }
 
+# PDFCraft's PDF stack (architecture §15, decision D1). Every pdfcraft-* crate and every
+# [patch.crates-io] entry below uses this one revision (PDFCraft 0.15.0, main on 2026-10-30).
+# Only scorecraft-pdf may depend on them (`cargo xtask layers`).
+pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+
 # Third-party
+bytemuck = "1"
 serde_json = "1"
 toml = "0.9"
 
@@ -69,3 +75,17 @@ codegen-units = 1
 [profile.dev.package."*"]
 # Dependencies optimised in dev builds so page rendering stays usable while debugging.
 opt-level = 2
+
+# PDFCraft patches hayro, lopdf and vello in its vendor/ directory. Patches apply only at the
+# workspace root, so we repeat them, at PDFCraft's revision. Not its egui and winit patches: those
+# are a UI matter (architecture §16).
+[patch.crates-io]
+hayro = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-interpret = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-syntax = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-cmap = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-postscript = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+hayro-jbig2 = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+lopdf = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+vello_common = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+vello_cpu = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
