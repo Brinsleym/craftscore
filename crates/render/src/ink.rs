@@ -12,8 +12,10 @@
 //! This is the oracle every other ink renderer is checked against, and what export and
 //! `view.snapshot` draw with.
 
-use scorecraft_doc::{Annotation, AnnotationKind, Color, Layer, Stroke, TextNote, Tool};
-use scorecraft_geom::{Affine, PageBox, Point, Rect};
+use scorecraft_doc::{
+    Annotation, AnnotationKind, Color, Hairpin, Layer, Stamp, Stroke, TextNote, Tool,
+};
+use scorecraft_geom::{Affine, PageBox, Point, Rect, Vec2};
 use scorecraft_ink::{PressureCurve, outline};
 use scorecraft_pdf::{Bitmap, PageGeometry};
 use scorecraft_text::{Face, FaceKind, LINE_SPACING, layout};
@@ -35,7 +37,13 @@ pub struct PageInk {
 /// Whether a renderer draws this kind of marking on the page (snips and shortcuts are drawn by
 /// the reader, not into the page).
 pub fn is_drawn(kind: &AnnotationKind) -> bool {
-    matches!(kind, AnnotationKind::Stroke(_) | AnnotationKind::Text(_))
+    matches!(
+        kind,
+        AnnotationKind::Stroke(_)
+            | AnnotationKind::Text(_)
+            | AnnotationKind::Stamp(_)
+            | AnnotationKind::Hairpin(_)
+    )
 }
 
 /// The markings to draw on a page, in drawing order: layers bottom first in list order, each
@@ -100,6 +108,8 @@ pub fn compose(
         match mark {
             AnnotationKind::Stroke(s) => draw_stroke(&mut out, to_bitmap, s, filter, curve),
             AnnotationKind::Text(t) => draw_text(&mut out, to_bitmap, t, filter),
+            AnnotationKind::Stamp(st) => draw_stamp(&mut out, to_bitmap, st, filter),
+            AnnotationKind::Hairpin(h) => draw_hairpin(&mut out, to_bitmap, h, filter, curve),
             _ => {}
         }
     }
@@ -131,6 +141,78 @@ pub fn draw_text(bm: &mut Bitmap, m: Affine, note: &TextNote, filter: Filter) {
         polys.extend(face.outlines(line, size, Point::new(note.rect.x0, baseline)));
     }
     fill(bm, m, &polys, color, f32::from(color.a) / 255.0);
+}
+
+/// Draws a dynamic stamp (spec ANNO-9): its letters in the dynamics face, centred in its box.
+/// SMuFL glyph stamps need a music font and draw nothing until one is built in.
+pub fn draw_stamp(bm: &mut Bitmap, m: Affine, stamp: &Stamp, filter: Filter) {
+    if stamp.text.is_empty() || !stamp.rect.is_finite() {
+        return;
+    }
+    let size = if stamp.size.is_finite() && stamp.size > 0.0 {
+        f64::from(stamp.size)
+    } else {
+        stamp.rect.height()
+    };
+    let Some(face) = Face::get(FaceKind::Dynamic, false, false) else {
+        return;
+    };
+    let (asc, desc) = face.ascent_descent(size);
+    let c = stamp.rect.center();
+    let origin = Point::new(
+        c.x - face.advance(&stamp.text, size) / 2.0,
+        c.y - (asc - desc) / 2.0,
+    );
+    let color = ink_color(Tool::Pen, stamp.color, filter);
+    let polys = face.outlines(&stamp.text, size, origin);
+    fill(bm, m, &polys, color, f32::from(color.a) / 255.0);
+}
+
+/// The two lines of a hairpin, each from its open end to its point (spec ANNO-9).
+pub fn hairpin_lines(h: &Hairpin) -> Option<[[Point; 2]; 2]> {
+    let d = h.to - h.from;
+    let len = d.length();
+    if !(len > 0.0 && len.is_finite() && h.opening.is_finite()) {
+        return None;
+    }
+    let n = Vec2::new(-d.y / len, d.x / len) * (f64::from(h.opening.max(0.0)) / 2.0);
+    let (tip, open) = if h.crescendo {
+        (h.from, h.to)
+    } else {
+        (h.to, h.from)
+    };
+    Some([[open + n, tip], [open - n, tip]])
+}
+
+/// Draws a hairpin as two round-ended lines.
+pub fn draw_hairpin(
+    bm: &mut Bitmap,
+    m: Affine,
+    h: &Hairpin,
+    filter: Filter,
+    curve: &PressureCurve,
+) {
+    let Some(lines) = hairpin_lines(h) else {
+        return;
+    };
+    let width = if h.width.is_finite() && h.width > 0.0 {
+        h.width
+    } else {
+        1.0
+    };
+    for [a, b] in lines {
+        let stroke = Stroke {
+            tool: Tool::Pen,
+            color: h.color,
+            width,
+            nib: scorecraft_doc::Nib::Round,
+            points: vec![
+                scorecraft_doc::InkPoint::new(a.x as f32, a.y as f32),
+                scorecraft_doc::InkPoint::new(b.x as f32, b.y as f32),
+            ],
+        };
+        draw_stroke(bm, m, &stroke, filter, curve);
+    }
 }
 
 /// A background colour under `filter`: white becomes the filter's paper, like whiteout.
@@ -677,6 +759,60 @@ mod tests {
             rows.iter().any(|&y| y < 22) && rows.iter().any(|&y| y > 30),
             "{rows:?}"
         );
+    }
+
+    #[test]
+    fn dynamics_and_hairpins_draw() {
+        let mut bm = page(100, 100, WHITE);
+        let mf = Stamp {
+            glyph: 0,
+            text: "mf".into(),
+            size: 18.0,
+            rect: Rect::new(20.0, 40.0, 50.0, 60.0),
+            color: Color::BLACK,
+        };
+        draw_stamp(&mut bm, flip(), &mf, Filter::Normal);
+        let dark = |bm: &Bitmap, x0: u32, x1: u32, y0: u32, y1: u32| {
+            (y0..y1)
+                .flat_map(|y| (x0..x1).map(move |x| (x, y)))
+                .filter(|&(x, y)| px(bm, x, y) != WHITE)
+                .count()
+        };
+        assert!(dark(&bm, 18, 52, 38, 62) > 20, "letters inside the box");
+        assert_eq!(dark(&bm, 60, 100, 0, 100), 0);
+        let h = Hairpin {
+            from: Point::new(10.0, 20.0),
+            to: Point::new(90.0, 20.0),
+            crescendo: true,
+            opening: 10.0,
+            width: 1.5,
+            color: Color::BLACK,
+        };
+        let [[o1, t1], [o2, t2]] = hairpin_lines(&h).unwrap();
+        assert_eq!(
+            (t1, t2),
+            (h.from, h.from),
+            "a crescendo points at its start"
+        );
+        assert!((o1.distance(o2) - 10.0).abs() < 1e-9);
+        let mut bm = page(100, 100, WHITE);
+        draw_hairpin(
+            &mut bm,
+            flip(),
+            &h,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        // Open end: two lines 10 pt apart at x = 88, y = 15 and 25 (flipped: 85 and 75).
+        assert_ne!(px(&bm, 88, 75), WHITE);
+        assert_ne!(px(&bm, 88, 85), WHITE);
+        assert_eq!(px(&bm, 88, 80), WHITE, "open between them");
+        let dim = Hairpin {
+            crescendo: false,
+            ..h
+        };
+        assert_eq!(hairpin_lines(&dim).unwrap()[0][1], h.to);
+        assert!(hairpin_lines(&Hairpin { to: h.from, ..h }).is_none());
     }
 
     #[test]

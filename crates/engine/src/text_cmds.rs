@@ -100,7 +100,7 @@ fn clean_text(id: &str, raw: &str) -> Result<Option<String>, EngineError> {
 }
 
 /// The visible area of a file page in its own PDF space.
-fn page_rect(session: &Session, file_page: usize) -> Result<Rect, EngineError> {
+pub(crate) fn page_rect(session: &Session, file_page: usize) -> Result<Rect, EngineError> {
     let open = session
         .score
         .as_ref()
@@ -124,7 +124,7 @@ fn place(text: &str, style: &TextStyle, at: Point, page: Rect) -> Result<Rect, E
 }
 
 /// Where a point given in `space` lands: score page, file page and page-space position.
-fn locate(
+pub(crate) fn locate(
     session: &mut Session,
     id: &str,
     p: Option<&Map<String, Value>>,
@@ -174,7 +174,11 @@ fn locate(
     }
 }
 
-fn required_f64(id: &str, p: Option<&Map<String, Value>>, key: &str) -> Result<f64, EngineError> {
+pub(crate) fn required_f64(
+    id: &str,
+    p: Option<&Map<String, Value>>,
+    key: &str,
+) -> Result<f64, EngineError> {
     opt_f64(id, p, key)?.ok_or_else(|| bad(id, format!("`{key}` is required")))
 }
 
@@ -248,13 +252,16 @@ fn text_add(session: &mut Session, params: &Value) -> Result<Value, EngineError>
     }))
 }
 
-fn page_key(file_page: usize) -> Result<PageKey, EngineError> {
+pub(crate) fn page_key(file_page: usize) -> Result<PageKey, EngineError> {
     u32::try_from(file_page)
         .map(PageKey)
         .map_err(|_| EngineError::Unsupported("a page past 4 billion".into()))
 }
 
-fn library_score(session: &Session, id: scorecraft_doc::ScoreId) -> Result<&Score, EngineError> {
+pub(crate) fn library_score(
+    session: &Session,
+    id: scorecraft_doc::ScoreId,
+) -> Result<&Score, EngineError> {
     session
         .library()
         .and_then(|l| l.scores.get(&id))

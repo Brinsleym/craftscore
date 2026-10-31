@@ -385,11 +385,14 @@ ScoreCraft's own additions, beyond what was observed:
 | INK-34 | A score with one layer | a layer is added and a stroke drawn | the new layer is active and holds the stroke; choosing the first layer again sends the next stroke there |
 | INK-35 | A layer with two strokes | it is deleted | the layer and both strokes go in one undo step; undo restores both; the last layer can't be deleted |
 | INK-36 | A highlighter preset saved, then the pen chosen | the preset is applied | the highlighter is active with the preset's colour and width |
+| INK-37 | The stamp tool, first time | the page is tapped | a **p** is placed, centred on the tap, 18 pt, in the pen's colour; near an edge it is kept inside the page |
+| INK-38 | A crescendo placed by a tap | its end handle is dragged, then its middle | it stretches to the new end, then moves whole; each is one undo step; its opening stays a third of the size |
 | INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
 INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
 `crates/engine/src/text_cmds/tests.rs`). INK-34 to INK-36 are engine tests
-(`crates/engine/src/layer_cmds/tests.rs`). INK-29 and INK-30 are `scorecraft-ink` and
+(`crates/engine/src/layer_cmds/tests.rs`); INK-37 and INK-38 are engine tests
+(`crates/engine/src/stamp_cmds/tests.rs`). INK-29 and INK-30 are `scorecraft-ink` and
 `scorecraft-render` tests; INK-31 is a
 `scorecraft-input` test; INK-32 is an engine test. INK-20 to INK-23 are `scorecraft-input` tests of the palm filter the shell routes pointers through. INK-1 to INK-3, INK-8 to INK-13, INK-16 to INK-19, INK-24 to INK-28 are engine tests
 (`crates/engine/src/annotate_cmds.rs`, `crates/engine/tests/panic_hunt.rs`); INK-4 and INK-15 are
@@ -425,6 +428,7 @@ swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | INK-37, -38 for stamps (M4 part 2c) |
 | 2026-10-31 | patch | INK-33 lands with text notes (M4 part 2b); notes are set in Inter, built in |
 | 2026-10-31 | patch | INK-34..36 for layers and presets (M4 part 2a) |
 | 2026-10-31 | minor | ANNO-8 from the owner's observation of enScore's text tool (screenshot 29): Type with Touch, new-note box and handle, plain text with no background, maximum width with wrapping, notes kept inside the page; text size 8–36 pt, 12 pt by default, on the size slider; INK-33 |

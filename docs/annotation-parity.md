@@ -30,7 +30,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 | ANN-13 | Stroke eraser | ANNO-6 | partial (INK-8) |
 | ANN-14 | Pixel eraser splitting strokes | ANNO-7 | partial (INK-9) |
 | ANN-15 | Text notes: plain text, wrapped to a maximum width, kept inside the page, grip handle to move; Type with Touch; size 8–36 pt (12 pt default) on the slider; colour, edit | ANNO-8 | partial (engine and CPU renderer, Inter, INK-33; the box and handle come with the UI) |
-| ANN-16 | Stamps (ScoreCraft's own): dynamics pp to ff in Edwin, crescendo and diminuendo hairpins with stretch and move handles | ANNO-9 | missing |
+| ANN-16 | Stamps (ScoreCraft's own): dynamics pp to ff in Edwin, crescendo and diminuendo hairpins with stretch and move handles | ANNO-9 | partial (engine and CPU renderer, INK-37, -38; handles drawn with the UI) |
 | ANN-17 | Rectangle select: move, copy, resize, recolour, delete; starts snips and shortcuts | ANNO-12 | missing |
 | ANN-18 | Shapes and straight lines | ANNO-16 | missing |
 | ANN-19 | Stylus button / double-tap switches pen and eraser | ANNO-11 | missing |
@@ -50,6 +50,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 2c: ANN-16 stamps partial |
 | 2026-10-31 | patch | M4 part 2b: ANN-15 text notes partial |
 | 2026-10-31 | patch | M4 part 2a: ANN-30 layers and ANN-10 presets partial |
 | 2026-10-31 | minor | Owner's answers and text observation: ANN-11 chisel at full strength, ANN-10 separate highlighter colours, ANN-15 observed text behaviour, ANN-16 stamps ours, ANN-19 pen and eraser, ANN-20 ruler across the screen, ANN-21 added |

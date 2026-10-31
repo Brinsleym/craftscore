@@ -400,6 +400,18 @@ fn style_set(session: &mut Session, params: &Value) -> Result<Value, EngineError
             }
             w
         }
+        // With the stamp tool the slider is the stamp size (ANNO-9).
+        MarkupTool::Stamp => {
+            let w = opt_width(ID, p, crate::markup::STAMP_SIZES)?;
+            if let Some(w) = w {
+                m.stamp_size = w;
+            }
+            if let Some(c) = color {
+                m.apply_color(c);
+                select_matching_swatch(m, c);
+            }
+            w
+        }
         // With the text tool the slider is the text size (ANNO-8).
         MarkupTool::Text => {
             let w = opt_width(ID, p, crate::markup::TEXT_SIZES)?;

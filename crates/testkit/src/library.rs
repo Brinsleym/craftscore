@@ -144,8 +144,31 @@ pub fn sample_library(seed: u64, scores: usize) -> Library {
                 base,
                 AnnotationKind::Stamp(Stamp {
                     glyph: 0xE4C0,
+                    text: String::new(),
+                    size: 0.0,
                     rect: Rect::new(300.0, 500.0, 320.0, 515.0),
                     color: Color::BLUE,
+                }),
+            ),
+            ann(
+                base,
+                AnnotationKind::Stamp(Stamp {
+                    glyph: 0,
+                    text: "mf".into(),
+                    size: 18.0,
+                    rect: Rect::new(100.0, 400.0, 124.0, 418.0),
+                    color: Color::BLACK,
+                }),
+            ),
+            ann(
+                base,
+                AnnotationKind::Hairpin(scorecraft_doc::Hairpin {
+                    from: scorecraft_geom::Point::new(130.0, 409.0),
+                    to: scorecraft_geom::Point::new(202.0, 409.0),
+                    crescendo: true,
+                    opening: 6.0,
+                    width: 1.0,
+                    color: Color::BLACK,
                 }),
             ),
         ];

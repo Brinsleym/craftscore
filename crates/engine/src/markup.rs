@@ -31,6 +31,7 @@ pub enum MarkupTool {
     Highlighter,
     Eraser,
     Text,
+    Stamp,
 }
 
 impl MarkupTool {
@@ -40,6 +41,7 @@ impl MarkupTool {
             MarkupTool::Highlighter => "highlighter",
             MarkupTool::Eraser => "eraser",
             MarkupTool::Text => "text",
+            MarkupTool::Stamp => "stamp",
         }
     }
 }
@@ -111,7 +113,19 @@ pub struct Markup {
     /// New text notes' size in points and colour (ANNO-8).
     pub text_size: f32,
     pub text_color: Color,
+    /// The selected stamp and its size in points (ANNO-9).
+    pub stamp: &'static str,
+    pub stamp_size: f32,
 }
+
+/// The stamp tool's choices, in its bar's order: the dynamics, then the hairpins behind ">".
+pub const STAMPS: [&str; 8] = ["pp", "p", "mp", "mf", "f", "ff", "crescendo", "diminuendo"];
+
+/// Stamp sizes on the size slider.
+pub const STAMP_SIZES: scorecraft_ink::WidthRange = scorecraft_ink::WidthRange {
+    min: 8.0,
+    max: 96.0,
+};
 
 /// Text sizes on the size slider (spec ANNO-8).
 pub const TEXT_SIZES: scorecraft_ink::WidthRange = scorecraft_ink::WidthRange {
@@ -143,6 +157,8 @@ impl Default for Markup {
             presets: Vec::new(),
             text_size: 12.0,
             text_color: Color::BLACK,
+            stamp: "p",
+            stamp_size: 18.0,
         }
     }
 }
@@ -180,6 +196,11 @@ impl Markup {
                 self.text_color = Color::rgb(color.r, color.g, color.b);
                 true
             }
+            // Stamps are in the pen's colour.
+            MarkupTool::Stamp => {
+                self.pen.color = Color::rgb(color.r, color.g, color.b);
+                true
+            }
             MarkupTool::Eraser => false,
         }
     }
@@ -188,7 +209,7 @@ impl Markup {
     pub fn swatches_mut(&mut self) -> Option<(&mut [Color; 8], &mut usize, &'static [Color; 30])> {
         match self.tool {
             // Text takes the pen's swatches and palette.
-            MarkupTool::Pen | MarkupTool::Text => {
+            MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => {
                 Some((&mut self.pen_swatches, &mut self.pen_swatch, &PALETTE))
             }
             MarkupTool::Highlighter => Some((
@@ -245,17 +266,17 @@ impl Markup {
             "highlighterPalette": hex(&HIGHLIGHTER_PALETTE),
             // The active tool's, as the toolbar shows them; none for the eraser.
             "swatches": match self.tool {
-                MarkupTool::Pen | MarkupTool::Text => Some(hex(&self.pen_swatches)),
+                MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(hex(&self.pen_swatches)),
                 MarkupTool::Highlighter => Some(hex(&self.highlighter_swatches)),
                 MarkupTool::Eraser => None,
             },
             "swatch": match self.tool {
-                MarkupTool::Pen | MarkupTool::Text => Some(self.pen_swatch + 1),
+                MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(self.pen_swatch + 1),
                 MarkupTool::Highlighter => Some(self.highlighter_swatch + 1),
                 MarkupTool::Eraser => None,
             },
             "palette": match self.tool {
-                MarkupTool::Pen | MarkupTool::Text => Some(hex(&PALETTE)),
+                MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(hex(&PALETTE)),
                 MarkupTool::Highlighter => Some(hex(&HIGHLIGHTER_PALETTE)),
                 MarkupTool::Eraser => None,
             },
@@ -264,6 +285,12 @@ impl Markup {
                 "size": self.text_size,
                 "sizes": [TEXT_SIZES.min, TEXT_SIZES.max],
                 "color": self.text_color.to_string(),
+            },
+            "stamp": {
+                "stamp": self.stamp,
+                "stamps": STAMPS,
+                "size": self.stamp_size,
+                "sizes": [STAMP_SIZES.min, STAMP_SIZES.max],
             },
             // Draw with Touch reads "Type with Touch" while the text tool is active.
             "touchLabel": if self.tool == MarkupTool::Text { "Type with Touch" } else { "Draw with Touch" },

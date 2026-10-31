@@ -19,7 +19,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 | G1 | PDF engine: parse, render, write (reusing PDFCraft). Reading is in (M2); PDF-2 is partial on six PDFCraft render gaps (blank JBIG2 halftone, rotated-page image placement, short page tree, faint hairlines, light 1-bit downscales, sampling phase), fixed upstream then re-pinned | file format | blocks alpha | 15–30 h | [file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00) |
 | G2 | Reader layout and page turns | features, UI | blocks alpha | 40–80 h | [ui-parity](ui-parity.md) |
 | G3 | Stability and data safety | stability | blocks alpha | 50–100 h | [scorecard](scorecard.md#reliability) |
-| G4 | Ink engine and markup tools. The stroke engine, highlighter, whiteout, erasers, palm rejection and ruler are in the engine (M4 part 1); the pen in the app, text, stamps, layers, selection and export are not | features, UI | blocks alpha | 60–120 h + human | [annotation-parity](annotation-parity.md) |
+| G4 | Ink engine and markup tools. Ink, erasers, palm rejection, ruler, layers, presets, text notes and stamps are in the engine (M4 parts 1 and 2); the pen in the app, selection, shapes and export are not | features, UI | blocks alpha | 45–100 h + human | [annotation-parity](annotation-parity.md) |
 | G5 | Library store, organisation and search | features | blocks alpha | 40–80 h | [file-format-parity](file-format-parity.md#scorecraft-library-format) |
 | G6 | Foot pedals and keyboard turning | hardware | blocks alpha | 10–20 h + human | [hardware-parity](hardware-parity.md) |
 | G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 30–65 h | [feature-map](feature-map.md#list-setlists) |
@@ -80,10 +80,10 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   pen ↔ eraser, stamps as ScoreCraft's own (Edwin dynamics and hairpins), and the observed text
   tool (Type with Touch, wrapping, notes kept inside the page): all in the spec; the highlighter,
   colours, palm grace and ruler changes are in the engine.
-- **Done since (M4 parts 2a and 2b, engine):** layer commands, presets, and text notes (Inter,
-  wrapped and kept inside the page).
+- **Done since (M4 part 2, engine):** layer commands, presets, text notes (Inter, wrapped and
+  kept inside the page) and stamps (Edwin dynamics, hairpins with handles).
 - **Missing:** the pen in the app (live ink, pen input and pressure from the platform, the
-  toolbar), stamps, rectangle select, shapes, pen shortcuts, export with ink.
+  toolbar), rectangle select, shapes, pen shortcuts, export with ink.
 - **Rows:** ANNO-1..17.
 - **Human:** ink feel must be judged on real tablets with real styluses (Apple Pencil, Surface Pen,
   S Pen, Wacom).

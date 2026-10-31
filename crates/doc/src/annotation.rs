@@ -34,6 +34,7 @@ pub enum AnnotationKind {
     Stroke(Stroke),
     Text(TextNote),
     Stamp(Stamp),
+    Hairpin(Hairpin),
     Snip(Snip),
     Shortcut(Shortcut),
 }
@@ -45,6 +46,7 @@ impl AnnotationKind {
             AnnotationKind::Stroke(_) => "stroke",
             AnnotationKind::Text(_) => "text",
             AnnotationKind::Stamp(_) => "stamp",
+            AnnotationKind::Hairpin(_) => "hairpin",
             AnnotationKind::Snip(_) => "snip",
             AnnotationKind::Shortcut(_) => "shortcut",
         }
@@ -192,12 +194,36 @@ pub struct TextNote {
     pub style: TextStyle,
 }
 
-/// A music symbol stamp (a SMuFL glyph: fermata, breath mark, dynamics, fingerings).
+/// A stamp (ANNO-9, ScoreCraft's own): a dynamic set as text ("mf", in Edwin Bold Italic), or a
+/// music symbol by SMuFL code point.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Stamp {
-    /// The SMuFL code point, e.g. `0xE4C0` for a fermata.
+    /// The SMuFL code point, e.g. `0xE4C0` for a fermata; 0 for a text stamp.
+    #[serde(default)]
     pub glyph: u32,
+    /// A dynamic's letters (`pp` … `ff`); empty for a SMuFL glyph.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub text: String,
+    /// Size in points; 0 in older files means "fit the box".
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub size: f32,
     pub rect: Rect,
+    pub color: Color,
+}
+
+/// A crescendo or diminuendo hairpin (ANNO-9): two lines meeting at a point and opening to
+/// `opening` points apart at the other end. `from` and `to` are its ends in page space; a
+/// crescendo opens towards `to`, a diminuendo towards `from`.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Hairpin {
+    pub from: scorecraft_geom::Point,
+    pub to: scorecraft_geom::Point,
+    pub crescendo: bool,
+    /// The gap at the open end, in points.
+    pub opening: f32,
+    /// Line width in points.
+    pub width: f32,
     pub color: Color,
 }
 

@@ -32,6 +32,7 @@ mod reader_cmds;
 mod score_cmds;
 mod session;
 mod snapshot;
+mod stamp_cmds;
 mod text_cmds;
 mod view_cmds;
 
