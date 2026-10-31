@@ -74,8 +74,11 @@ to file scores, metadata, the trash and Verify & Repair are M1's
 
 ### LIB-13 Fast with thousands of scores
 
-- With 5,000 scores, opening the library and showing its first screen takes under 1 s on the
-  reference desktop, and a search answers in under 50 ms (perf scenario P3).
+- With 10,000 scores, opening the library and listing its first screen takes at most 1.5 s on
+  the reference desktop (perf scenario P6), and a metadata search answers in at most 50 ms (P7).
+  `crates/engine/examples/library_perf.rs` measures both (`cargo xtask perf`); on the
+  development container (not the reference device) 10,000 synthetic scores open in 172 ms and
+  search in 22 ms (median).
 
 ## Acceptance tests
 
@@ -108,5 +111,6 @@ to file scores, metadata, the trash and Verify & Repair are M1's
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M5 part 3: LIB-13 names perf scenarios P6 and P7 (10,000 scores), first measurement |
 | 2026-10-31 | patch | M5 part 2: LIBS-9, -10 for covers and the library window |
 | 2026-10-31 | major | First version for M5: search, sort, recently opened, folder import, the library window, speed |

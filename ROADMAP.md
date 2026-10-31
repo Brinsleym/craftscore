@@ -59,7 +59,7 @@ enScore lists fifteen languages. ScoreCraft ships English first; the rest follow
 | Rank | Milestone | Estimate |
 |---|---|---:|
 | 1 | M4 ink: code complete; a check on a Windows tablet, then fixes from it | 5–20 h |
-| 2 | M5 library (search, sort, recent, folder import, the library window with covers; next speed with thousands of scores) | 15–35 h |
+| 2 | M5 library: code complete; P6 and P7 on the reference device, polish from use | 5–15 h |
 | 3 | M3 follow-ups: half-page split that snaps between systems, first-render cost on big scans, more pedals | 20–40 h |
 
 Detail: [docs/roadmap.md](docs/roadmap.md).
@@ -68,6 +68,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | M5 part 3: library speed measured: 10,000 scores open and list in 172 ms, search in 22 ms (development container) |
 | 2026-10-31 | M5 part 2: the library window: covers rendered off the frame, or a list; search box, sort, folders, folder import; `library.cover`; parity 53 of 124 |
 | 2026-10-31 | M5 part 1: [library spec](docs/spec/library.md); search (word starts, no case or accents, ranked), sort (natural, articles ignored), recently opened, folder import in the engine; parity 52 of 124 |
 | 2026-10-31 | M4 part 5: export with ink, flattened or as annotations, chosen layers, in the score's page order, rotation and crop; parity 48 of 124 |
