@@ -49,7 +49,15 @@ scorecraft-testkit = { path = "crates/testkit" }
 # Only scorecraft-pdf may depend on them (`cargo xtask layers`).
 pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
 
+# The Craft suite's shared UI (architecture §16). craft-libs pins the suite's egui fork; the
+# [patch.crates-io] egui and winit entries below use the revisions this craft-libs revision pins.
+# Only scorecraft-ui-egui and the apps may take them (`cargo xtask layers`).
+craft-ui = { git = "https://github.com/storytold/craft-libs", rev = "c39e435cc34417843793df240a0b38bac970179b" }
+egui = { version = "0.37", default-features = false }
+eframe = { version = "0.37", default-features = false }
+
 # Third-party
+base64 = "0.22"
 bytemuck = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 png = "0.18"
@@ -97,3 +105,16 @@ hayro-jbig2 = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c0
 lopdf = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
 vello_common = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
 vello_cpu = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+
+# The suite's egui and winit forks, at the revisions craft-libs c39e435c pins: one egui in every
+# build (architecture §16, `ONE_VERSION` in xtask/src/graph.rs).
+ecolor = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+emath = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint_default_fonts = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-winit = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-wgpu = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_glow = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+eframe = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }

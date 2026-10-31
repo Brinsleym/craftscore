@@ -1,7 +1,7 @@
 //! scorecraft-devices: Platform services: MIDI ports, audio I/O, camera and keep-awake. The one crate where FFI may appear, behind Cargo features.
 //!
-//! Layer L4 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Layer L4 in the workspace map (`docs/architecture.md` §2–3). M3 adds keep-awake ([`power`]);
+//! MIDI, audio and camera come with their milestones.
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -10,6 +10,10 @@
     clippy::todo,
     clippy::unreachable
 )]
+
+pub mod power;
+
+pub use power::{KeepAwake, PowerError};
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

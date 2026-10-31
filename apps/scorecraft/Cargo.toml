@@ -9,6 +9,13 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+eframe = { workspace = true, features = ["wgpu", "default_fonts", "accesskit", "clipboard", "wayland", "x11"] }
+scorecraft-devices = { workspace = true }
+scorecraft-ui-egui = { workspace = true }
+
+# Native file dialogs; Linux uses drag and drop and the command line until a portal picker lands.
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+rfd = { version = "0.17", default-features = false }
 
 [lints]
 workspace = true

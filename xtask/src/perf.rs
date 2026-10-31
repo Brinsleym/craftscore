@@ -62,11 +62,21 @@ pub fn run(root: &Path, update_baseline: bool) -> Result<(), String> {
     }
     let mut stdout = String::new();
     // Render budgets from the PDF adapter; the turn budget (P1) from the engine.
-    for package in ["scorecraft-pdf", "scorecraft-engine"] {
+    for (package, example) in [
+        ("scorecraft-pdf", "perf"),
+        ("scorecraft-engine", "reader_perf"),
+    ] {
         let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
         let mut cmd = Command::new(cargo);
-        cmd.current_dir(root)
-            .args(["run", "--release", "-q", "-p", package, "--example", "perf"]);
+        cmd.current_dir(root).args([
+            "run",
+            "--release",
+            "-q",
+            "-p",
+            package,
+            "--example",
+            example,
+        ]);
         if corpus.is_dir() {
             cmd.arg("--").arg(&corpus);
         }

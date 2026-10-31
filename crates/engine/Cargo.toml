@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+base64 = { workspace = true }
 scorecraft-doc = { workspace = true }
 scorecraft-format = { workspace = true }
 scorecraft-geom = { workspace = true }

@@ -157,7 +157,7 @@ fn render(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
 
 /// `out` must name a `.png` file that is not an existing directory or device, so a mistyped or
 /// hostile path never overwrites something that isn't an image.
-fn check_png_path(id: &str, path: &str) -> Result<(), EngineError> {
+pub(crate) fn check_png_path(id: &str, path: &str) -> Result<(), EngineError> {
     let p = std::path::Path::new(path);
     let is_png = p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png"));
     if !is_png {

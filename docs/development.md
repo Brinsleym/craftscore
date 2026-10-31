@@ -100,10 +100,10 @@ pedal and MIDI events, and takes offscreen screenshots ([`control-protocol.md`](
 
 ```sh
 cargo run -p scorecraft-ui-egui --example snapshot -- --score corpus/public-domain/bach-1007.pdf \
-  --layout twoPage --filter sepia --out /tmp/reader.png
+  --layout twoPage --page 3 --out /tmp/reader.png
 ```
 
-Look at the PNG before you submit a UI change; attach before/after images to the PR.
+It composes the reader on the CPU (`view.snapshot`), so it needs no GPU. Look at the PNG before you submit a UI change; attach before/after images to the PR.
 
 ## Environment variables
 

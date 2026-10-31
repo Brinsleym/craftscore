@@ -8,7 +8,15 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+default = ["power"]
+# Keep the screen awake (READ-9): SetThreadExecutionState on Windows.
+power = ["dep:windows-sys"]
+
 [dependencies]
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Power"], optional = true }
 
 # The one crate allowed FFI (architecture §3): `unsafe_code` is `deny` instead of the
 # workspace's `forbid`, so a feature-gated block can `#[allow]` it with a SAFETY comment.
