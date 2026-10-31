@@ -1,7 +1,8 @@
 //! scorecraft-ui-egui: The egui shell: library, reader, tools and dialogs. Thin: every action goes through the engine.
 //!
-//! Layer L6 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Layer L6 in the workspace map (`docs/architecture.md` §2–3, §16): built on the Craft suite's
+//! `craft-ui` with the suite's egui. M3 brings the reader: [`App`] draws a toolbar and the
+//! [`reader::ReaderCanvas`], and turns taps, swipes, keys and pedals into engine commands.
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -10,6 +11,17 @@
     clippy::todo,
     clippy::unreachable
 )]
+
+pub mod app;
+pub mod reader;
+pub mod settings;
+pub mod state;
+pub mod theme;
+
+pub use app::{App, NoPlatform, Platform, SHELL_COMMANDS};
+pub use settings::Settings;
+pub use state::{Theme, UiState};
+pub use theme::Tokens;
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

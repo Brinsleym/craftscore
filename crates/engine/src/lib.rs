@@ -28,6 +28,7 @@ mod reader;
 mod reader_cmds;
 mod score_cmds;
 mod session;
+mod snapshot;
 mod view_cmds;
 
 pub use commands::{CommandInfo, CommandSpec, registry};
@@ -35,6 +36,7 @@ pub use error::EngineError;
 pub use library::{AnyStorage, Clock, library_open};
 pub use reader::{FrameSlot, ShownPage};
 pub use session::Session;
+pub use snapshot::{compose, unturn};
 
 /// The crate's package name, used in diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

@@ -9,6 +9,18 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+craft-ui = { workspace = true }
+egui = { workspace = true, features = ["default_fonts"] }
+scorecraft-codecs = { workspace = true }
+scorecraft-engine = { workspace = true }
+scorecraft-geom = { workspace = true }
+scorecraft-pdf = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+scorecraft-testkit = { workspace = true }
 
 [lints]
 workspace = true

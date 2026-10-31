@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -37,7 +37,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 
 | Area | Prefix | Rows | P0 | Done | Partial | Missing |
 |---|---|---:|---:|---:|---:|---:|
-| Reading and display | READ | 15 | 8 | 0 | 7 | 8 |
+| Reading and display | READ | 15 | 8 | 0 | 9 | 6 |
 | Page turning inputs | TURN | 8 | 4 | 0 | 5 | 3 |
 | Annotation | ANNO | 16 | 8 | 0 | 1 | 15 |
 | Library and organisation | LIB | 15 | 6 | 0 | 6 | 9 |
@@ -50,8 +50,8 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Import and scanning | IMP | 8 | 1 | 0 | 0 | 8 |
 | Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
-| Platforms, UI and languages | PLAT | 5 | 2 | 0 | 0 | 5 |
-| **Total** | | **122** | **39** | **0** | **29** | **93** |
+| Platforms, UI and languages | PLAT | 5 | 2 | 0 | 1 | 4 |
+| **Total** | | **122** | **39** | **0** | **32** | **90** |
 
 Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft reuse and the S8 rows (P0 250–530, P1 360–700, P2 230–450, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -62,12 +62,12 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 | READ-1 | Open a PDF score and render its pages crisply at any zoom, fast enough to turn without a visible delay | Free | S1 | `score.open`, `view.render` | pdf ♻ pdfcraft-cos, -render; render | P0 | 10–20 | partial |
 | READ-2 | Single-page layout | Free | S1, S4 | `view.layout.single` | layout | P0 | 4–8 | partial |
 | READ-3 | Two-page spread layout, with correct first-page placement for spreads | Free | S1 | `view.layout.twoPage` | layout | P0 | 6–12 | partial |
-| READ-4 | Full-screen (chrome hidden) performance mode | Free | S1, S4 | `ui.view.fullScreen` | ui-egui | P0 | 3–6 | missing |
+| READ-4 | Full-screen (chrome hidden) performance mode | Free | S1, S4 | `ui.view.fullScreen` | ui-egui | P0 | 3–6 | partial |
 | READ-5 | Half-page turns: the next system appears before the full turn | Free | S1, S2, S3 | `view.turn.halfPage` (mode) | layout | P0 | 8–16 | partial |
 | READ-6 | Alternating page turns for awkward page breaks | Free | S4 | `view.turn.alternating` (mode) | layout | P1 | 4–8 | partial |
 | READ-7 | Display filters: light, dark, sepia (with intensity), inverted | Free | S1, S8 | `view.filter.set` | render | P1 | 6–10 | missing |
 | READ-8 | Enhance filter for scanned pages (contrast / clean-up) | Free | S1 | `view.filter.enhance` | algo | P2 | 8–16 | missing |
-| READ-9 | Keep the screen awake while a score or setlist is open | Free | S1, S4 | `ui.power.keepAwake` | app shell | P0 | 2–4 | missing |
+| READ-9 | Keep the screen awake while a score or setlist is open | Free | S1, S4 | `ui.power.keepAwake` | app shell | P0 | 2–4 | partial |
 | READ-10 | Two scores side by side | Free | S1, S3 | `view.split.open` | engine, ui-egui | P2 | 8–16 | missing |
 | READ-11 | Multiple windows, each with its own score | Free | S1, S8 | `ui.window.new` | app shell | P2 | 8–16 | missing |
 | READ-12 | Landscape Page Zoom (fit width in landscape, scroll within a page) | Free | S1 | `view.zoom.landscapeFit` | layout | P1 | 4–8 | partial |
@@ -244,7 +244,7 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 | PLAT-1 | Same app on desktop (macOS, Windows, Linux), tablet and phone (iPadOS, iOS, Android), Chromebook, web | Free | S1–S3 | n/a | apps | P0 (Windows tablet, then desktop), P1 (Android, web), P2 (iPad, with a Swift pen host) | 80–200 | missing |
 | PLAT-2 | E-ink / e-reader mode (no animation, high contrast, partial refresh friendly) | Free | S3, S6, S8 | `ui.display.eInk` | ui-egui | P2 | 8–16 | missing |
 | PLAT-3 | Fifteen interface languages (see [`localization-parity.md`](localization-parity.md)) | Free | S1, S8 | n/a | ui-egui | P1 | 40–80 | missing |
-| PLAT-4 | Light and dark app themes, independent of the page filter | Free | S4 | `ui.theme.set` | ui-egui | P0 | 4–8 | missing |
+| PLAT-4 | Light and dark app themes, independent of the page filter | Free | S4 | `ui.theme.set` | ui-egui | P0 | 4–8 | partial |
 | PLAT-5 | Apple Vision (visionOS): the iPad build runs there, with gaze-and-pinch input for turns and tools | Free | S1, S8 | n/a | apps | P2 | 4–8 | missing |
 
 ## Reuse from PDFCraft
@@ -269,7 +269,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **122** | **39** | **0** | **29** | **93** |
+| **Total** | | **122** | **39** | **0** | **32** | **90** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -308,6 +308,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M3: READ-4, READ-9 and PLAT-4 partial (shell commands `ui.view.fullScreen`, `ui.power.keepAwake`, `ui.theme.set` in the reader window; keep-awake on Windows only so far) |
 | 2026-10-31 | patch | M3: TURN-1, -2, -3 and -4 partial (`input.pedal.map` with four pedal profiles; `input.key`, `input.tap`, `input.swipe`) |
 | 2026-10-31 | patch | M3: READ-2, -3, -5, -6, -12, -15, TURN-8 and NAV-5 partial (reader commands live in the engine); summary counts recounted from the rows (M1's 16 partial rows were missing from it) |
 | 2026-10-31 | patch | READ-1 partial: `score.open` opens a PDF and `view.render` renders pages through the page cache; the reader UI comes in M3 |
