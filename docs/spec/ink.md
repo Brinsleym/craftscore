@@ -1,6 +1,6 @@
 # Ink and markup
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 3: rectangle select, shapes switch, pen button; earlier: ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 4: the pen in the app; earlier: M4 part 3: rectangle select, shapes switch, pen button; earlier: ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 How the player marks up a score: pens, highlighters, whiteout, erasers, text notes, stamps,
 layers, selection, shapes, and exporting the result. Written for milestone M4.
@@ -289,6 +289,11 @@ ScoreCraft's own additions, beyond what was observed:
   erasing, turning, panning or zooming by touch. The pen, the mouse, keys and pedals keep working.
   It can be switched only in markup mode and applies only there; leaving markup mode lets touch
   turn pages again, and the lock is as the player left it next time. It is off by default.
+- **Telling a pen from a finger** (the desktop app, M4 part 4). winit 0.30 reports pens and
+  fingers alike as touches, so the app takes a touch that carries a pressure as a pen: Windows
+  Ink pens report one and touch screens normally don't. Where a device reports pressure for
+  fingers, or none for its pen, *Draw with Touch* lets every pointer draw. winit reports neither
+  the eraser end nor the barrel button yet, so ANNO-11 waits on it in the app.
 - The platforms help but can't be relied on alone: Windows has an *Ignore touch input when I'm
   using my pen* setting (Pen & Windows Ink) that suppresses touch while the pen is near the screen,
   but the user can turn it off and some devices hide it; Android only marks palm touches, so the
@@ -316,7 +321,8 @@ ScoreCraft's own additions, beyond what was observed:
 ### ANNO-15 The file is never changed
 
 - No markup action writes to the imported PDF. Markings live in the library, keyed by source page,
-  in page space.
+  in page space. The app opens every score through its library (`library.openFile`: the same file,
+  by content, reopens the same score), so markings are there next time.
 - Markings stay on their place in the music when the page is rotated, cropped, moved, hidden and
   shown again, or when the page range changes. Deleting a page from the score keeps its markings
   in the library until the score itself is deleted.
@@ -404,6 +410,10 @@ ScoreCraft's own additions, beyond what was observed:
 | INK-40 | A pen and a highlighter stroke selected | they are copied, scaled 2×, recoloured, then deleted | copies get new ids and originals stay; points spread and widths double about the centre; both take the colour; delete is one undo step; 11× is refused |
 | INK-41 | Shapes on | a wobbly straight stroke and a rough circle are drawn | they are stored as a straight line and an ellipse; with shapes off the same stroke stays freehand |
 | INK-42 | The pen | the pen button is pressed twice, then from the highlighter twice | eraser then pen; eraser then highlighter |
+| INK-43 | The app in markup mode | a pen drags across the page, then a finger, then a finger with *Draw with Touch* | the pen and the last finger draw; the first finger draws nothing |
+| INK-44 | The app, the pen drawing | a hand lands, drags across the page and lifts before the pen does | no turn; one stroke |
+| INK-45 | The app in markup mode | the mouse drags across the page, before and after *Draw with Touch* | nothing, then one stroke; no turn either time |
+| INK-46 | Highlighter with swatch 3 at 20 pt, shapes on, *Draw with Touch* on | the app is closed and opened again | the same tool, colours, swatches, widths and switches; markup mode itself starts off |
 | INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
 INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
@@ -417,7 +427,8 @@ INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
 stamps, layers, selection, shapes and export get their acceptance tests when their part of M4
 lands, and are added to this table. INK-39 to INK-42 are engine tests
 (`crates/engine/src/select_cmds/tests.rs`), with `scorecraft-ink` tests of the shape fit
-(`crates/ink/src/shape.rs`).
+(`crates/ink/src/shape.rs`). INK-43 to INK-46 are shell tests driving egui frames
+(`crates/ui-egui/src/app.rs`).
 
 ## Not in scope
 
@@ -447,6 +458,7 @@ swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M4 part 4: the pen in the desktop app (pen told from a finger by pressure, library-backed scores, saved markup state); INK-43..46 |
 | 2026-10-31 | minor | M4 part 3: rectangle select's details (visible, unlocked layers; drop point; ranges kept), shapes as a Markup-menu switch with its thresholds, the pen button's setting; INK-39..42 |
 | 2026-10-31 | patch | INK-37, -38 for stamps (M4 part 2c) |
 | 2026-10-31 | patch | INK-33 lands with text notes (M4 part 2b); notes are set in Inter, built in |

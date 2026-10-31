@@ -323,6 +323,8 @@ impl Markup {
             "mode": self.mode,
             "touchLock": self.touch_lock,
             "penSwatches": hex(&self.pen_swatches),
+            "penSwatch": self.pen_swatch + 1,
+            "highlighterSwatch": self.highlighter_swatch + 1,
             "highlighterSwatches": hex(&self.highlighter_swatches),
             "penPalette": hex(&PALETTE),
             "highlighterPalette": hex(&HIGHLIGHTER_PALETTE),
@@ -501,6 +503,17 @@ impl PageHit {
             .page_box
             .display_to_pdf(1.0, Point::new(fu * size.width, fv * size.height))?;
         p.is_finite().then_some(p)
+    }
+}
+
+impl crate::Session {
+    /// Page points per viewport pixel where (`x`, `y`) lands on a page: what the shell needs to
+    /// draw a stroke in progress at the width it will have. `None` off the pages.
+    pub fn points_per_pixel(&self, x: f64, y: f64) -> Option<f64> {
+        let open = self.score.as_ref()?;
+        let h = hit(&open.reader, open.view.document(), x, y)?;
+        let d = h.to_page(x, y)?.distance(h.to_page(x + 1.0, y)?);
+        (d.is_finite() && d > 0.0).then_some(d)
     }
 }
 
