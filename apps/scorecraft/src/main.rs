@@ -92,6 +92,22 @@ impl Platform for Desktop {
         self.keep_awake.set(on).map_err(|e| e.to_string())
     }
 
+    fn pick_export_path(&mut self, name: &str) -> Option<String> {
+        #[cfg(any(windows, target_os = "macos"))]
+        {
+            rfd::FileDialog::new()
+                .add_filter("PDF", &["pdf"])
+                .set_file_name(name)
+                .save_file()
+                .map(|p| p.to_string_lossy().into_owned())
+        }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            let _ = name;
+            None
+        }
+    }
+
     fn library_dir(&self) -> Option<String> {
         let dir = library_dir()?;
         if let Some(parent) = dir.parent() {

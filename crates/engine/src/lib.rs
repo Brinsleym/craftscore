@@ -18,6 +18,7 @@ pub mod commands;
 mod edit_cmds;
 mod engine_cmds;
 mod error;
+mod export_cmds;
 pub mod feature_catalog;
 mod input_cmds;
 mod layer_cmds;

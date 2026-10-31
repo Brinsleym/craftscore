@@ -2798,6 +2798,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pdfcraft-content"
+version = "0.15.0"
+source = "git+https://github.com/storytold/pdfcraft?rev=65ff3a00c04ad5189f4a0abedcdf7104f14e2aed#65ff3a00c04ad5189f4a0abedcdf7104f14e2aed"
+dependencies = [
+ "hayro-syntax",
+ "pdfcraft-cos",
+]
+
+[[package]]
 name = "pdfcraft-cos"
 version = "0.15.0"
 source = "git+https://github.com/storytold/pdfcraft?rev=65ff3a00c04ad5189f4a0abedcdf7104f14e2aed#65ff3a00c04ad5189f4a0abedcdf7104f14e2aed"
@@ -2840,6 +2849,16 @@ dependencies = [
  "pdfcraft-cos",
  "skrifa 0.44.0",
  "unicode-bidi",
+]
+
+[[package]]
+name = "pdfcraft-organize"
+version = "0.15.0"
+source = "git+https://github.com/storytold/pdfcraft?rev=65ff3a00c04ad5189f4a0abedcdf7104f14e2aed#65ff3a00c04ad5189f4a0abedcdf7104f14e2aed"
+dependencies = [
+ "pdfcraft-content",
+ "pdfcraft-cos",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -3627,7 +3646,9 @@ name = "scorecraft-pdf"
 version = "0.0.1"
 dependencies = [
  "bytemuck",
+ "pdfcraft-cos",
  "pdfcraft-fonts",
+ "pdfcraft-organize",
  "pdfcraft-render",
  "scorecraft-testkit",
  "sha2",
@@ -4056,7 +4077,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.6",
  "windows-sys 0.61.2",

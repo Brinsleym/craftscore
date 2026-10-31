@@ -1,6 +1,6 @@
 # Ink and markup
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 4: the pen in the app; earlier: M4 part 3: rectangle select, shapes switch, pen button; earlier: ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 5: export with ink; earlier: M4 part 4: the pen in the app; earlier: M4 part 3: rectangle select, shapes switch, pen button; earlier: ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 How the player marks up a score: pens, highlighters, whiteout, erasers, text notes, stamps,
 layers, selection, shapes, and exporting the result. Written for milestone M4.
@@ -348,6 +348,15 @@ ScoreCraft's own additions, beyond what was observed:
     appearance stream so readers that ignore annotation dictionaries still draw them.
 - Page order, rotation, crop, hidden pages and the page range of the score are applied to the
   exported pages.
+- How (M4 part 5): `score.export.pdf {path, mode, layers}`. The source pages are copied into a new
+  document in the score's order (`pdfcraft-organize`), turned and cropped as the score shows them.
+  Ink is the CPU renderer's own geometry (`scorecraft-render`'s fills: stroke outlines, glyph
+  outlines of notes and dynamics, hairpin lines) written as filled paths, so the export looks
+  like the reader on white paper; the highlighter's paths use an `ExtGState` with
+  `/BM /Multiply`. Flattened ink follows the page's content, which is wrapped in `q`/`Q`. Text
+  is drawn as outlines, so no font is embedded; `/FreeText` keeps the words in `/Contents`.
+  The file is written beside the target and renamed into place. Snips and shortcuts are not
+  exported (M6).
 
 ### Drawing and colours under filters
 
@@ -414,6 +423,9 @@ ScoreCraft's own additions, beyond what was observed:
 | INK-44 | The app, the pen drawing | a hand lands, drags across the page and lifts before the pen does | no turn; one stroke |
 | INK-45 | The app in markup mode | the mouse drags across the page, before and after *Draw with Touch* | nothing, then one stroke; no turn either time |
 | INK-46 | Highlighter with swatch 3 at 20 pt, shapes on, *Draw with Touch* on | the app is closed and opened again | the same tool, colours, swatches, widths and switches; markup mode itself starts off |
+| INK-47 | A red stroke on score page 2, page 1 hidden | the score is exported flattened | two pages; the first shows the stroke; elsewhere the pages look like the source; the imported file is unchanged |
+| INK-48 | A stroke and a text note | the score is exported as annotations | two annotations with appearances; the stroke renders from its appearance |
+| INK-49 | A stroke on a hidden layer | the score is exported by default, then naming that layer | no markings, then one; bad modes, layers and paths are refused |
 | INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
 INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
@@ -428,7 +440,9 @@ stamps, layers, selection, shapes and export get their acceptance tests when the
 lands, and are added to this table. INK-39 to INK-42 are engine tests
 (`crates/engine/src/select_cmds/tests.rs`), with `scorecraft-ink` tests of the shape fit
 (`crates/ink/src/shape.rs`). INK-43 to INK-46 are shell tests driving egui frames
-(`crates/ui-egui/src/app.rs`).
+(`crates/ui-egui/src/app.rs`). INK-47 to INK-49 are engine tests
+(`crates/engine/src/export_cmds/tests.rs`), with `scorecraft-pdf` tests of the writer
+(`crates/pdf/src/export.rs`).
 
 ## Not in scope
 
@@ -458,6 +472,7 @@ swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M4 part 5: export with ink, how it is written; INK-47..49 |
 | 2026-10-31 | minor | M4 part 4: the pen in the desktop app (pen told from a finger by pressure, library-backed scores, saved markup state); INK-43..46 |
 | 2026-10-31 | minor | M4 part 3: rectangle select's details (visible, unlocked layers; drop point; ranges kept), shapes as a Markup-menu switch with its thresholds, the pen button's setting; INK-39..42 |
 | 2026-10-31 | patch | INK-37, -38 for stamps (M4 part 2c) |

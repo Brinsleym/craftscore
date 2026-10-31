@@ -116,21 +116,49 @@ pub fn compose(
     Some(out)
 }
 
-/// Draws a text note (spec ANNO-8): its optional background, then its lines, wrapped to the
-/// note's width and set from its top-left corner.
-pub fn draw_text(bm: &mut Bitmap, m: Affine, note: &TextNote, filter: Filter) {
+/// One filled shape of a marking, in source-page PDF space: what every renderer draws, the CPU
+/// compositor here and the PDF export (EXP-2). Polygons are filled with the non-zero rule.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Fill {
+    pub polygons: Vec<Vec<Point>>,
+    /// The colour, alpha ignored (it is in `alpha`).
+    pub color: Color,
+    /// 0..=1.
+    pub alpha: f32,
+    /// Multiplied onto the page (the highlighter) rather than laid over it.
+    pub multiply: bool,
+}
+
+/// The fills that draw `mark` under `filter`, in order. Empty for marks that draw nothing.
+pub fn fills(mark: &AnnotationKind, filter: Filter, curve: &PressureCurve) -> Vec<Fill> {
+    match mark {
+        AnnotationKind::Stroke(s) => stroke_fill(s, filter, curve).into_iter().collect(),
+        AnnotationKind::Text(t) => text_fills(t, filter),
+        AnnotationKind::Stamp(st) => stamp_fill(st, filter).into_iter().collect(),
+        AnnotationKind::Hairpin(h) => hairpin_fills(h, filter, curve),
+        _ => Vec::new(),
+    }
+}
+
+/// A text note (spec ANNO-8): its optional background, then its lines, wrapped to the note's
+/// width and set from its top-left corner.
+fn text_fills(note: &TextNote, filter: Filter) -> Vec<Fill> {
+    let mut out = Vec::new();
     let style = &note.style;
     let size = f64::from(style.size);
     let Some(face) = Face::get(FaceKind::Note, style.bold, style.italic) else {
-        return;
+        return out;
     };
     if !(size.is_finite() && size > 0.0 && note.rect.is_finite()) {
-        return;
+        return out;
     }
     if let Some(bg) = style.background {
-        let r = note.rect;
-        let bg = paper_mapped(bg, filter);
-        fill(bm, m, &[r.corners().to_vec()], bg, 1.0);
+        out.push(Fill {
+            polygons: vec![note.rect.corners().to_vec()],
+            color: paper_mapped(bg, filter),
+            alpha: 1.0,
+            multiply: false,
+        });
     }
     // A hair wider than the box, so rounding never re-wraps a line that fitted.
     let laid = layout(&face, &note.text, size, note.rect.width() + 0.01);
@@ -140,23 +168,27 @@ pub fn draw_text(bm: &mut Bitmap, m: Affine, note: &TextNote, filter: Filter) {
         let baseline = note.rect.y1 - laid.baseline - i as f64 * size * LINE_SPACING;
         polys.extend(face.outlines(line, size, Point::new(note.rect.x0, baseline)));
     }
-    fill(bm, m, &polys, color, f32::from(color.a) / 255.0);
+    out.push(Fill {
+        polygons: polys,
+        color,
+        alpha: f32::from(color.a) / 255.0,
+        multiply: false,
+    });
+    out
 }
 
-/// Draws a dynamic stamp (spec ANNO-9): its letters in the dynamics face, centred in its box.
-/// SMuFL glyph stamps need a music font and draw nothing until one is built in.
-pub fn draw_stamp(bm: &mut Bitmap, m: Affine, stamp: &Stamp, filter: Filter) {
+/// A dynamic stamp (spec ANNO-9): its letters in the dynamics face, centred in its box. SMuFL
+/// glyph stamps need a music font and draw nothing until one is built in.
+fn stamp_fill(stamp: &Stamp, filter: Filter) -> Option<Fill> {
     if stamp.text.is_empty() || !stamp.rect.is_finite() {
-        return;
+        return None;
     }
     let size = if stamp.size.is_finite() && stamp.size > 0.0 {
         f64::from(stamp.size)
     } else {
         stamp.rect.height()
     };
-    let Some(face) = Face::get(FaceKind::Dynamic, false, false) else {
-        return;
-    };
+    let face = Face::get(FaceKind::Dynamic, false, false)?;
     let (asc, desc) = face.ascent_descent(size);
     let c = stamp.rect.center();
     let origin = Point::new(
@@ -164,8 +196,26 @@ pub fn draw_stamp(bm: &mut Bitmap, m: Affine, stamp: &Stamp, filter: Filter) {
         c.y - (asc - desc) / 2.0,
     );
     let color = ink_color(Tool::Pen, stamp.color, filter);
-    let polys = face.outlines(&stamp.text, size, origin);
-    fill(bm, m, &polys, color, f32::from(color.a) / 255.0);
+    Some(Fill {
+        polygons: face.outlines(&stamp.text, size, origin),
+        color,
+        alpha: f32::from(color.a) / 255.0,
+        multiply: false,
+    })
+}
+
+/// Draws a text note (spec ANNO-8).
+pub fn draw_text(bm: &mut Bitmap, m: Affine, note: &TextNote, filter: Filter) {
+    for f in text_fills(note, filter) {
+        paint(bm, m, &f);
+    }
+}
+
+/// Draws a dynamic stamp (spec ANNO-9).
+pub fn draw_stamp(bm: &mut Bitmap, m: Affine, stamp: &Stamp, filter: Filter) {
+    if let Some(f) = stamp_fill(stamp, filter) {
+        paint(bm, m, &f);
+    }
 }
 
 /// The two lines of a hairpin, each from its open end to its point (spec ANNO-9).
@@ -184,24 +234,19 @@ pub fn hairpin_lines(h: &Hairpin) -> Option<[[Point; 2]; 2]> {
     Some([[open + n, tip], [open - n, tip]])
 }
 
-/// Draws a hairpin as two round-ended lines.
-pub fn draw_hairpin(
-    bm: &mut Bitmap,
-    m: Affine,
-    h: &Hairpin,
-    filter: Filter,
-    curve: &PressureCurve,
-) {
+/// A hairpin's two lines as round-ended strokes.
+pub fn hairpin_strokes(h: &Hairpin) -> Vec<Stroke> {
     let Some(lines) = hairpin_lines(h) else {
-        return;
+        return Vec::new();
     };
     let width = if h.width.is_finite() && h.width > 0.0 {
         h.width
     } else {
         1.0
     };
-    for [a, b] in lines {
-        let stroke = Stroke {
+    lines
+        .into_iter()
+        .map(|[a, b]| Stroke {
             tool: Tool::Pen,
             color: h.color,
             width,
@@ -210,8 +255,27 @@ pub fn draw_hairpin(
                 scorecraft_doc::InkPoint::new(a.x as f32, a.y as f32),
                 scorecraft_doc::InkPoint::new(b.x as f32, b.y as f32),
             ],
-        };
-        draw_stroke(bm, m, &stroke, filter, curve);
+        })
+        .collect()
+}
+
+fn hairpin_fills(h: &Hairpin, filter: Filter, curve: &PressureCurve) -> Vec<Fill> {
+    hairpin_strokes(h)
+        .iter()
+        .filter_map(|s| stroke_fill(s, filter, curve))
+        .collect()
+}
+
+/// Draws a hairpin as two round-ended lines.
+pub fn draw_hairpin(
+    bm: &mut Bitmap,
+    m: Affine,
+    h: &Hairpin,
+    filter: Filter,
+    curve: &PressureCurve,
+) {
+    for f in hairpin_fills(h, filter, curve) {
+        paint(bm, m, &f);
     }
 }
 
@@ -226,20 +290,20 @@ fn paper_mapped(c: Color, filter: Filter) -> Color {
     }
 }
 
-/// Fills `polys` (page space, any winding, non-zero rule) in `color` at `alpha`, "over".
-fn fill(bm: &mut Bitmap, m: Affine, polys: &[Vec<Point>], color: Color, alpha: f32) {
-    let Some(mask) = Mask::fill(polys, m, bm.width, bm.height) else {
+/// Paints one fill onto `bm`.
+fn paint(bm: &mut Bitmap, m: Affine, f: &Fill) {
+    let Some(mask) = Mask::fill(&f.polygons, m, bm.width, bm.height) else {
         return;
     };
-    blend(bm, &mask, color, alpha, false);
+    blend(bm, &mask, f.color, f.alpha, f.multiply);
 }
 
-/// Draws one stroke onto `bm`.
-pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve: &PressureCurve) {
+/// A stroke's fill under `filter`.
+fn stroke_fill(s: &Stroke, filter: Filter, curve: &PressureCurve) -> Option<Fill> {
     let o = outline(s, curve);
-    let Some(mask) = Mask::fill(&o.polygons, m, bm.width, bm.height) else {
-        return;
-    };
+    if o.polygons.is_empty() {
+        return None;
+    }
     let color = ink_color(s.tool, s.color, filter);
     let mut alpha = f32::from(color.a) / 255.0;
     if s.tool == Tool::Highlighter && filter == Filter::Dark {
@@ -247,8 +311,19 @@ pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve
         // light notation still reads through it.
         alpha = alpha.min(DARK_HIGHLIGHT);
     }
-    let multiply = s.tool == Tool::Highlighter && filter != Filter::Dark;
-    blend(bm, &mask, color, alpha, multiply);
+    Some(Fill {
+        polygons: o.polygons,
+        color,
+        alpha,
+        multiply: s.tool == Tool::Highlighter && filter != Filter::Dark,
+    })
+}
+
+/// Draws one stroke onto `bm`.
+pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve: &PressureCurve) {
+    if let Some(f) = stroke_fill(s, filter, curve) {
+        paint(bm, m, &f);
+    }
 }
 
 /// Blends `color` at `alpha` through `mask` onto `bm`: multiplied (the highlighter) or "over".

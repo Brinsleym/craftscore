@@ -25,6 +25,11 @@ pub trait Platform {
     fn library_dir(&self) -> Option<String> {
         None
     }
+    /// Asks where to save an exported PDF, suggesting `name`. `None` if cancelled or there is no
+    /// dialog.
+    fn pick_export_path(&mut self, _name: &str) -> Option<String> {
+        None
+    }
 }
 
 /// A platform that does nothing (tests, snapshots).
@@ -394,6 +399,21 @@ impl App {
         }
     }
 
+    /// Exports the open score with its visible layers' ink (EXP-2).
+    fn export(&mut self, mode: &str) {
+        let name = self
+            .settings
+            .last_score
+            .as_deref()
+            .and_then(|p| std::path::Path::new(p).file_stem())
+            .map(|s| format!("{} (marked).pdf", s.to_string_lossy()))
+            .unwrap_or_else(|| "Score (marked).pdf".to_owned());
+        if let Some(path) = self.platform.pick_export_path(&name) {
+            let r = self.command("score.export.pdf", &json!({ "path": path, "mode": mode }));
+            self.report(r);
+        }
+    }
+
     fn pick_and_open(&mut self) {
         if let Some(path) = self.platform.pick_score() {
             let r = self.open_path(&path);
@@ -451,6 +471,18 @@ impl App {
         ui.horizontal_centered(|ui| {
             if self.icon_button(ui, tokens, "Open Score…", false, Icon::Open) {
                 self.pick_and_open();
+            }
+            if has {
+                ui.menu_button("Export", |ui| {
+                    if ui.button("PDF with ink drawn in…").clicked() {
+                        self.export("flatten");
+                        ui.close();
+                    }
+                    if ui.button("PDF with ink as annotations…").clicked() {
+                        self.export("annotations");
+                        ui.close();
+                    }
+                });
             }
             ui.add_enabled_ui(has, |ui| {
                 if self.icon_button(ui, tokens, "Previous Page", false, Icon::Previous) {

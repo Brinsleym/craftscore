@@ -17,6 +17,7 @@
 
 mod document;
 mod error;
+pub mod export;
 mod fonts;
 
 pub use document::{
@@ -24,6 +25,7 @@ pub use document::{
     PaperColors, TextGlyph, Tile, device_pixels, fit_scale,
 };
 pub use error::PdfError;
+pub use export::{ExportMark, ExportMode, ExportPage, InkFill, MarkKind, export_pdf};
 pub use fonts::interface_font;
 
 /// The crate's package name, used in diagnostics.

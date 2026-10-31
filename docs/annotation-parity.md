@@ -1,6 +1,6 @@
 # Annotation parity: ink, tools and layers
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 3: ANN-17 rectangle select, ANN-18 shapes and ANN-19 pen button partial; earlier: minor (owner's answers and text observation: chisel highlighter, own highlighter colours, stamps ours, ruler across the screen, ANN-21 ruler angle; earlier: M4 part 1: stroke engine, highlighter, whiteout, erasers, pen only, touch lock and ruler partial in the engine; earlier: first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 5: export with chosen layers; earlier: M4 part 3: ANN-17 rectangle select, ANN-18 shapes and ANN-19 pen button partial; earlier: minor (owner's answers and text observation: chisel highlighter, own highlighter colours, stamps ours, ruler across the screen, ANN-21 ruler angle; earlier: M4 part 1: stroke engine, highlighter, whiteout, erasers, pen only, touch lock and ruler partial in the engine; earlier: first version, all rows missing) · **Target:** enScore 3.7 (2026)
 
 How ScoreCraft's markup compares with enScore 3.7 (PhotoCraft's brush-parity checklist, for a score
 reader). Status and evidence as in [`ui-parity.md`](ui-parity.md).
@@ -8,7 +8,7 @@ reader). Status and evidence as in [`ui-parity.md`](ui-parity.md).
 **Summary (estimated):** about 15% ready (2026-10-31): the stroke engine, the highlighter, whiteout, both
 erasers, pressure, palm rejection logic and the ruler work in the engine and the CPU renderer with
 tests ([spec](spec/ink.md)); nothing is drawn by a pen in the app yet (M4 part 4), so no ink-feel
-row can be judged. Text, stamps, layers commands, selection, shapes and export are still to do.
+row can be judged. Every row has engine commands; the pen draws in the desktop app (M4 part 4) and exports with its ink (part 5); feel is judged on a device.
 
 ## Ink feel
 
@@ -41,7 +41,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Id | Target | Rows | Status |
 |---|---|---|---|
-| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | ANNO-10, EXP-2 | partial (all in the engine with undo, INK-11, -34, -35; export later) |
+| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | ANNO-10, EXP-2 | partial (all in the engine with undo, INK-11, -34, -35; export of chosen layers, INK-49) |
 | ANN-31 | Undo/redo per score, one step per stroke | ANNO-13 | partial (one step per stroke and per eraser gesture, INK-2, -8, -9) |
 | ANN-32 | Markings never alter the PDF; survive rotate, crop, reorder and page-range changes | ANNO-15 | partial (page space, rotate and reorder tested, INK-3, -12; crop isn't applied by the reader yet) |
 | ANN-33 | Markings imported from `.4sc` and from PDF annotations land in the right layers | IMP-5, IMP-7 | missing |
@@ -50,6 +50,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 parts 4 and 5: the pen in the desktop app; export with chosen layers |
 | 2026-10-31 | patch | M4 part 3: ANN-17 rectangle select, ANN-18 shapes, ANN-19 pen button partial |
 | 2026-10-31 | patch | M4 part 2c: ANN-16 stamps partial |
 | 2026-10-31 | patch | M4 part 2b: ANN-15 text notes partial |

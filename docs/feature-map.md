@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 5: EXP-2 partial; earlier: M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -49,10 +49,10 @@ feature-map ids each one informs. `obs.` in the Source column means an observati
 | MIDI | MIDI | 5 | 0 | 0 | 0 | 5 |
 | Practice tools | PRAC | 11 | 1 | 0 | 0 | 11 |
 | Import and scanning | IMP | 8 | 1 | 0 | 0 | 8 |
-| Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
+| Export and print | EXP | 4 | 1 | 0 | 1 | 3 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 1 | 4 |
-| **Total** | | **124** | **39** | **0** | **48** | **76** |
+| **Total** | | **124** | **39** | **0** | **49** | **75** |
 
 Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft reuse, the S8 rows and the ruler (P0 250–530, P1 350–680, P2 233–456, P3 92–194) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -223,7 +223,7 @@ Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
 | EXP-1 | Print a score with or without annotations | Free | S1, S4 | `score.print` | io ♻ pdfcraft-print | P1 | 3–6 | missing |
-| EXP-2 | Export a PDF with ink flattened, or as real PDF annotations, choosing which layers | Free | S1, S4 | `score.export.pdf` | pdf ♻ pdfcraft-annot, -cos (save) | P0 | 4–8 | missing |
+| EXP-2 | Export a PDF with ink flattened, or as real PDF annotations, choosing which layers | Free | S1, S4 | `score.export.pdf` | pdf ♻ pdfcraft-cos, -organize | P0 | 4–8 | partial |
 | EXP-3 | Export a setlist as a single combined PDF | Pro | inferred | `list.export.pdf` | pdf ♻ pdfcraft-organize | P2 | 1–2 | missing |
 | EXP-4 | Export a page as an image | Free | inferred | `page.export.image` | render, codecs | P2 | 2–4 | missing |
 
@@ -272,7 +272,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **124** | **39** | **0** | **48** | **76** |
+| **Total** | | **124** | **39** | **0** | **49** | **75** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -311,6 +311,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 5: EXP-2 export with ink (flattened or as annotations, chosen layers) partial |
 | 2026-10-31 | patch | M4 part 3: ANNO-12 rectangle select (move, copy, delete, scale, recolour), ANNO-16 shapes and ANNO-11 pen button partial, live in the engine |
 | 2026-10-31 | patch | M4 part 2c: ANNO-9 stamps (dynamics and hairpins) partial, live in the engine and the CPU renderer |
 | 2026-10-31 | patch | M4 part 2b: ANNO-8 text notes partial, live in the engine and the CPU renderer |

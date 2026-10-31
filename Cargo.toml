@@ -49,6 +49,8 @@ scorecraft-testkit = { path = "crates/testkit" }
 # Only scorecraft-pdf may depend on them (`cargo xtask layers`).
 pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
 pdfcraft-fonts = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+pdfcraft-cos = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
+pdfcraft-organize = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a00c04ad5189f4a0abedcdf7104f14e2aed" }
 
 # The Craft suite's shared UI (architecture §16). craft-libs pins the suite's egui fork; the
 # [patch.crates-io] egui and winit entries below use the revisions this craft-libs revision pins.
