@@ -1,6 +1,6 @@
 # Ink and markup
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 How the player marks up a score: pens, highlighters, whiteout, erasers, text notes, stamps,
 layers, selection, shapes, and exporting the result. Written for milestone M4.
@@ -19,7 +19,13 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
   pen-only drawing by default with a *Draw with Touch* switch, a touch lock, the tool set, eight
   changeable swatches with a fixed palette of extra colours (screenshot 25), a width slider per
   tool, eraser options, a rectangle tool for snips, shortcuts and moving ink, and a ruler whose
-  button is hidden unless a setting shows it.
+  button is hidden unless a setting shows it. A second pass answers this spec's open questions:
+  the chisel highlighter (screenshot 26), the ruler (screenshot 27), the highlighter's own
+  swatches and palette (screenshot 28), the eraser's size, palm rejection after the pen lifts,
+  the stylus shortcut, and stamps (ScoreCraft's own, in the Edwin font). A third pass covers the
+  text tool (screenshot 29).
+- Font: [Edwin](https://github.com/MuseScoreFonts/Edwin) (MuseScore BVBA, SIL OFL 1.1) for stamp
+  text, loaded from the fonts directory like every font ([fonts](../standards/fonts.md)).
 - Platform documentation on palm rejection: Windows' *Ignore touch input when I'm using my pen*
   setting ([guide](https://geekrewind.com/how-to-enable-or-disable-ignore-touch-input-when-using-pen-in-windows-11/),
   [Microsoft hardware docs](https://learn.microsoft.com/vi-vn/windows-hardware/customize/desktop/pen-and-ink));
@@ -51,10 +57,13 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 ### The markup toolbar
 
 - Entering markup mode shows one toolbar, in this order: *Draw with Touch*, touch lock, pen,
-  highlighter, eraser, text, rectangle select, ruler (only when the *Show ruler button* setting is
+  highlighter, eraser, text, stamp, rectangle select, ruler (only when the *Show ruler button* setting is
   on; it is off by default); then eight colour swatches, a palette button and a width slider. The
-  active tool and the selected swatch are marked.
-- With the eraser selected, its *stroke* and *pixel* options appear in the bar next to it.
+  active tool and the selected swatch are marked. The swatches and palette are the active tool's:
+  the pen's and the highlighter's are different (ANNO-4).
+- With the eraser selected, its *stroke* and *pixel* options appear in the bar next to it. With
+  the stamp tool selected, the stamp choices appear instead of the swatches (ANNO-9). With the
+  text tool selected, the *Draw with Touch* toggle reads *Type with Touch* (ANNO-8).
 - The pen is active the first time; afterwards markup opens with the last tool, colours, widths
   and swatches.
 - Leaving markup mode (or turning the page with a pedal) keeps every marking and the tool
@@ -85,28 +94,41 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 
 ### ANNO-3 Highlighter
 
-- Draws a translucent, wide, constant-width band with flat ends.
-- Blends like a real highlighter: it darkens the page by its colour (multiply), so black notation
-  under it stays black and the paper takes the colour. It never covers notation.
+- The nib is a **chisel held upright** (screenshot 26): a rectangle one third as wide as it is
+  tall, swept along the stroke. Strokes running across the page are as thick as the nib is tall;
+  strokes running up and down are as thin as it is wide; diagonals fall between. The ends are cut
+  straight up and down, and a tap leaves the nib's rectangle. The width slider sets the nib's
+  height. The nib stays upright on the page (it turns with a rotated page, as a marker on paper
+  would).
+- A setting, *Round highlighter ends*, swaps the chisel for a round nib: a constant-width band
+  with round ends, like a wide pen. It applies to new strokes; each stroke keeps the nib it was
+  drawn with.
+- Blends like a real highlighter: it multiplies the page by its colour at full strength, so black
+  notation under it stays black and white paper takes the swatch's colour. It never covers
+  notation.
 - No build-up within a stroke: where one stroke crosses itself, the colour is the same as where it
   doesn't. Two separate strokes over the same place do darken it again, as two passes would.
-- Default: yellow at 40% (`#ffe60066`), 12 pt wide. A *stronger* highlighter is the same tool at a
-  higher alpha.
+- Default: the highlighter's first swatch (yellow), 12 pt nib.
 
 ### ANNO-4 Colours, widths and presets
 
-- Eight swatches, black, red, blue, green, amber, purple, brown and grey to start with. Tapping a
-  swatch selects it and gives the active tool its colour.
-- The swatches can be changed. The palette button opens a fixed grid of 30 colours (six columns,
-  five rows: black, white and greys; reds, oranges and yellows; greens, cyan, blue and indigo;
-  purples and browns; pastels). It offers only these colours, not a free colour picker. Picking
-  one replaces the **selected swatch** with it and gives the active tool that colour. The swatches
-  are kept between launches. ScoreCraft chooses its own values for every colour.
+- The pen and the highlighter each have their own **eight swatches** and their own **palette**.
+  - Pen swatches start as black, red, blue, green, amber, purple, brown and grey; the pen palette
+    is 30 colours (six columns, five rows: black, white and greys; reds, oranges and yellows;
+    greens, cyan, blue and indigo; purples and browns; pastels).
+  - Highlighter swatches start as yellow, pink, light green, light blue, orange, lavender, coral
+    and aqua (screenshot 28); the highlighter palette is 30 highlighter colours (yellows and
+    golds; peaches, oranges and corals; pinks, roses, magenta and orchid; yellow-greens, greens,
+    mint and turquoise; blues, lavenders and violet).
+- Tapping a swatch selects it and gives the tool its colour. The palette button opens the active
+  tool's palette; it offers only those colours, not a free colour picker. Picking one replaces the
+  **selected swatch** with it and gives the tool that colour. Swatches are kept between launches.
+  ScoreCraft chooses its own values for every colour.
 - The width slider is per tool: it shows and sets the active tool's own width: pen 0.25 to 12 pt,
-  highlighter 4 to 40 pt, eraser 2 to 60 pt.
+  highlighter nib 4 to 40 pt, eraser 2 to 60 pt (the eraser's size). With the text tool it is the
+  text size slider, 8 to 36 pt (ANNO-8).
 - Pen, highlighter and whiteout each keep their own colour and width (picking red for the pen
-  doesn't change the highlighter); changing them affects new strokes only. The highlighter takes a
-  swatch's hue at its own translucency.
+  doesn't change the highlighter); changing them affects new strokes only.
 - A player can save the current tool, colour and width as a named preset, recall it in one action,
   and delete it. Presets are kept between launches.
 
@@ -127,8 +149,8 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
   from the options that appear when the eraser is selected. The eraser keeps the mode it was last
   used in.
 - With the eraser in stroke mode, every stroke the eraser touches is removed whole. The eraser is a
-  disc 8 pt across in page space; a stroke is touched when any part of its drawn shape is within
-  the disc.
+  disc in page space, 8 pt across by default; its size is the eraser's width on the one width
+  slider (2 to 60 pt). A stroke is touched when any part of its drawn shape is within the disc.
 - One eraser gesture is one undo step, however many strokes it removed. A gesture that touched
   nothing records nothing.
 - Only strokes on visible, unlocked layers are erased. Text notes and stamps are not erased by
@@ -137,28 +159,61 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 ### ANNO-7 Pixel eraser
 
 - With the eraser in pixel mode, erases only the part of a stroke under the eraser disc (default 8
-  pt across). What remains of the
-  stroke becomes one or more new strokes, each keeping the original's tool, colour, width and
-  pressure along its remaining samples. A stroke erased entirely is removed.
+  pt across, the same slider). What remains of the stroke becomes one or more new strokes, each
+  keeping the original's tool, nib, colour and width, and the pressure of its remaining samples
+  exactly as they were (the pressure profile is not reshaped). A stroke erased entirely is removed.
 - One gesture is one undo step; undo restores the original stroke.
 
 ### ANNO-8 Text notes
 
-- A text note is a box on a page holding typed text, with a font size (6–144 pt), a colour, bold
-  and italic, and an optional filled background.
-- Placing a note puts its top-left corner where the player tapped; the box grows to fit the text.
-- Notes can be edited (text and style), moved and deleted. Each is one undo step.
-- Empty text is not a note: finishing an edit with no text deletes it.
+Observed in enScore (screenshot 29, [observation](../observations/anno-markup-toolbar.md)):
 
-### ANNO-9 Stamps
+- With the text tool selected, the toolbar's first toggle reads **Type with Touch** instead of
+  *Draw with Touch*: it is the same setting (ANNO-14), named for what touch does with this tool.
+  Without it, only the pen (or a tap with the mouse, as for drawing: see ANNO-14) places notes.
+- Tapping the page places a **new note** there: an empty box outlined in the accent colour, with
+  a dark rounded **handle** on its left marked with grip lines, and the text cursor in the box.
+  Typing fills it. The same box outline and handle show on a note that is selected for editing.
+  Dragging the handle moves the note.
+- A note looks like plain text on the page: black, a sans-serif face, no border and no
+  background, so the music shows around the letters.
+- **Text size** is set with the toolbar's slider, which becomes a **size slider** while the text
+  tool is active: from **8 pt to 36 pt**, **12 pt** by default (owner, 2026-10-31). It sets the
+  size of new notes and of the selected note.
+- A note is as wide as its longest line, up to a **maximum width of 86% of the page's width**.
+  Longer text wraps at spaces (a single word longer than the maximum breaks where it must). Lines
+  are 1.5 times the text size apart.
+- **Notes stay inside the page.** A note is placed, grown and moved so that no part of it crosses
+  a page edge: tapped near the right or bottom edge, it starts far enough left or up to fit its
+  text, and as it grows it shifts back inside; it can't be dragged past an edge. A note can start
+  exactly at the page's corner.
+- Notes are stored in page space like ink, so they stay on the same music when the page is
+  rotated or moved.
 
-- A stamp is a music symbol placed on a page: fingerings 0–5, dynamics (pp, p, mp, mf, f, ff, sfz,
-  fp), bowings (up bow, down bow), breath mark, caesura, fermata, accent, staccato, tenuto,
-  sharp, flat, natural, and eyeglasses ("watch").
-- Symbols come from a SMuFL font under the OFL ([fonts](../standards/fonts.md)); without that font a
-  built-in fallback drawing is used, so stamps always show.
-- Placing a stamp centres it where the player tapped, at a size the player picks (8–96 pt); it can
-  be moved, resized, recoloured and deleted like any selection (ANNO-12).
+ScoreCraft's own additions, beyond what was observed:
+
+- The style of a note can be changed from its selection: colour (the pen's swatches), bold and
+  italic, and an optional filled background. The defaults are the observed look above.
+- Notes can be edited, moved and deleted. Placing, each finished edit and each move is one undo
+  step. Empty text is not a note: finishing an edit with no text deletes it.
+
+### ANNO-9 Stamps (ScoreCraft's own)
+
+- enScore has no stamps; ScoreCraft adds them because a dynamic is the commonest marking a player
+  writes in.
+- The stamp tool's bar shows the dynamics **pp, p, mp, mf, f, ff**, then a **>** button that opens
+  the **crescendo** and **diminuendo hairpins**. **p** is selected the first time; afterwards the
+  last stamp used.
+- Dynamics are set in the **Edwin** font, bold italic as engraved dynamics are. Without the font
+  installed, a built-in fallback shape is used, so stamps always show.
+- Tapping the page places the selected dynamic centred where the player tapped, at a size the
+  player picks (8–96 pt, 18 pt by default), in the pen's colour.
+- A hairpin is placed by dragging from where it starts to where it ends (a tap places one 72 pt
+  long). A placed hairpin shows three handles when selected: one at each end, which stretch it
+  longer or shorter, and one in the middle, which moves it. Its opening is a fixed height (a
+  third of the size setting) whatever its length.
+- Every placed stamp can be moved, resized, recoloured and deleted like any selection (ANNO-12).
+  Each placement and each handle drag is one undo step.
 
 ### ANNO-10 Layers
 
@@ -174,9 +229,10 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 
 ### ANNO-11 Pen shortcuts
 
-- A stylus barrel button or double-tap (where the platform reports one) switches to a tool the
-  player chooses (default: the stroke eraser) and switching again returns to the previous tool. The
-  eraser end of a stylus always erases with the stroke eraser.
+- A stylus barrel button or double-tap (where the platform reports one) switches between the pen
+  and the eraser by default: from any other tool it switches to the eraser, and pressing again
+  returns to the tool before. The player can choose another pair in settings. The eraser end of a
+  stylus always erases, in the eraser's current mode.
 
 ### ANNO-12 Rectangle select: move, copy, delete; snips and shortcuts
 
@@ -216,6 +272,9 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
   - when no pen is touching, touch works as normal: tapping and swiping turn pages, two fingers
     pinch to zoom and pan, so using the pen and then zooming with two fingers needs no switch;
   - the mouse is never rejected;
+  - a touch that starts within **50 ms** after the pen lifts is ignored too, to catch a hand that
+    lands as the pen comes off; no deliberate tap follows a pen that quickly, so taps and pinches
+    are never lost;
   - a touch the platform marks as a palm or cancels (Android 13 and later flag palm touches as
     cancelled) is dropped as if it never happened, and any ink or gesture it started is undone.
 - **Touch lock** (the padlock): while it is on, every touch is ignored on the page: no drawing,
@@ -233,12 +292,16 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 - The ruler is a straight edge laid over the page to rule lines against (bar lines, slurs, a
   cut). Its toolbar button is hidden by default and appears when the *Show ruler button* setting
   is on; the ruler works the same either way (an agent can show it by command).
-- Showing it places it across the middle of the page on screen, horizontal. Dragging it (one
-  finger, the mouse, or the pen on the ruler body) moves it; two fingers turn it. Its angle is
-  shown while it turns and snaps to 0°, 45° and 90° within 2°.
-- While it is shown, a pen or highlighter stroke that starts within 12 pt of the ruler's edge is
-  drawn straight along that edge, from where it started to where the pen's movement along the
-  edge ended. Strokes that start further away are drawn freehand.
+- Showing it lays a light band, with tick marks along both long edges, horizontally across the
+  **whole width of the screen** at its vertical centre (screenshot 27). It is a band on the
+  screen, not on a page: it stays put while pages turn, zoom and pan, and in the two-page layout
+  it crosses both pages. Dragging it (one finger, the mouse, or the pen on the ruler body) moves
+  it up and down.
+- It stays horizontal for now: turning it and showing its angle are ANNO-18, at the bottom of the
+  low-priority list.
+- While it is shown, a pen or highlighter stroke that starts within 18 screen pixels of either
+  long edge is drawn straight along that edge, from where it started to where the pen's movement
+  along the edge ended. Strokes that start further away are drawn freehand.
 - The ruler is a guide, not a marking: it is never stored in the score or exported. Hiding it, or
   leaving markup mode, removes it from the screen.
 
@@ -270,8 +333,9 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 ### Drawing and colours under filters
 
 - Ink keeps its own colour under sepia. Under dark, ink darker than mid grey is drawn light (its
-  lightness inverted, hue kept) so a black pen stays legible on a dark page; highlighter colours
-  keep their hue.
+  lightness inverted, hue kept) so a black pen stays legible on a dark page. Multiplying a dark
+  page would hide the highlighter, so under dark it is laid over the page at 40% instead, keeping
+  its hue and leaving the light notation readable through it.
 
 ### Speed (P5)
 
@@ -311,11 +375,18 @@ layers, selection, shapes, and exporting the result. Written for milestone M4.
 | INK-24 | Markup mode, touch lock on | a touch taps the right third, pinches, or (with *Draw with Touch*) draws | nothing happens; a pen still draws |
 | INK-25 | The second swatch selected | the player picks the palette's lavender | the second swatch becomes lavender and the active tool draws in it |
 | INK-26 | The palette | a colour that isn't one of its 30 is asked for | it is refused |
-| INK-27 | The ruler shown horizontally across the page | a pen stroke starts 5 pt from its edge and wobbles along it | the stored stroke is a straight line along the edge |
+| INK-27 | The ruler shown across the screen | a pen stroke starts 5 pixels from its edge and wobbles along it | the stored stroke is a straight line along the edge |
+| INK-29 | The default highlighter | a horizontal and a vertical stroke and a tap are drawn | the horizontal band is three times as thick as the vertical one, ends are cut vertically, the tap is an upright rectangle |
+| INK-30 | *Round highlighter ends* on | a highlighter stroke is drawn | it has round ends and the same thickness in every direction; strokes drawn before keep the chisel |
+| INK-31 | The pen just lifted | a touch starts 20 ms later, then another 200 ms later | the first is ignored, the second turns or zooms as usual |
+| INK-32 | Pen swatches changed | the highlighter is chosen | its own swatches and palette show; picking from its palette doesn't change the pen's |
 | INK-28 | The pen with white picked | a stroke is drawn | it is a whiteout stroke |
-| INK-19 | Pen red, highlighter yellow | the player picks blue with the highlighter active | new highlighter strokes are blue at the highlighter's translucency; the pen is still red |
+| INK-33 | The text tool, a page 612 pt wide | a long note is typed, and a short one is placed 20 pt from the right edge | the long note wraps at 526 pt (86%); the short one is moved left so its right side meets the page edge; neither crosses an edge |
+| INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
-INK-27 comes with the ruler. INK-20 to INK-23 are `scorecraft-input` tests of the palm filter the shell routes pointers through. INK-1 to INK-3, INK-8 to INK-13, INK-16 to INK-19, INK-24 to INK-26 and INK-28 are engine tests
+INK-33 comes with text notes (M4 part 2). INK-29 and INK-30 are `scorecraft-ink` and
+`scorecraft-render` tests; INK-31 is a
+`scorecraft-input` test; INK-32 is an engine test. INK-20 to INK-23 are `scorecraft-input` tests of the palm filter the shell routes pointers through. INK-1 to INK-3, INK-8 to INK-13, INK-16 to INK-19, INK-24 to INK-28 are engine tests
 (`crates/engine/src/annotate_cmds.rs`, `crates/engine/tests/panic_hunt.rs`); INK-4 and INK-15 are
 `scorecraft-ink` tests; INK-5 to INK-7, INK-11 and INK-14 are `scorecraft-render` tests. Text,
 stamps, layers, selection, shapes and export get their acceptance tests when their part of M4
@@ -332,24 +403,25 @@ lands, and are added to this table.
 
 ## Open questions
 
-- Does enScore's highlighter build up where two strokes overlap, and does it have flat or round
-  ends? (S8 says only that it blends "like real ones".)
-- Eraser size and whether it is adjustable; whether the pixel eraser leaves the stroke's pressure
-  profile intact.
-- Which symbols the stamp palette offers by default, and whether custom stamps can be made from a
-  selection (the feature map's ANNO-9 wording).
-- Whether rejecting touches for a moment after the pen lifts (a hand landing as the pen comes
-  off) is worth the delay it adds to a deliberate tap; ScoreCraft starts without such a delay.
-- How enScore's ruler is placed, moved and turned, and how strokes follow it; ANNO-17 is
-  ScoreCraft's own design until observed.
-- Whether pen and highlighter share the eight swatches or each has its own row; ScoreCraft shares
-  one row, each tool remembering its own selected swatch.
-- What the stylus shortcut switches to by default.
+- Whether two separate enScore highlighter strokes darken where they overlap (screenshot 26 shows
+  only strokes crossing themselves). ScoreCraft multiplies again, as two real passes would.
+- Whether enScore's chisel stays upright on screen or on the page when a page is rotated.
+- How enScore sets a note's maximum width (a share of the page, as measured, or a fixed size),
+  and whether it has colour or font options (none show in screenshot 29).
+- How strokes follow enScore's ruler edges; ANNO-17's snapping is ScoreCraft's own until observed.
+
+Answered by the owner on 2026-10-31: highlighter build-up within a stroke and its ends (chisel,
+screenshot 26; round ends as a setting); the eraser's size (the one width slider) and the pressure
+profile (kept); stamps (ScoreCraft's own: Edwin dynamics and hairpins); a short delay after the
+pen lifts (50 ms); the ruler (full screen width, horizontal, no turning yet); separate highlighter
+swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 ## Revision history
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | ANNO-8 from the owner's observation of enScore's text tool (screenshot 29): Type with Touch, new-note box and handle, plain text with no background, maximum width with wrapping, notes kept inside the page; text size 8–36 pt, 12 pt by default, on the size slider; INK-33 |
+| 2026-10-31 | minor | Owner's answers to the open questions: chisel highlighter at full strength with a round-ends setting; one slider for eraser size, pressure kept by the pixel eraser; stamps are ScoreCraft's own (Edwin dynamics, hairpins with handles); 50 ms palm delay after the pen lifts; the ruler spans the screen, horizontal, turning moved to ANNO-18; separate highlighter swatches and palette; stylus shortcut switches pen and eraser; INK-29..32 |
 | 2026-10-31 | minor | Owner's corrections: the padlock is a touch lock; the ruler stays (ANNO-17) with its button hidden by default; eraser options in the bar; width per tool; changeable swatches with a fixed 30-colour palette that replaces the selected swatch; whiteout is the pen in white |
 | 2026-10-31 | minor | Owner's direction: palm rejection while the pen draws, without disturbing taps and two-finger zoom; platform behaviour noted |
 | 2026-10-31 | minor | Owner's direction: pen-only by default with *Draw with Touch*, the toolbar, eight swatches, custom colour and width slider, one eraser with two modes, rectangle select (move, copy, delete, snip, shortcut) replaces the lasso, no ruler |

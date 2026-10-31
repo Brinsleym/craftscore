@@ -105,6 +105,7 @@ pub fn sample_library(seed: u64, scores: usize) -> Library {
                     tool: Tool::Pen,
                     color: Color::RED,
                     width: 1.5,
+                    nib: Default::default(),
                     points: (0..20)
                         .map(|k| InkPoint {
                             x: 100.0 + k as f32 * 3.0,
@@ -123,6 +124,7 @@ pub fn sample_library(seed: u64, scores: usize) -> Library {
                     tool: Tool::Highlighter,
                     color: Color::HIGHLIGHT,
                     width: 10.0,
+                    nib: Default::default(),
                     points: vec![InkPoint::new(50.0, 300.0), InkPoint::new(250.0, 300.0)],
                 }),
             ),

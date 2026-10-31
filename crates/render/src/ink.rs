@@ -19,6 +19,9 @@ use scorecraft_pdf::{Bitmap, PageGeometry};
 
 use crate::Filter;
 
+/// The highlighter's strength laid over a dark page.
+const DARK_HIGHLIGHT: f32 = 0.4;
+
 /// The ink a page carries, as the page cache keeps it: the strokes in drawing order and a key
 /// that changes whenever they do (the engine fingerprints ids and stamps).
 #[derive(Debug, Clone)]
@@ -96,7 +99,12 @@ pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve
         return;
     };
     let color = ink_color(s.tool, s.color, filter);
-    let alpha = f32::from(color.a) / 255.0;
+    let mut alpha = f32::from(color.a) / 255.0;
+    if s.tool == Tool::Highlighter && filter == Filter::Dark {
+        // Multiplying a dark page would hide the highlighter; lay it over at 40% instead, so the
+        // light notation still reads through it.
+        alpha = alpha.min(DARK_HIGHLIGHT);
+    }
     let src = [color.r, color.g, color.b].map(|c| f32::from(c) / 255.0);
     let multiply = s.tool == Tool::Highlighter && filter != Filter::Dark;
     for row in 0..mask.h {
@@ -377,6 +385,7 @@ mod tests {
             tool,
             color,
             width,
+            nib: Default::default(),
             points: pts.iter().map(|&(x, y)| InkPoint::new(x, y)).collect(),
         }
     }
@@ -465,6 +474,37 @@ mod tests {
             &PressureCurve::default(),
         );
         assert!(px(&bm, 20, 50)[2] < once[2]);
+    }
+
+    #[test]
+    fn full_strength_highlighter_takes_the_swatch_colour_on_white_and_shows_on_dark() {
+        let yellow = Color::rgb(0xff, 0xe9, 0x4f);
+        let mut s = stroke(
+            Tool::Highlighter,
+            yellow,
+            10.0,
+            &[(10.0, 50.0), (90.0, 50.0)],
+        );
+        s.nib = scorecraft_doc::Nib::Chisel;
+        let mut bm = page(100, 100, WHITE);
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &s,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert_eq!(px(&bm, 50, 50), [0xff, 0xe9, 0x4f, 255]);
+        let mut dark = page(100, 100, [0x1c, 0x1c, 0x1c, 255]);
+        draw_stroke(
+            &mut dark,
+            flip(),
+            &s,
+            Filter::Dark,
+            &PressureCurve::default(),
+        );
+        let p = px(&dark, 50, 50);
+        assert!(p[0] > 100 && p[0] < 0xff, "laid over at 40%: {p:?}");
     }
 
     #[test]

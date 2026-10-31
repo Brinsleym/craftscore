@@ -1,7 +1,7 @@
 //! Property tests: any samples, widths and eraser paths give finite geometry and never panic.
 
 use proptest::prelude::*;
-use scorecraft_doc::{Color, InkPoint, Stroke, Tool};
+use scorecraft_doc::{Color, InkPoint, Nib, Stroke, Tool};
 use scorecraft_geom::Point;
 use scorecraft_ink::{
     Erased, MAX_OUTLINE_POINTS, PressureCurve, erase, outline, prepare, smooth, touches,
@@ -35,14 +35,19 @@ fn tool() -> impl Strategy<Value = Tool> {
 }
 
 fn stroke() -> impl Strategy<Value = Stroke> {
-    (tool(), any_f32(), prop::collection::vec(point(), 0..60)).prop_map(|(tool, width, points)| {
-        Stroke {
+    (
+        tool(),
+        any_f32(),
+        any::<bool>(),
+        prop::collection::vec(point(), 0..60),
+    )
+        .prop_map(|(tool, width, chisel, points)| Stroke {
             tool,
             color: Color::BLACK,
             width,
+            nib: if chisel { Nib::Chisel } else { Nib::Round },
             points,
-        }
-    })
+        })
 }
 
 proptest! {

@@ -74,6 +74,12 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   commands for the tools, swatches, Draw with Touch, touch lock, ruler and `annotate.stroke` with
   one undo step per gesture; ink shows in the reader frame and `view.render` (ANNO-1..3, -5..7,
   -14, -15, -17 partial).
+- **Owner's answers (2026-10-31):** chisel highlighter at full strength with a round-ends
+  setting, separate highlighter swatches and palette, a 50 ms palm grace after the pen lifts,
+  the ruler as a band across the screen (turning it is ANNO-18, last of all), stylus shortcut
+  pen ↔ eraser, stamps as ScoreCraft's own (Edwin dynamics and hairpins), and the observed text
+  tool (Type with Touch, wrapping, notes kept inside the page): all in the spec; the highlighter,
+  colours, palm grace and ruler changes are in the engine.
 - **Missing:** the pen in the app (live ink, pen input and pressure from the platform, the
   toolbar), text notes, stamps, layer commands, presets, rectangle select, shapes, pen
   shortcuts, export with ink.

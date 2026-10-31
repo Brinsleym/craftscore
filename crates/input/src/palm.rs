@@ -67,12 +67,18 @@ pub struct Filtered {
 /// The most pointers tracked at once; more are ignored (a hostile or broken driver).
 pub const MAX_POINTERS: usize = 64;
 
+/// A touch that starts this soon after the last pen lifts is a hand landing, not a tap (spec
+/// ANNO-14): short enough that no deliberate tap is lost.
+pub const PEN_LIFT_GRACE_MS: u64 = 50;
+
 /// Tracks pens and touches to decide which touch events to drop.
 #[derive(Debug, Clone, Default)]
 pub struct PalmFilter {
     pens: BTreeSet<u64>,
     /// Touches down now, and whether each is being ignored.
     touches: BTreeMap<u64, bool>,
+    /// When the last pen lifted (event time, milliseconds).
+    pen_lifted_ms: Option<u64>,
 }
 
 impl PalmFilter {
@@ -85,8 +91,18 @@ impl PalmFilter {
         !self.pens.is_empty()
     }
 
-    /// Decides one event from pointer `id` of `kind`.
-    pub fn event(&mut self, id: u64, kind: PointerKind, phase: Phase) -> Filtered {
+    /// Whether a touch starting at `now_ms` is ignored: a pen is down, or one lifted less than
+    /// [`PEN_LIFT_GRACE_MS`] ago. A clock that went backwards counts as just after the lift.
+    fn rejects_new_touch(&self, now_ms: u64) -> bool {
+        self.pen_down()
+            || self
+                .pen_lifted_ms
+                .is_some_and(|t| now_ms.saturating_sub(t) < PEN_LIFT_GRACE_MS)
+    }
+
+    /// Decides one event from pointer `id` of `kind`, at event time `now_ms` (milliseconds, any
+    /// monotonic origin).
+    pub fn event(&mut self, id: u64, kind: PointerKind, phase: Phase, now_ms: u64) -> Filtered {
         let pass = Filtered {
             pass: true,
             cancel: Vec::new(),
@@ -114,12 +130,15 @@ impl PalmFilter {
                 Phase::Move => pass,
                 Phase::Up | Phase::Cancel => {
                     self.pens.remove(&id);
+                    if self.pens.is_empty() {
+                        self.pen_lifted_ms = Some(now_ms);
+                    }
                     pass
                 }
             },
             PointerKind::Touch => match phase {
                 Phase::Down => {
-                    let ignored = self.pen_down();
+                    let ignored = self.rejects_new_touch(now_ms);
                     if self.touches.len() < MAX_POINTERS || self.touches.contains_key(&id) {
                         self.touches.insert(id, ignored);
                     } else {
@@ -166,6 +185,7 @@ impl PalmFilter {
     pub fn reset(&mut self) {
         self.pens.clear();
         self.touches.clear();
+        self.pen_lifted_ms = None;
     }
 }
 
@@ -173,81 +193,119 @@ impl PalmFilter {
 mod tests {
     use super::*;
     use PointerKind::*;
+    use std::cell::Cell;
+
+    thread_local! {
+        static NOW: Cell<u64> = const { Cell::new(1_000) };
+    }
+
+    /// A clock that moves a second per event, so the post-lift grace never applies by accident.
+    fn tick() -> u64 {
+        NOW.with(|n| {
+            n.set(n.get() + 1_000);
+            n.get()
+        })
+    }
 
     #[test]
     fn ink_20_touches_while_the_pen_draws_are_ignored() {
         let mut f = PalmFilter::new();
-        assert!(f.event(1, Pen, Phase::Down).pass);
-        assert!(!f.event(7, Touch, Phase::Down).pass);
-        assert!(!f.event(7, Touch, Phase::Move).pass);
-        assert!(f.event(1, Pen, Phase::Move).pass);
+        assert!(f.event(1, Pen, Phase::Down, tick()).pass);
+        assert!(!f.event(7, Touch, Phase::Down, tick()).pass);
+        assert!(!f.event(7, Touch, Phase::Move, tick()).pass);
+        assert!(f.event(1, Pen, Phase::Move, tick()).pass);
         // The pen lifts before the hand: the hand stays ignored until it lifts.
-        assert!(f.event(1, Pen, Phase::Up).pass);
-        assert!(!f.event(7, Touch, Phase::Move).pass);
-        assert!(!f.event(7, Touch, Phase::Up).pass);
+        assert!(f.event(1, Pen, Phase::Up, tick()).pass);
+        assert!(!f.event(7, Touch, Phase::Move, tick()).pass);
+        assert!(!f.event(7, Touch, Phase::Up, tick()).pass);
         // A new touch after that is a real one.
-        assert!(f.event(8, Touch, Phase::Down).pass);
+        assert!(f.event(8, Touch, Phase::Down, tick()).pass);
     }
 
     #[test]
     fn ink_21_pen_down_cancels_a_touch_in_progress() {
         let mut f = PalmFilter::new();
-        assert!(f.event(3, Touch, Phase::Down).pass);
-        let r = f.event(1, Pen, Phase::Down);
+        assert!(f.event(3, Touch, Phase::Down, tick()).pass);
+        let r = f.event(1, Pen, Phase::Down, tick());
         assert!(r.pass);
         assert_eq!(r.cancel, vec![3]);
         // Its lift is not a tap.
-        assert!(!f.event(3, Touch, Phase::Up).pass);
+        assert!(!f.event(3, Touch, Phase::Up, tick()).pass);
     }
 
     #[test]
     fn ink_22_two_finger_pinch_without_a_pen() {
         let mut f = PalmFilter::new();
         for id in [1, 2] {
-            assert!(f.event(id, Touch, Phase::Down).pass);
+            assert!(f.event(id, Touch, Phase::Down, tick()).pass);
         }
         for _ in 0..5 {
-            assert!(f.event(1, Touch, Phase::Move).pass);
-            assert!(f.event(2, Touch, Phase::Move).pass);
+            assert!(f.event(1, Touch, Phase::Move, tick()).pass);
+            assert!(f.event(2, Touch, Phase::Move, tick()).pass);
         }
-        assert!(f.event(1, Touch, Phase::Up).pass);
-        assert!(f.event(2, Touch, Phase::Up).pass);
+        assert!(f.event(1, Touch, Phase::Up, tick()).pass);
+        assert!(f.event(2, Touch, Phase::Up, tick()).pass);
         // Pen, then zoom: no switch needed.
-        f.event(9, Pen, Phase::Down);
-        f.event(9, Pen, Phase::Up);
-        assert!(f.event(4, Touch, Phase::Down).pass);
-        assert!(f.event(5, Touch, Phase::Down).pass);
+        f.event(9, Pen, Phase::Down, tick());
+        f.event(9, Pen, Phase::Up, tick());
+        assert!(f.event(4, Touch, Phase::Down, tick()).pass);
+        assert!(f.event(5, Touch, Phase::Down, tick()).pass);
     }
 
     #[test]
     fn ink_23_platform_palm_cancel_undoes_the_touch() {
         let mut f = PalmFilter::new();
-        f.event(6, Touch, Phase::Down);
-        let r = f.event(6, Touch, Phase::Cancel);
+        f.event(6, Touch, Phase::Down, tick());
+        let r = f.event(6, Touch, Phase::Cancel, tick());
         assert!(!r.pass);
         assert_eq!(r.cancel, vec![6]);
-        assert_eq!(f.event(6, Touch, Phase::Cancel), Filtered::default());
+        assert_eq!(
+            f.event(6, Touch, Phase::Cancel, tick()),
+            Filtered::default()
+        );
     }
 
     #[test]
     fn mouse_always_passes_and_eraser_counts_as_pen() {
         let mut f = PalmFilter::new();
-        f.event(2, Eraser, Phase::Down);
+        f.event(2, Eraser, Phase::Down, tick());
         assert!(f.pen_down());
-        assert!(f.event(0, Mouse, Phase::Down).pass);
-        assert!(!f.event(5, Touch, Phase::Down).pass);
-        f.event(2, Eraser, Phase::Cancel);
+        assert!(f.event(0, Mouse, Phase::Down, tick()).pass);
+        assert!(!f.event(5, Touch, Phase::Down, tick()).pass);
+        f.event(2, Eraser, Phase::Cancel, tick());
         assert!(!f.pen_down());
         f.reset();
-        assert!(f.event(5, Touch, Phase::Move).pass);
+        assert!(f.event(5, Touch, Phase::Move, tick()).pass);
+    }
+
+    #[test]
+    fn ink_31_touch_just_after_the_pen_lifts_is_ignored() {
+        let mut f = PalmFilter::new();
+        f.event(1, Pen, Phase::Down, 10_000);
+        f.event(1, Pen, Phase::Up, 10_100);
+        assert!(
+            !f.event(5, Touch, Phase::Down, 10_120).pass,
+            "20 ms after: a landing hand"
+        );
+        assert!(!f.event(5, Touch, Phase::Up, 10_200).pass);
+        assert!(
+            f.event(6, Touch, Phase::Down, 10_300).pass,
+            "200 ms after: a real tap"
+        );
+        // A clock that went backwards still counts as just after the lift.
+        f.event(1, Pen, Phase::Down, 20_000);
+        f.event(1, Pen, Phase::Up, 20_010);
+        assert!(!f.event(7, Touch, Phase::Down, 19_000).pass);
+        f.reset();
+        assert!(f.event(8, Touch, Phase::Down, 19_000).pass);
     }
 
     #[test]
     fn floods_of_pointers_are_bounded() {
         let mut f = PalmFilter::new();
         for id in 0..1000 {
-            f.event(id, Touch, Phase::Down);
-            f.event(id + 10_000, Pen, Phase::Down);
+            f.event(id, Touch, Phase::Down, tick());
+            f.event(id + 10_000, Pen, Phase::Down, tick());
         }
         assert!(f.touches.len() <= MAX_POINTERS);
         assert!(f.pens.len() <= MAX_POINTERS);

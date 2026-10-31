@@ -1,6 +1,6 @@
 # File-format parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (library format v1 written down as built in M1; earlier: corpus results: PDF-1 done, PDF-2 and PDF-3 partial; earlier: PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (strokes record their nib; earlier: library format v1 written down as built in M1; earlier: corpus results: PDF-1 done, PDF-2 and PDF-3 partial; earlier: PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Which files ScoreCraft reads and writes, against what enScore's public listings say it handles.
 Status: **done** (with round-trip or corpus tests), **partial**, **missing**. Directions: R read,
@@ -49,7 +49,10 @@ imported files. Version 1, as built in M1 (`crates/format`, 2026-10-31):
 - **Ids** are UUID v7 strings; times are Unix milliseconds; colours are `#rrggbbaa`; rotations
   are degrees; blob ids are 64 hex digits; JSON keys are camelCase.
 - **Annotations** are in PDF user space of the source page, so page edits never move them.
-  Annotation objects carry `"type"`: `stroke`, `text`, `stamp`, `snip` or `shortcut`.
+  Annotation objects carry `"type"`: `stroke`, `text`, `stamp`, `snip` or `shortcut`. A
+  stroke has `tool` (`pen`, `highlighter`, `whiteout`), `color`, `width`, `points` and, for a
+  chisel highlighter, `"nib": "chisel"` (left out for the round nib, so older files read as
+  round).
 - **Writes** are atomic per file (temp file, flush, rename). A save that changes more than one
   file writes every new record to `journal/pending.json` first; on open, a journal is replayed
   and removed, so the library is always as before or after a save. Only files whose bytes
@@ -122,6 +125,7 @@ count only; see [development](development.md#test-corpora)).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Library format: strokes record their nib (`chisel` for the highlighter's default), optional and backward compatible |
 | 2026-10-31 | patch | Library format v1 as built (M1): records, ink per page, journal, verify and repair |
 | 2026-10-31 | patch | Corpus results: PDF-1 done; PDF-2 and PDF-3 partial, with the renderer gaps listed |
 | 2026-10-31 | patch | PDF reading is partial: the adapter opens, renders and extracts text |

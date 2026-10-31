@@ -265,6 +265,7 @@ mod tests {
             tool,
             color: Color::BLACK,
             width: 2.0,
+            nib: Default::default(),
             points: pts
                 .iter()
                 .map(|&(x, y, p)| InkPoint {

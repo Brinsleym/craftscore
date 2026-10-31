@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use scorecraft_doc::{InkPoint, Stroke};
+use scorecraft_doc::{InkPoint, Nib, Stroke};
 use scorecraft_geom::{Point, Rect};
 
 use crate::{MAX_POINTS, PressureCurve, Sample, smooth};
@@ -173,7 +173,34 @@ pub fn touches(stroke: &Stroke, path: &[Point], radius: f64, curve: &PressureCur
         0.0
     });
     let grid = PathGrid::new(path, radius + width);
-    shape_touched(&samples, &grid, radius)
+    match stroke.nib {
+        Nib::Round => shape_touched(&samples, &grid, radius),
+        Nib::Chisel => polygons_touched(&crate::outline(stroke, curve).polygons, &grid, radius),
+    }
+}
+
+/// Whether any eraser position, as a disc of `radius`, touches one of `polys` (convex,
+/// counter-clockwise): inside it, or within `radius` of an edge.
+fn polygons_touched(polys: &[Vec<Point>], grid: &PathGrid, radius: f64) -> bool {
+    polys.iter().any(|poly| {
+        let Some(b) = Rect::bounding(poly.iter().copied()) else {
+            return false;
+        };
+        grid.any_in(b.inflate(radius), |p| {
+            let mut inside = true;
+            let mut near = false;
+            for (i, a) in poly.iter().enumerate() {
+                let c = poly.get((i + 1) % poly.len()).unwrap_or(a);
+                if (*c - *a).cross(p - *a) < 0.0 {
+                    inside = false;
+                }
+                if segment_distance(p, *a, *c).0 <= radius {
+                    near = true;
+                }
+            }
+            inside || near
+        })
+    })
 }
 
 /// The stroke's samples with extra ones (pressure and time interpolated) so none are further
@@ -238,9 +265,25 @@ pub fn erase(stroke: &Stroke, path: &[Point], radius: f64, curve: &PressureCurve
         .iter()
         .map(|p| {
             let at = Point::new(f64::from(p.x), f64::from(p.y));
-            let r = radius + half(p);
-            let b = Rect::new(at.x, at.y, at.x, at.y).inflate(r);
-            grid.any_in(b, |q| q.distance(at) <= r)
+            let h = half(p);
+            match stroke.nib {
+                // The disc of the round nib at this sample.
+                Nib::Round => {
+                    let r = radius + h;
+                    let b = Rect::new(at.x, at.y, at.x, at.y).inflate(r);
+                    grid.any_in(b, |q| q.distance(at) <= r)
+                }
+                // The chisel's upright rectangle at this sample.
+                Nib::Chisel => {
+                    let nib = Rect::new(
+                        at.x - crate::chisel_half_width(h),
+                        at.y - h,
+                        at.x + crate::chisel_half_width(h),
+                        at.y + h,
+                    );
+                    grid.any_in(nib.inflate(radius), |q| nib.clamp(q).distance(q) <= radius)
+                }
+            }
         })
         .collect();
     if !erased.iter().any(|e| *e) {
@@ -317,6 +360,7 @@ mod tests {
             tool: Tool::Pen,
             color: Color::RED,
             width: 2.0,
+            nib: Default::default(),
             points: vec![InkPoint::new(x0, y), InkPoint::new(x1, y)],
         }
     }
@@ -377,6 +421,27 @@ mod tests {
         let _ = erase(&s, &path, f64::INFINITY, &c());
         let _ = erase(&s, &path, -1.0, &c());
         assert!(touches(&s, &[Point::new(5.0, 0.0)], f64::NAN, &c()));
+    }
+
+    #[test]
+    fn chisel_strokes_are_hit_by_their_real_shape() {
+        let mut s = line(0.0, 100.0, 0.0);
+        s.width = 30.0;
+        s.nib = Nib::Chisel;
+        // 15 pt above and below the line, only 5 pt to either side of its ends.
+        assert!(touches(&s, &[Point::new(50.0, 14.0)], 0.5, &c()));
+        assert!(!touches(&s, &[Point::new(108.0, 0.0)], 0.5, &c()));
+        assert!(touches(&s, &[Point::new(104.0, 0.0)], 0.5, &c()));
+        let Erased::Split(pieces) = erase(
+            &s,
+            &[Point::new(50.0, 40.0), Point::new(50.0, -40.0)],
+            2.0,
+            &c(),
+        ) else {
+            panic!("expected a split");
+        };
+        assert_eq!(pieces.len(), 2);
+        assert!(pieces.iter().all(|p| p.nib == Nib::Chisel));
     }
 
     #[test]

@@ -7,7 +7,7 @@
 //! (no build-up), and a renderer needs nothing but a polygon filler. Convex pieces also triangulate
 //! as fans for GPU drawing.
 
-use scorecraft_doc::{Stroke, Tool};
+use scorecraft_doc::{Nib, Stroke};
 use scorecraft_geom::{Point, Rect, Vec2};
 
 use crate::{PressureCurve, Sample, smooth};
@@ -66,31 +66,92 @@ impl Outline {
     }
 }
 
-/// The outline of `stroke` with pressure mapped by `curve`. Pen and whiteout have round ends;
-/// the highlighter has flat ends (a single-sample highlighter is a square).
+/// The outline of `stroke` with pressure mapped by `curve`. A round nib (pen, whiteout, a
+/// highlighter with round ends) has round ends and joins; a chisel (the highlighter's default) is
+/// an upright rectangle a third as wide as it is tall swept along the stroke, so its ends are cut
+/// vertically and a tap is the rectangle itself (spec ANNO-3).
 pub fn outline(stroke: &Stroke, curve: &PressureCurve) -> Outline {
     let samples = smooth(stroke, curve);
-    let round_ends = stroke.tool != Tool::Highlighter;
-    build(&samples, round_ends)
+    match stroke.nib {
+        Nib::Round => build_round(&samples),
+        Nib::Chisel => build_chisel(&samples),
+    }
 }
 
-fn build(s: &[Sample], round_ends: bool) -> Outline {
+/// Half the chisel's width for a half-height `half`: the nib is a third as wide as it is tall.
+pub fn chisel_half_width(half: f64) -> f64 {
+    half / 3.0
+}
+
+fn chisel_corners(s: &Sample) -> [Point; 4] {
+    let (hw, hh) = (chisel_half_width(s.half), s.half);
+    let c = s.p;
+    [
+        Point::new(c.x - hw, c.y - hh),
+        Point::new(c.x + hw, c.y - hh),
+        Point::new(c.x + hw, c.y + hh),
+        Point::new(c.x - hw, c.y + hh),
+    ]
+}
+
+fn build_chisel(s: &[Sample]) -> Outline {
+    let mut out = Outline::default();
+    if let [only] = s {
+        out.push(chisel_corners(only).to_vec());
+        return out;
+    }
+    for w in s.windows(2) {
+        let [a, b] = w else { continue };
+        // The nib swept from one sample to the next is the convex hull of its two positions.
+        let mut pts: Vec<Point> = chisel_corners(a).to_vec();
+        pts.extend(chisel_corners(b));
+        out.push(convex_hull(pts));
+    }
+    out
+}
+
+/// The convex hull of `pts` (monotone chain), counter-clockwise.
+fn convex_hull(mut pts: Vec<Point>) -> Vec<Point> {
+    pts.retain(|p| p.is_finite());
+    pts.sort_by(|a, b| a.x.total_cmp(&b.x).then(a.y.total_cmp(&b.y)));
+    pts.dedup();
+    if pts.len() < 3 {
+        return pts;
+    }
+    let cross = |o: Point, a: Point, b: Point| (a - o).cross(b - o);
+    let mut hull: Vec<Point> = Vec::with_capacity(pts.len() * 2);
+    for pass in 0..2 {
+        let start = hull.len();
+        let iter: Box<dyn Iterator<Item = &Point>> = if pass == 0 {
+            Box::new(pts.iter())
+        } else {
+            Box::new(pts.iter().rev())
+        };
+        for p in iter {
+            while hull.len() >= start + 2 {
+                let (Some(&o), Some(&a)) = (hull.get(hull.len() - 2), hull.last()) else {
+                    break;
+                };
+                if cross(o, a, *p) <= 0.0 {
+                    hull.pop();
+                } else {
+                    break;
+                }
+            }
+            hull.push(*p);
+        }
+        // The last point of each half is the first of the other.
+        hull.pop();
+    }
+    hull
+}
+
+fn build_round(s: &[Sample]) -> Outline {
     let mut out = Outline::default();
     match s {
         [] => return out,
         [only] => {
-            if round_ends {
-                out.push(disc(only.p, only.half));
-            } else {
-                let h = only.half;
-                let c = only.p;
-                out.push(vec![
-                    Point::new(c.x - h, c.y - h),
-                    Point::new(c.x + h, c.y - h),
-                    Point::new(c.x + h, c.y + h),
-                    Point::new(c.x - h, c.y + h),
-                ]);
-            }
+            out.push(disc(only.p, only.half));
             return out;
         }
         _ => {}
@@ -123,10 +184,8 @@ fn build(s: &[Sample], round_ends: bool) -> Outline {
             }
         }
     }
-    if round_ends {
-        for end in [s.first(), s.get(n - 1)].into_iter().flatten() {
-            out.push(disc(end.p, end.half));
-        }
+    for end in [s.first(), s.get(n - 1)].into_iter().flatten() {
+        out.push(disc(end.p, end.half));
     }
     if out.is_empty() {
         // Every sample at one place: a dot.
@@ -161,13 +220,14 @@ fn signed_area(poly: &[Point]) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scorecraft_doc::{Color, InkPoint};
+    use scorecraft_doc::{Color, InkPoint, Tool};
 
     fn stroke(tool: Tool, pts: &[(f32, f32)]) -> Stroke {
         Stroke {
             tool,
             color: Color::BLACK,
             width: 4.0,
+            nib: Default::default(),
             points: pts.iter().map(|&(x, y)| InkPoint::new(x, y)).collect(),
         }
     }
@@ -188,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn pen_ends_are_round_highlighter_ends_flat() {
+    fn round_and_chisel_ends() {
         let pen = outline(
             &stroke(Tool::Pen, &[(0.0, 0.0), (10.0, 0.0)]),
             &PressureCurve::default(),
@@ -198,28 +258,54 @@ mod tests {
             (b.x0 - -2.0).abs() < 1e-6 && (b.x1 - 12.0).abs() < 1e-6,
             "{b:?}"
         );
-        let hl = outline(
-            &stroke(Tool::Highlighter, &[(0.0, 0.0), (10.0, 0.0)]),
-            &PressureCurve::default(),
-        );
-        let b = hl.bounds.unwrap();
+        let mut hl = stroke(Tool::Highlighter, &[(0.0, 0.0), (12.0, 0.0)]);
+        hl.width = 12.0;
+        hl.nib = Nib::Chisel;
+        let b = outline(&hl, &PressureCurve::default()).bounds.unwrap();
+        // Half-width 2 sideways, half-height 6 up and down; ends cut vertically.
         assert!(
-            (b.x0 - 0.0).abs() < 1e-6 && (b.x1 - 10.0).abs() < 1e-6,
+            (b.x0 - -2.0).abs() < 1e-6 && (b.x1 - 14.0).abs() < 1e-6,
             "{b:?}"
         );
-        assert!((b.y0 - -2.0).abs() < 1e-6 && (b.y1 - 2.0).abs() < 1e-6);
+        assert!(
+            (b.y0 - -6.0).abs() < 1e-6 && (b.y1 - 6.0).abs() < 1e-6,
+            "{b:?}"
+        );
     }
 
     #[test]
-    fn dots() {
-        let pen = outline(&stroke(Tool::Pen, &[(5.0, 5.0)]), &PressureCurve::default());
-        assert_eq!(pen.polygons.len(), 1);
-        let hl = outline(
-            &stroke(Tool::Highlighter, &[(5.0, 5.0)]),
-            &PressureCurve::default(),
+    fn ink_29_chisel_is_thick_across_and_thin_up_and_down() {
+        let area = |pts: &[(f32, f32)]| {
+            let mut s = stroke(Tool::Highlighter, pts);
+            s.width = 12.0;
+            s.nib = Nib::Chisel;
+            outline(&s, &PressureCurve::default())
+        };
+        let across = area(&[(0.0, 0.0), (30.0, 0.0)]).bounds.unwrap();
+        let down = area(&[(0.0, 0.0), (0.0, 30.0)]).bounds.unwrap();
+        assert!((across.height() - 12.0).abs() < 1e-6);
+        assert!(
+            (down.width() - 4.0).abs() < 1e-6,
+            "three times thinner: {down:?}"
         );
-        assert_eq!(hl.polygons[0].len(), 4);
-        assert!(outline(&stroke(Tool::Pen, &[]), &PressureCurve::default()).is_empty());
+        let tap = area(&[(5.0, 5.0)]);
+        assert_eq!(tap.polygons.len(), 1);
+        let t = tap.bounds.unwrap();
+        assert!((t.width() - 4.0).abs() < 1e-6 && (t.height() - 12.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn hull_is_convex_and_counter_clockwise() {
+        let h = convex_hull(vec![
+            Point::new(0.0, 0.0),
+            Point::new(2.0, 0.0),
+            Point::new(1.0, 1.0),
+            Point::new(2.0, 2.0),
+            Point::new(0.0, 2.0),
+            Point::new(f64::NAN, 1.0),
+        ]);
+        assert_eq!(h.len(), 4);
+        assert!(signed_area(&h) > 0.0);
     }
 
     #[test]

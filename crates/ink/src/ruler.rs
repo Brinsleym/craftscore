@@ -3,13 +3,11 @@
 use scorecraft_doc::InkPoint;
 use scorecraft_geom::{Point, Vec2};
 
-/// A stroke that starts within this distance of the edge, in points, is ruled along it.
-pub const RULER_REACH: f64 = 12.0;
 /// The ruler's angle snaps to a multiple of 45° within this many degrees.
 pub const RULER_SNAP_DEGREES: f64 = 2.0;
 
-/// A straight edge through `origin` at `angle_deg` (counter-clockwise from the page's x axis, in
-/// page space).
+/// A straight edge through `origin` at `angle_deg` (counter-clockwise from the x axis), in any
+/// one coordinate space: the reader uses screen pixels, so the ruler stays put while pages turn.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ruler {
     pub origin: Point,
@@ -46,16 +44,20 @@ impl Ruler {
         (v.dot(d), v.cross(d).abs())
     }
 
-    /// `points` ruled along the edge when the first one is within [`RULER_REACH`] of it: a
-    /// straight two-sample stroke from the first sample's place on the edge to the last one's,
-    /// keeping their pressures and times. `None` when the stroke starts too far away (it stays
-    /// freehand).
-    pub fn rule(&self, points: &[InkPoint]) -> Option<Vec<InkPoint>> {
+    /// How far `p` is from the edge.
+    pub fn distance(&self, p: Point) -> f64 {
+        self.project(p).1
+    }
+
+    /// `points` ruled along the edge when the first one is within `reach` of it: a straight
+    /// two-sample stroke from the first sample's place on the edge to the last one's, keeping
+    /// their pressures and times. `None` when the stroke starts too far away (it stays freehand).
+    pub fn rule(&self, points: &[InkPoint], reach: f64) -> Option<Vec<InkPoint>> {
         let first = points.first()?;
         let last = points.last()?;
         let at = |p: &InkPoint| Point::new(f64::from(p.x), f64::from(p.y));
         let (s0, dist) = self.project(at(first));
-        if dist.is_nan() || dist > RULER_REACH {
+        if !(dist.is_finite() && reach.is_finite()) || dist > reach {
             return None;
         }
         let (s1, _) = self.project(at(last));
@@ -86,12 +88,12 @@ mod tests {
         let pts: Vec<InkPoint> = (0..50)
             .map(|i| InkPoint::new(10.0 + i as f32 * 4.0, 105.0 + (i % 3) as f32))
             .collect();
-        let ruled = r.rule(&pts).unwrap();
+        let ruled = r.rule(&pts, 12.0).unwrap();
         assert_eq!(ruled.len(), 2);
         assert!(ruled.iter().all(|p| (p.y - 100.0).abs() < 1e-4));
         assert!((ruled[0].x - 10.0).abs() < 1e-4 && (ruled[1].x - 206.0).abs() < 1e-4);
         let far: Vec<InkPoint> = pts.iter().map(|p| InkPoint::new(p.x, p.y + 50.0)).collect();
-        assert!(r.rule(&far).is_none());
+        assert!(r.rule(&far, 12.0).is_none());
     }
 
     #[test]
@@ -104,9 +106,9 @@ mod tests {
         assert!(Ruler::new(p, f64::NAN).is_none());
         let diag = Ruler::new(p, 45.0).unwrap();
         let ruled = diag
-            .rule(&[InkPoint::new(1.0, 1.0), InkPoint::new(10.0, 12.0)])
+            .rule(&[InkPoint::new(1.0, 1.0), InkPoint::new(10.0, 12.0)], 12.0)
             .unwrap();
         assert!((ruled[1].x - ruled[1].y).abs() < 1e-4);
-        assert!(diag.rule(&[]).is_none());
+        assert!(diag.rule(&[], 12.0).is_none());
     }
 }

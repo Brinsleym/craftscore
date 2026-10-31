@@ -10,10 +10,11 @@ use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-use scorecraft_doc::{Color, LayerId, Library, PageKey, Score, ScoreId, Stroke, Tool};
+use scorecraft_doc::{Color, LayerId, Library, Nib, PageKey, Score, ScoreId, Stroke, Tool};
 use scorecraft_geom::{PageBox, Point, Rect, Rotation};
 use scorecraft_ink::{
-    ERASER_WIDTHS, PALETTE, PressureCurve, Ruler, SWATCHES, ToolStyle, WHITEOUT_SWATCH,
+    ERASER_WIDTHS, HIGHLIGHTER_PALETTE, HIGHLIGHTER_SWATCHES, PALETTE, PressureCurve, Ruler,
+    SWATCHES, ToolStyle, WHITEOUT_SWATCH,
 };
 use scorecraft_pdf::Document;
 use scorecraft_render::ink::{page_box, visible_strokes};
@@ -76,13 +77,18 @@ pub struct Markup {
     pub mode: bool,
     /// Touch lock (the padlock): in markup mode, every touch is ignored (ANNO-14).
     pub touch_lock: bool,
-    /// The eight swatches, each a palette colour (ANNO-4).
-    pub swatches: [Color; 8],
+    /// The pen's and the highlighter's eight swatches, each from its own palette (ANNO-4).
+    pub pen_swatches: [Color; 8],
+    pub highlighter_swatches: [Color; 8],
     /// The selected swatch of the pen and of the highlighter.
     pub pen_swatch: usize,
     pub highlighter_swatch: usize,
-    /// The ruler, if shown: the file page it lies on and where (ANNO-17).
-    pub ruler: Option<(usize, Ruler)>,
+    /// The *Round highlighter ends* setting: new highlighter strokes get a round nib instead of
+    /// the chisel (ANNO-3).
+    pub highlighter_round: bool,
+    /// The ruler, if shown: the vertical centre of its band in viewport pixels (ANNO-17). It lies
+    /// on the screen, not on a page.
+    pub ruler: Option<f64>,
     pub curve: PressureCurve,
     /// The layer new markings go into, per score; the score's top layer when unset.
     pub layers: BTreeMap<ScoreId, LayerId>,
@@ -101,9 +107,11 @@ impl Default for Markup {
             pen_only: true,
             mode: false,
             touch_lock: false,
-            swatches: SWATCHES,
+            pen_swatches: SWATCHES,
+            highlighter_swatches: HIGHLIGHTER_SWATCHES,
             pen_swatch: 0,
-            highlighter_swatch: 4,
+            highlighter_swatch: 0,
+            highlighter_round: false,
             ruler: None,
             curve: PressureCurve::default(),
             layers: BTreeMap::new(),
@@ -144,12 +152,25 @@ impl Markup {
         }
     }
 
-    /// The selected swatch of the active tool, if it has one.
-    pub fn selected_swatch(&mut self) -> Option<&mut usize> {
+    /// The active tool's swatches, selected swatch and palette, if it has colours.
+    pub fn swatches_mut(&mut self) -> Option<(&mut [Color; 8], &mut usize, &'static [Color; 30])> {
         match self.tool {
-            MarkupTool::Pen => Some(&mut self.pen_swatch),
-            MarkupTool::Highlighter => Some(&mut self.highlighter_swatch),
+            MarkupTool::Pen => Some((&mut self.pen_swatches, &mut self.pen_swatch, &PALETTE)),
+            MarkupTool::Highlighter => Some((
+                &mut self.highlighter_swatches,
+                &mut self.highlighter_swatch,
+                &HIGHLIGHTER_PALETTE,
+            )),
             MarkupTool::Eraser => None,
+        }
+    }
+
+    /// The nib a new stroke of `tool` gets.
+    pub fn nib(&self, tool: Tool) -> Nib {
+        if tool == Tool::Highlighter && !self.highlighter_round {
+            Nib::Chisel
+        } else {
+            Nib::Round
         }
     }
 
@@ -183,21 +204,60 @@ impl Markup {
             "drawWithTouch": !self.pen_only,
             "mode": self.mode,
             "touchLock": self.touch_lock,
-            "swatches": self.swatches.iter().map(Color::to_string).collect::<Vec<_>>(),
+            "penSwatches": hex(&self.pen_swatches),
+            "highlighterSwatches": hex(&self.highlighter_swatches),
+            "penPalette": hex(&PALETTE),
+            "highlighterPalette": hex(&HIGHLIGHTER_PALETTE),
+            // The active tool's, as the toolbar shows them; none for the eraser.
+            "swatches": match self.tool {
+                MarkupTool::Pen => Some(hex(&self.pen_swatches)),
+                MarkupTool::Highlighter => Some(hex(&self.highlighter_swatches)),
+                MarkupTool::Eraser => None,
+            },
             "swatch": match self.tool {
                 MarkupTool::Pen => Some(self.pen_swatch + 1),
                 MarkupTool::Highlighter => Some(self.highlighter_swatch + 1),
                 MarkupTool::Eraser => None,
             },
-            "palette": PALETTE.iter().map(Color::to_string).collect::<Vec<_>>(),
-            "ruler": self.ruler.map(|(page, r)| json!({
-                "filePage": page + 1,
-                "origin": [r.origin.x, r.origin.y],
-                "angle": r.angle_deg,
+            "palette": match self.tool {
+                MarkupTool::Pen => Some(hex(&PALETTE)),
+                MarkupTool::Highlighter => Some(hex(&HIGHLIGHTER_PALETTE)),
+                MarkupTool::Eraser => None,
+            },
+            "highlighterRoundEnds": self.highlighter_round,
+            "ruler": self.ruler.map(|y| json!({
+                "y": y,
+                "halfHeight": RULER_HALF_HEIGHT,
+                "reach": RULER_REACH,
             })),
             "layer": active_layer.map(|l| l.to_string()),
         })
     }
+}
+
+fn hex(colors: &[Color]) -> Vec<String> {
+    colors.iter().map(Color::to_string).collect()
+}
+
+/// Half the ruler band's height, in viewport pixels: its two long edges lie this far above and
+/// below its centre.
+pub const RULER_HALF_HEIGHT: f64 = 30.0;
+/// A stroke starting this close to a ruler edge, in viewport pixels, is ruled along it.
+pub const RULER_REACH: f64 = 18.0;
+
+/// `points` (viewport pixels) ruled along whichever edge of the ruler centred at `y` the stroke
+/// starts within [`RULER_REACH`] of; `None` when it starts further from both (spec ANNO-17).
+pub fn rule_on_screen(
+    y: f64,
+    points: &[scorecraft_doc::InkPoint],
+) -> Option<Vec<scorecraft_doc::InkPoint>> {
+    let first = points.first()?;
+    let at = Point::new(f64::from(first.x), f64::from(first.y));
+    [y - RULER_HALF_HEIGHT, y + RULER_HALF_HEIGHT]
+        .into_iter()
+        .filter_map(|edge| Ruler::new(Point::new(0.0, edge), 0.0))
+        .min_by(|a, b| a.distance(at).total_cmp(&b.distance(at)))
+        .and_then(|edge| edge.rule(points, RULER_REACH))
 }
 
 /// Fingerprint of what ink on `page` looks like: every visible marking's id, layer and stamp in
@@ -293,19 +353,6 @@ impl PageHit {
             .page_box
             .display_to_pdf(1.0, Point::new(fu * size.width, fv * size.height))?;
         p.is_finite().then_some(p)
-    }
-}
-
-impl PageHit {
-    /// A direction on screen (degrees clockwise from the viewport's x axis) at viewport point
-    /// (`x`, `y`) as an angle in page space (counter-clockwise from the page's x axis).
-    pub fn angle_to_page(self, x: f64, y: f64, degrees: f64) -> Option<f64> {
-        let r = degrees.to_radians();
-        let a = self.to_page(x, y)?;
-        let b = self.to_page(x + 100.0 * r.cos(), y + 100.0 * r.sin())?;
-        let d = b - a;
-        let deg = d.y.atan2(d.x).to_degrees();
-        deg.is_finite().then_some(deg)
     }
 }
 

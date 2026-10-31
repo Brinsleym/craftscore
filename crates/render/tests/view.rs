@@ -162,6 +162,7 @@ fn red_line() -> scorecraft_render::PageInk {
             tool: Tool::Pen,
             color: Color::RED,
             width: 10.0,
+            nib: Default::default(),
             points: vec![InkPoint::new(100.0, 396.0), InkPoint::new(500.0, 396.0)],
         }]),
         curve: scorecraft_ink::PressureCurve::default(),

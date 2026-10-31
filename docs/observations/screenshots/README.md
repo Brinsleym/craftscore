@@ -46,6 +46,10 @@ files).
 | # | File | What it shows | Feature-map ids |
 |---|---|---|---|
 | 24 | [`markup/24-markup-toolbar.png`](markup/24-markup-toolbar.png) | The markup toolbar on Windows (2026-10-31): Draw with Touch toggle, padlock, pen (selected), highlighter, eraser, text, rectangle select, ruler, eight colour swatches, custom colour picker, width slider. Described in [anno-markup-toolbar.md](../anno-markup-toolbar.md) | ANNO-1, ANNO-3, ANNO-4, ANNO-6, ANNO-8, ANNO-12, ANNO-14 |
+| 26 | [`markup/26-markup-highlighter-shapes.png`](markup/26-markup-highlighter-shapes.png) | Shapes drawn with the default highlighter on white: an upright chisel nib (thick horizontals, thin verticals, ends cut vertically), even colour where a stroke crosses itself | ANNO-3 |
+| 27 | [`markup/27-markup-ruler.png`](markup/27-markup-ruler.png) | The ruler: a light band with tick marks along both edges across the full screen width, a 0° angle badge in the middle | ANNO-17 |
+| 28 | [`markup/28-markup-highlighter-palette.png`](markup/28-markup-highlighter-palette.png) | The highlighter's own eight swatches and its 30-colour palette (6 × 5), yellow selected | ANNO-3, ANNO-4 |
+| 29 | [`markup/29-markup-text-notes.png`](markup/29-markup-text-notes.png) | Text tool active ("Type with Touch" on): many "Sample Text" notes on a title page, a long one wrapped to a maximum width from the page's top-left corner, short ones kept inside the page edges, a lone "a", and a new empty note with its red box and grip handle | ANNO-8 |
 | 25 | [`markup/25-markup-colour-palette.png`](markup/25-markup-colour-palette.png) | The palette button's grid of 30 extra colours (6 × 5) opened under the swatches, black selected; the ruler button shown active | ANNO-4 |
 
 ## Store promo

@@ -63,6 +63,24 @@ pub enum Tool {
     Whiteout,
 }
 
+/// The shape of the tip a stroke was drawn with.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Nib {
+    /// A round tip: round ends and joins, the same width in every direction.
+    #[default]
+    Round,
+    /// An upright chisel, a third as wide as it is tall, swept along the stroke: the
+    /// highlighter's default (`docs/spec/ink.md`, ANNO-3).
+    Chisel,
+}
+
+impl Nib {
+    pub fn is_round(&self) -> bool {
+        *self == Nib::Round
+    }
+}
+
 /// One pen sample, in source-page PDF points.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct InkPoint {
@@ -113,8 +131,11 @@ pub struct Stroke {
     #[serde(default)]
     pub tool: Tool,
     pub color: Color,
-    /// Nominal width in points at full pressure.
+    /// Nominal width in points at full pressure (a chisel's height).
     pub width: f32,
+    /// Round unless drawn with a chisel; older files have no field and load as round.
+    #[serde(default, skip_serializing_if = "Nib::is_round")]
+    pub nib: Nib,
     pub points: Vec<InkPoint>,
 }
 
@@ -221,6 +242,7 @@ mod tests {
                 tool: Tool::Highlighter,
                 color: Color::HIGHLIGHT,
                 width: 8.0,
+                nib: Default::default(),
                 points: vec![InkPoint::new(1.0, 2.0)],
             }),
         };
@@ -242,6 +264,7 @@ mod tests {
             tool: Tool::Pen,
             color: Color::BLACK,
             width: 2.0,
+            nib: Default::default(),
             points: vec![InkPoint::new(10.0, 10.0), InkPoint::new(20.0, 30.0)],
         };
         assert_eq!(s.bounds(), Some(Rect::new(9.0, 9.0, 21.0, 31.0)));
@@ -250,5 +273,27 @@ mod tests {
             ..s
         };
         assert_eq!(empty.bounds(), None);
+    }
+
+    #[test]
+    fn nib_is_omitted_when_round_and_round_when_missing() {
+        let s = Stroke {
+            tool: Tool::Highlighter,
+            color: Color::HIGHLIGHT,
+            width: 12.0,
+            nib: Nib::Chisel,
+            points: vec![InkPoint::new(0.0, 0.0)],
+        };
+        let v = serde_json::to_value(&s).unwrap();
+        assert_eq!(v["nib"], "chisel");
+        let round = Stroke {
+            nib: Nib::Round,
+            ..s.clone()
+        };
+        let mut v = serde_json::to_value(&round).unwrap();
+        assert!(v.get("nib").is_none());
+        v.as_object_mut().unwrap().remove("tool");
+        let back: Stroke = serde_json::from_value(v).unwrap();
+        assert_eq!(back.nib, Nib::Round);
     }
 }

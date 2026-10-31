@@ -54,8 +54,55 @@ pub const SWATCHES: [Color; 8] = [
 /// The palette's white: the pen in this colour paints whiteout (spec ANNO-5).
 pub const WHITEOUT_SWATCH: Color = PALETTE[1];
 
-/// The highlighter's translucency: 40%.
-pub const HIGHLIGHT_ALPHA: u8 = 102;
+/// The highlighter's own palette (spec ANNO-4, screenshot 28), six columns by five rows: yellows
+/// and golds; peaches, oranges and corals; pinks, roses, magenta and orchid; yellow-greens,
+/// greens, mint and turquoise; blues, lavenders and violet. ScoreCraft's own values. Drawn at
+/// full strength and multiplied with the page.
+pub const HIGHLIGHTER_PALETTE: [Color; 30] = [
+    Color::rgb(0xff, 0xf6, 0xb0),
+    Color::rgb(0xff, 0xf0, 0x7a),
+    Color::rgb(0xff, 0xe9, 0x4f),
+    Color::rgb(0xff, 0xe6, 0x00),
+    Color::rgb(0xff, 0xd2, 0x3f),
+    Color::rgb(0xff, 0xbf, 0x1f),
+    Color::rgb(0xff, 0xd9, 0xb3),
+    Color::rgb(0xff, 0xc2, 0x85),
+    Color::rgb(0xff, 0xa9, 0x40),
+    Color::rgb(0xff, 0x8c, 0x4a),
+    Color::rgb(0xff, 0x9e, 0x85),
+    Color::rgb(0xff, 0x7a, 0x70),
+    Color::rgb(0xff, 0xd1, 0xdc),
+    Color::rgb(0xff, 0x9e, 0xc4),
+    Color::rgb(0xff, 0x80, 0xb0),
+    Color::rgb(0xff, 0x4f, 0x8f),
+    Color::rgb(0xff, 0x66, 0xe0),
+    Color::rgb(0xe8, 0x5a, 0xd0),
+    Color::rgb(0xd9, 0xf0, 0x7a),
+    Color::rgb(0xcd, 0xf0, 0x3c),
+    Color::rgb(0x9c, 0xf0, 0x7a),
+    Color::rgb(0x4f, 0xd9, 0x6b),
+    Color::rgb(0x7a, 0xf0, 0xd0),
+    Color::rgb(0x4f, 0xe0, 0xc8),
+    Color::rgb(0xb3, 0xe5, 0xff),
+    Color::rgb(0x85, 0xcc, 0xff),
+    Color::rgb(0x66, 0xb3, 0xff),
+    Color::rgb(0xd9, 0xb8, 0xff),
+    Color::rgb(0xbf, 0x8c, 0xf0),
+    Color::rgb(0xa3, 0x66, 0xff),
+];
+
+/// The highlighter's eight swatches on a new install: yellow, pink, light green, light blue,
+/// orange, lavender, coral, aqua. Each is a [`HIGHLIGHTER_PALETTE`] colour.
+pub const HIGHLIGHTER_SWATCHES: [Color; 8] = [
+    HIGHLIGHTER_PALETTE[2],
+    HIGHLIGHTER_PALETTE[13],
+    HIGHLIGHTER_PALETTE[20],
+    HIGHLIGHTER_PALETTE[25],
+    HIGHLIGHTER_PALETTE[8],
+    HIGHLIGHTER_PALETTE[28],
+    HIGHLIGHTER_PALETTE[11],
+    HIGHLIGHTER_PALETTE[22],
+];
 
 /// An inclusive range of widths in points.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -116,7 +163,7 @@ impl ToolStyle {
                 width: 1.5,
             },
             Tool::Highlighter => ToolStyle {
-                color: Color::HIGHLIGHT,
+                color: HIGHLIGHTER_SWATCHES[0],
                 width: 12.0,
             },
             Tool::Whiteout => ToolStyle {
@@ -135,13 +182,12 @@ impl ToolStyle {
         }
     }
 
-    /// The colour `tool` uses when the player picks `picked`: the highlighter keeps its own
-    /// translucency whatever the swatch's alpha (spec ANNO-4); whiteout is always opaque.
+    /// The colour `tool` uses when the player picks `picked`: the highlighter and whiteout are at
+    /// full strength (the highlighter multiplies, so it never hides notation; spec ANNO-3).
     pub fn color_for(tool: Tool, picked: Color) -> Color {
         match tool {
             Tool::Pen => picked,
-            Tool::Highlighter => Color::rgba(picked.r, picked.g, picked.b, HIGHLIGHT_ALPHA),
-            Tool::Whiteout => Color::rgb(picked.r, picked.g, picked.b),
+            Tool::Highlighter | Tool::Whiteout => Color::rgb(picked.r, picked.g, picked.b),
         }
     }
 }
@@ -160,10 +206,15 @@ mod tests {
     }
 
     #[test]
-    fn highlighter_keeps_its_translucency() {
-        let c = ToolStyle::color_for(Tool::Highlighter, SWATCHES[2]);
-        assert_eq!(c, Color::rgba(0x1f, 0x5b, 0xd6, HIGHLIGHT_ALPHA));
+    fn highlighter_is_at_full_strength() {
+        let c = ToolStyle::color_for(Tool::Highlighter, Color::rgba(1, 2, 3, 40));
+        assert_eq!(c, Color::rgb(1, 2, 3));
         assert!(SWATCHES.iter().all(|c| PALETTE.contains(c)));
+        assert!(
+            HIGHLIGHTER_SWATCHES
+                .iter()
+                .all(|c| HIGHLIGHTER_PALETTE.contains(c))
+        );
         assert_eq!(ToolStyle::color_for(Tool::Pen, SWATCHES[1]), SWATCHES[1]);
     }
 
@@ -176,7 +227,12 @@ mod tests {
 
     #[test]
     fn distinct_opaque_colours() {
-        for list in [&SWATCHES[..], &PALETTE[..]] {
+        for list in [
+            &SWATCHES[..],
+            &PALETTE[..],
+            &HIGHLIGHTER_SWATCHES[..],
+            &HIGHLIGHTER_PALETTE[..],
+        ] {
             for (i, a) in list.iter().enumerate() {
                 assert_eq!(a.a, 255);
                 for b in &list[i + 1..] {

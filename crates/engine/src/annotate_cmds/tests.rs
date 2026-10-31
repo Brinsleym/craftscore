@@ -301,8 +301,8 @@ fn ink_19_each_tool_keeps_its_own_colour() {
     let mut s = Session::new();
     run(&mut s, "annotate.tool.pen", json!({ "color": "#d32f2f" }));
     run(&mut s, "annotate.tool.highlighter", json!({}));
-    let st = run(&mut s, "annotate.style.set", json!({ "color": "#1f5bd6" }));
-    assert_eq!(st["highlighter"]["color"], "#1f5bd666");
+    let st = run(&mut s, "annotate.swatch.select", json!({ "index": 4 }));
+    assert_eq!(st["highlighter"]["color"], st["highlighterSwatches"][3]);
     assert_eq!(st["pen"]["color"], "#d32f2fff");
     assert_eq!(st["tool"], "highlighter");
     // Width slider on the eraser.
@@ -440,13 +440,28 @@ fn ink_25_and_26_palette_replaces_the_selected_swatch() {
         fails(&mut s, "annotate.swatch.set", json!({ "color": "#123456" })),
         "bad_params"
     );
-    // The highlighter keeps its own selection and translucency.
+    // INK-32: the highlighter has its own swatches and palette.
     let st = run(&mut s, "annotate.tool.highlighter", json!({}));
-    assert_eq!(st["swatch"], 5);
-    let st = run(&mut s, "annotate.swatch.select", json!({ "index": 2 }));
+    assert_eq!(st["swatch"], 1);
+    assert_ne!(st["swatches"], st["penSwatches"]);
+    assert_eq!(st["swatches"], st["highlighterSwatches"]);
     assert_eq!(
-        st["highlighter"]["color"].as_str().unwrap(),
-        format!("{}66", &lavender[..7])
+        fails(&mut s, "annotate.swatch.set", json!({ "color": lavender })),
+        "bad_params",
+        "the pen palette's lavender isn't a highlighter colour"
+    );
+    let mint = st["highlighterPalette"][22].as_str().unwrap().to_owned();
+    let st = run(
+        &mut s,
+        "annotate.swatch.set",
+        json!({ "color": mint, "index": 3 }),
+    );
+    assert_eq!(st["highlighterSwatches"][2].as_str().unwrap(), mint);
+    assert_eq!(st["highlighter"]["color"].as_str().unwrap(), mint);
+    assert_eq!(
+        st["penSwatches"][1].as_str().unwrap(),
+        lavender,
+        "pen swatches untouched"
     );
     run(&mut s, "annotate.tool.strokeEraser", json!({}));
     assert_eq!(
@@ -463,50 +478,70 @@ fn ink_27_ruler_straightens_strokes_that_start_at_its_edge() {
     let (mut s, _) = setup("ruler", 1);
     run(&mut s, "annotate.mode.set", json!({ "on": true }));
     let st = run(&mut s, "annotate.ruler.show", json!({}));
-    assert_eq!(st["ruler"]["angle"], 0.0, "horizontal: {st}");
-    run(
-        &mut s,
-        "annotate.ruler.set",
-        json!({ "space": "page", "page": 1, "x": 0.0, "y": 300.0, "angle": 0.5 }),
-    );
+    // Across the whole reader, centred vertically (the default viewport is 1280 × 800).
+    assert_eq!(st["ruler"]["y"], 400.0, "{st}");
+    run(&mut s, "annotate.ruler.set", json!({ "y": 300.0 }));
+    let edge = 300.0 + crate::markup::RULER_HALF_HEIGHT;
+    let [x0, _, x1, _] = slot(&mut s);
     let wobble: Vec<Value> = (0..40)
-        .map(|i| json!([50.0 + f64::from(i) * 5.0, 305.0 + f64::from(i % 3)]))
+        .map(|i| {
+            let x = x0 + 5.0 + (x1 - x0 - 10.0) * f64::from(i) / 39.0;
+            json!([x, edge + 5.0 + f64::from(i % 3)])
+        })
         .collect();
-    run(
-        &mut s,
-        "annotate.stroke",
-        json!({ "space": "page", "page": 1, "points": wobble }),
-    );
+    run(&mut s, "annotate.stroke", json!({ "points": wobble }));
     let list = run(&mut s, "annotate.page.list", json!({}));
     let pts = list["annotations"][0]["points"].as_array().unwrap();
-    assert_eq!(pts.len(), 2);
-    assert!(pts.iter().all(|p| p["y"] == 300.0), "{pts:?}");
-    // Leaving markup mode removes the ruler.
+    assert_eq!(pts.len(), 2, "ruled into a straight line");
+    assert!((pts[0]["y"].as_f64().unwrap() - pts[1]["y"].as_f64().unwrap()).abs() < 1e-3);
+    // Far from both edges: freehand.
+    let free: Vec<Value> = (0..10)
+        .map(|i| json!([x0 + 20.0 + f64::from(i) * 5.0, 600.0 + f64::from(i % 2)]))
+        .collect();
+    run(&mut s, "annotate.stroke", json!({ "points": free }));
+    let list = run(&mut s, "annotate.page.list", json!({}));
+    assert_eq!(
+        list["annotations"][1]["points"].as_array().unwrap().len(),
+        10
+    );
+    // Out of range moves are kept on screen; leaving markup mode removes the ruler.
+    let st = run(&mut s, "annotate.ruler.set", json!({ "y": -50 }));
+    assert_eq!(st["ruler"]["y"], 0.0);
+    assert!(
+        s.dispatch("annotate.ruler.set", &json!({ "x": 1, "y": 2 }))
+            .is_err()
+    );
     run(&mut s, "annotate.mode.set", json!({ "on": false }));
     assert!(run(&mut s, "annotate.state", json!({}))["ruler"].is_null());
 }
 
 #[test]
-fn ruler_follows_a_rotated_page() {
-    let (mut s, id) = setup("ruler-rot", 1);
+fn ink_29_and_30_highlighter_nib_follows_the_setting() {
+    let (mut s, id) = setup("nib", 1);
+    run(&mut s, "annotate.tool.highlighter", json!({}));
+    run(&mut s, "annotate.stroke", page_line(100.0));
     run(
         &mut s,
-        "page.rotate",
-        json!({ "score": id, "page": 1, "degrees": 90 }),
+        "annotate.highlighter.roundEnds",
+        json!({ "on": true }),
     );
-    let st = run(&mut s, "annotate.ruler.show", json!({}));
-    // Horizontal on screen is vertical on a page turned a quarter.
-    assert_eq!(st["ruler"]["angle"], 90.0, "{st}");
-    let [x0, y0, x1, y1] = slot(&mut s);
-    let st = run(
-        &mut s,
-        "annotate.ruler.set",
-        json!({ "x": (x0 + x1) / 2.0, "y": (y0 + y1) / 2.0, "angle": 90 }),
-    );
-    assert_eq!(st["ruler"]["angle"], 0.0, "{st}");
-    assert!(
-        s.dispatch("annotate.ruler.set", &json!({ "x": -5000, "y": 0 }))
-            .is_err()
+    run(&mut s, "annotate.stroke", page_line(200.0));
+    run(&mut s, "annotate.tool.pen", json!({}));
+    run(&mut s, "annotate.stroke", page_line(300.0));
+    let sid: ScoreId = id.parse().unwrap();
+    let nibs: Vec<scorecraft_doc::Nib> = s.library().unwrap().scores[&sid]
+        .annotations_on(PageKey(0))
+        .iter()
+        .map(|a| match &a.kind {
+            AnnotationKind::Stroke(st) => st.nib,
+            _ => panic!("not a stroke"),
+        })
+        .collect();
+    use scorecraft_doc::Nib::{Chisel, Round};
+    assert_eq!(nibs, vec![Chisel, Round, Round]);
+    assert_eq!(
+        run(&mut s, "annotate.state", json!({}))["highlighterRoundEnds"],
+        true
     );
 }
 

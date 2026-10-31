@@ -29,14 +29,14 @@ mod style;
 
 pub use erase::{Erased, erase, inside_rect, touches};
 pub use error::InkError;
-pub use outline::{Outline, outline};
+pub use outline::{Outline, chisel_half_width, outline};
 pub use prepare::{MAX_COORD, MAX_POINTS, MIN_SPACING, prepare};
 pub use pressure::PressureCurve;
-pub use ruler::{RULER_REACH, RULER_SNAP_DEGREES, Ruler};
+pub use ruler::{RULER_SNAP_DEGREES, Ruler};
 pub use smooth::{CORNER_DEGREES, MAX_OUTLINE_POINTS, Sample, smooth};
 pub use style::{
-    ERASER_WIDTHS, HIGHLIGHT_ALPHA, HIGHLIGHTER_WIDTHS, PALETTE, PEN_WIDTHS, SWATCHES, ToolStyle,
-    WHITEOUT_SWATCH, WHITEOUT_WIDTHS, WidthRange,
+    ERASER_WIDTHS, HIGHLIGHTER_PALETTE, HIGHLIGHTER_SWATCHES, HIGHLIGHTER_WIDTHS, PALETTE,
+    PEN_WIDTHS, SWATCHES, ToolStyle, WHITEOUT_SWATCH, WHITEOUT_WIDTHS, WidthRange,
 };
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.

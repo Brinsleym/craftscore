@@ -33,7 +33,7 @@ USB keyboard pedal. The owner's Windows tablet is the first test platform (pedal
 | Id | Target | Rows | Status | Tested on |
 |---|---|---|---|---|
 | HW-20 | Pressure and tilt from Apple Pencil, Windows Ink / Surface Pen, Android stylus (S Pen), Wacom on desktop | ANNO-2 | missing | |
-| HW-21 | Eraser end and barrel buttons | ANNO-11 | missing | |
+| HW-21 | Eraser end and barrel buttons (barrel or double-tap switches pen and eraser by default) | ANNO-11 | missing | |
 | HW-22 | Palm rejection while the pen draws, working with the platform's own: Windows' *Ignore touch input when I'm using my pen* setting (can be off or hidden), Android 13+ palm flags (cancelled touches); touch lock | ANNO-14 | missing | (logic in `scorecraft-input`, [spec](spec/ink.md#anno-14-pen-only-and-draw-with-touch-palm-rejection); needs the pen wired in the app and a device) |
 
 ## Displays and power

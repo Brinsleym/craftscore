@@ -11,9 +11,7 @@ use scorecraft_doc::{
     Stroke, Tool,
 };
 use scorecraft_geom::Point;
-use scorecraft_ink::{
-    ERASER_WIDTHS, Erased, InkError, MAX_POINTS, PALETTE, Ruler, ToolStyle, erase, touches,
-};
+use scorecraft_ink::{ERASER_WIDTHS, Erased, InkError, MAX_POINTS, ToolStyle, erase, touches};
 use scorecraft_input::PointerKind;
 use scorecraft_ops::{Op, OpError, Transaction};
 
@@ -118,6 +116,15 @@ pub fn specs() -> Vec<CommandSpec> {
             swatch_set as _,
         ),
         spec(
+            "annotate.highlighter.roundEnds",
+            "Round Highlighter Ends",
+            "Settings>Markup",
+            r#"{"on":bool?}"#,
+            true,
+            always,
+            highlighter_round_ends as _,
+        ),
+        spec(
             "annotate.mode.set",
             "Markup",
             "Markup",
@@ -148,7 +155,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "annotate.ruler.set",
             "Move Ruler",
             "",
-            r#"{"x":number,"y":number,"angle":number=0,"space":"view|page"="view","page":int?}"#,
+            r#"{"y":number}"#,
             false,
             markup_ready,
             ruler_set as _,
@@ -280,10 +287,10 @@ fn style_mut(m: &mut crate::markup::Markup, tool: Tool) -> &mut ToolStyle {
 /// Marks the swatch holding `c`, if one does, as the active tool's selected swatch.
 fn select_matching_swatch(m: &mut crate::markup::Markup, c: Color) {
     let rgb = Color::rgb(c.r, c.g, c.b);
-    if let Some(i) = m.swatches.iter().position(|s| *s == rgb)
-        && let Some(slot) = m.selected_swatch()
+    if let Some((swatches, selected, _)) = m.swatches_mut()
+        && let Some(i) = swatches.iter().position(|s| *s == rgb)
     {
-        *slot = i;
+        *selected = i;
     }
 }
 
@@ -392,49 +399,51 @@ fn swatch_select(session: &mut Session, params: &Value) -> Result<Value, EngineE
     reject_unknown_keys(ID, p, &["index"])?;
     let i = swatch_index(ID, p)?.ok_or_else(|| bad(ID, "`index` is required".into()))?;
     let m = &mut session.markup;
-    let color = m.swatches.get(i).copied().unwrap_or(Color::BLACK);
-    let slot = m
-        .selected_swatch()
+    let (swatches, selected, _) = m
+        .swatches_mut()
         .ok_or_else(|| bad(ID, "the eraser has no colour".into()))?;
-    *slot = i;
+    let color = swatches.get(i).copied().unwrap_or(Color::BLACK);
+    *selected = i;
     m.apply_color(color);
     Ok(state_json(session))
 }
 
-/// Picking from the palette: the selected swatch (or swatch `index`) becomes that colour, and the
-/// active tool takes it (ANNO-4). Only palette colours are accepted.
+/// Picking from the active tool's palette: its selected swatch (or swatch `index`) becomes that
+/// colour, and the tool takes it (ANNO-4). Only that palette's colours are accepted.
 fn swatch_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "annotate.swatch.set";
     let p = params_object(ID, params)?;
     reject_unknown_keys(ID, p, &["color", "index"])?;
     let color = opt_color(ID, p, "color")?.ok_or_else(|| bad(ID, "`color` is required".into()))?;
     let color = Color::rgb(color.r, color.g, color.b);
-    if !PALETTE.contains(&color) {
-        return Err(bad(
-            ID,
-            format!("{color} is not one of the palette's colours"),
-        ));
-    }
     let index = swatch_index(ID, p)?;
     let m = &mut session.markup;
-    let i = match (index, m.selected_swatch()) {
-        (Some(i), Some(slot)) => {
-            *slot = i;
-            i
-        }
-        (None, Some(slot)) => *slot,
-        (Some(i), None) => i,
-        (None, None) => {
-            return Err(bad(
-                ID,
-                "give `index`: the eraser has no selected swatch".into(),
-            ));
-        }
-    };
-    if let Some(sw) = m.swatches.get_mut(i) {
+    let tool = m.tool.id();
+    let (swatches, selected, palette) = m
+        .swatches_mut()
+        .ok_or_else(|| bad(ID, "the eraser has no swatches".into()))?;
+    if !palette.contains(&color) {
+        return Err(bad(
+            ID,
+            format!("{color} is not one of the {tool}'s palette colours"),
+        ));
+    }
+    let i = index.unwrap_or(*selected);
+    *selected = i;
+    if let Some(sw) = swatches.get_mut(i) {
         *sw = color;
     }
     m.apply_color(color);
+    Ok(state_json(session))
+}
+
+/// The *Round highlighter ends* setting (ANNO-3): new highlighter strokes get a round nib.
+fn highlighter_round_ends(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.highlighter.roundEnds";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(!session.markup.highlighter_round);
+    session.markup.highlighter_round = on;
     Ok(state_json(session))
 }
 
@@ -470,104 +479,38 @@ fn markup_mode(s: &Session) -> bool {
     s.markup.mode
 }
 
-/// Shows or hides the ruler (ANNO-17): shown across the middle of the current page, horizontal.
+/// Shows or hides the ruler (ANNO-17): a band across the whole width of the reader, centred
+/// vertically. It lies on the screen, so it stays put while pages turn, zoom and pan.
 fn ruler_show(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "annotate.ruler.show";
     let p = params_object(ID, params)?;
     reject_unknown_keys(ID, p, &["on"])?;
     let on = opt_bool(ID, p, "on")?.unwrap_or(session.markup.ruler.is_none());
-    if !on {
-        session.markup.ruler = None;
-        return Ok(state_json(session));
-    }
-    session.refresh_reader();
-    let open = session
-        .score
-        .as_ref()
-        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
-    // The middle of the current page on screen, horizontal on screen whatever its rotation.
-    let current = open.reader.reader.page();
-    let frame = open.reader.frame();
-    let slot = frame
-        .slots
-        .iter()
-        .find(|s| s.page == current)
-        .or_else(|| frame.slots.first())
-        .ok_or_else(|| bad(ID, "the score shows no pages".into()))?;
-    let (cx, cy) = (
-        (slot.dst.x0 + slot.dst.x1) / 2.0,
-        (slot.dst.y0 + slot.dst.y1) / 2.0,
-    );
-    let h = hit(&open.reader, open.view.document(), cx, cy)
-        .ok_or_else(|| bad(ID, "the score shows no pages".into()))?;
-    let ruler = h
-        .to_page(cx, cy)
-        .zip(h.angle_to_page(cx, cy, 0.0))
-        .and_then(|(o, a)| Ruler::new(o, a))
-        .ok_or_else(|| bad(ID, "the page has no size".into()))?;
-    session.markup.ruler = Some((h.file_page, ruler));
+    session.markup.ruler = if on {
+        let open = session
+            .score
+            .as_ref()
+            .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+        Some(open.reader.viewport.height / 2.0)
+    } else {
+        None
+    };
     Ok(state_json(session))
 }
 
-/// Moves and turns the ruler. In view space, `x`, `y` is a point on the page on screen and `angle`
-/// is degrees clockwise on screen; in page space, a point in PDF space on score page `page` and
-/// degrees counter-clockwise.
+/// Moves the ruler up or down: `y` is the band's centre in viewport pixels, kept on screen. It
+/// stays horizontal; turning it is ANNO-18.
 fn ruler_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "annotate.ruler.set";
     let p = params_object(ID, params)?;
-    reject_unknown_keys(ID, p, &["x", "y", "angle", "space", "page"])?;
-    let req = |k: &str| opt_f64(ID, p, k)?.ok_or_else(|| bad(ID, format!("`{k}` is required")));
-    let (x, y) = (req("x")?, req("y")?);
-    let angle = opt_f64(ID, p, "angle")?.unwrap_or(0.0);
-    let space = opt_str(ID, p, "space")?.unwrap_or("view");
-    session.refresh_reader();
+    reject_unknown_keys(ID, p, &["y"])?;
+    let y = opt_f64(ID, p, "y")?.ok_or_else(|| bad(ID, "`y` is required".into()))?;
     let open = session
         .score
         .as_ref()
         .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
-    let (file_page, origin, page_angle) = match space {
-        "view" => {
-            if opt_int(ID, p, "page", 1, u64::from(u32::MAX))?.is_some() {
-                return Err(bad(ID, "`page` goes with `space: page` only".into()));
-            }
-            let h = hit(&open.reader, open.view.document(), x, y)
-                .ok_or_else(|| bad(ID, "the point is not on a page".into()))?;
-            let origin = h
-                .to_page(x, y)
-                .ok_or_else(|| bad(ID, "the point is not on a page".into()))?;
-            let a = h
-                .angle_to_page(x, y, angle)
-                .ok_or_else(|| bad(ID, "the angle can't be mapped onto the page".into()))?;
-            (h.file_page, origin, a)
-        }
-        "page" => {
-            let n = opt_int(ID, p, "page", 1, u64::from(u32::MAX))?
-                .ok_or_else(|| bad(ID, "`page` is required with `space: page`".into()))?;
-            let index =
-                usize::try_from(n - 1).map_err(|_| bad(ID, "`page` is too large".into()))?;
-            let shown = open.reader.shown.get(index).ok_or_else(|| {
-                bad(
-                    ID,
-                    format!("`page` must be from 1 to {}", open.reader.shown.len()),
-                )
-            })?;
-            (shown.file_page, Point::new(x, y), angle)
-        }
-        other => {
-            return Err(bad(
-                ID,
-                format!("`space` must be view or page, got {}", truncate(other, 32)),
-            ));
-        }
-    };
-    if origin.x.abs() > f64::from(scorecraft_ink::MAX_COORD)
-        || origin.y.abs() > f64::from(scorecraft_ink::MAX_COORD)
-    {
-        return Err(InkError::OutOfRange.into());
-    }
-    let ruler =
-        Ruler::new(origin, page_angle).ok_or_else(|| bad(ID, "bad ruler position".into()))?;
-    session.markup.ruler = Some((file_page, ruler));
+    let height = open.reader.viewport.height;
+    session.markup.ruler = Some(y.clamp(0.0, height.max(0.0)));
     Ok(state_json(session))
 }
 
@@ -672,7 +615,7 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
             format!("`space` must be view or page, got {}", truncate(space, 32)),
         ));
     }
-    let raw = parse_points(ID, p, device.is_pen())?;
+    let mut raw = parse_points(ID, p, device.is_pen())?;
     let page_param = opt_int(ID, p, "page", 1, u64::from(u32::MAX))?;
     if device == PointerKind::Touch && session.markup.mode && session.markup.touch_lock {
         // Touch lock: every touch is ignored in markup mode.
@@ -681,6 +624,31 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     if !device.is_pen() && session.markup.pen_only {
         // Only a pen marks up (ANNO-14); the shell treats this gesture as a turn or pan.
         return Ok(json!({ "drawn": false, "reason": "penOnly" }));
+    }
+    // A stroke drawn on screen that starts at a ruler edge is ruled along it (ANNO-17). The ruler
+    // lies on the screen, so only view-space strokes meet it; erasers are never ruled.
+    let erasing = device == PointerKind::Eraser || session.markup.tool == MarkupTool::Eraser;
+    if space == "view"
+        && !erasing
+        && let Some(y) = session.markup.ruler
+    {
+        let pts: Vec<InkPoint> = raw
+            .iter()
+            .map(|r| InkPoint {
+                x: r.0 as f32,
+                y: r.1 as f32,
+                pressure: r.2,
+                tilt: 0.0,
+                twist: 0.0,
+                t: r.3,
+            })
+            .collect();
+        if let Some(ruled) = crate::markup::rule_on_screen(y, &pts) {
+            raw = ruled
+                .iter()
+                .map(|q| (f64::from(q.x), f64::from(q.y), q.pressure, q.t))
+                .collect();
+        }
     }
     // Where on which page: map the samples into the page's PDF space.
     session.refresh_reader();
@@ -732,7 +700,6 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
         .scores
         .get(&score_id)
         .ok_or(OpError::NoScore(score_id))?;
-    let erasing = device == PointerKind::Eraser || markup.tool == MarkupTool::Eraser;
     let done = if erasing {
         // The stylus's eraser end always erases whole strokes (ANNO-11).
         let mode = if device == PointerKind::Eraser {
@@ -777,11 +744,6 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
                 t: r.3,
             })
             .collect();
-        // Ruled along the ruler when it lies on this page and the stroke starts at its edge.
-        let samples = match markup.ruler {
-            Some((rp, r)) if rp == file_page => r.rule(&samples).unwrap_or(samples),
-            _ => samples,
-        };
         let points = scorecraft_ink::prepare(&samples)?;
         let count = points.len();
         let id: AnnotationId = l.ids.id(now);
@@ -796,6 +758,7 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
                 tool,
                 color: style.color,
                 width: style.width,
+                nib: markup.nib(tool),
                 points,
             }),
         };
