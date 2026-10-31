@@ -9,6 +9,10 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+scorecraft-pdf = { workspace = true }
+
+[dev-dependencies]
+scorecraft-testkit = { workspace = true }
 
 [lints]
 workspace = true

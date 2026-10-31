@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use scorecraft_pdf::{Document, PdfError, Tile, fit_scale};
+use scorecraft_pdf::{Document, PaperColors, PdfError, Tile, fit_scale};
 use scorecraft_testkit::pdf::{PageSpec, PdfBuilder, hostile};
 
 fn open(builder: &PdfBuilder) -> Document {
@@ -201,4 +201,20 @@ fn not_a_pdf_is_invalid() {
 fn document_is_send() {
     fn assert_send<T: Send>() {}
     assert_send::<Document>();
+}
+
+#[test]
+fn forks_render_the_same_page_and_can_recolour_it() {
+    let mut doc = open(&score());
+    let mut same = doc.fork(None);
+    assert_eq!(same.page_count(), 3);
+    assert_eq!(same.render(0, 0.5).unwrap(), doc.render(0, 0.5).unwrap());
+    let dark = PaperColors {
+        ink: [230, 230, 230],
+        paper: [20, 20, 20],
+    };
+    let mut night = doc.fork(Some(dark));
+    assert_eq!(night.colors(), Some(dark));
+    let bmp = night.render(0, 0.5).unwrap();
+    assert_eq!(bmp.pixel(2, 2), Some([20, 20, 20, 255]));
 }

@@ -1,7 +1,11 @@
 //! scorecraft-render: CPU page compositor (the oracle): PDF raster, display filters, ink and snips.
 //!
-//! Layer L3 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Today it holds the page cache that makes a turn a cache hit (`docs/architecture.md` §7):
+//! bitmaps keyed by page, [`ZoomBucket`], [`Filter`] and region in a byte-budget LRU
+//! ([`TileCache`]), and a [`ScoreView`] that renders on a miss and pre-renders the
+//! [`neighbours`] of the current page on a background thread.
+//!
+//! Layer L3 in the workspace map (`docs/architecture.md` §2–3).
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -11,8 +15,22 @@
     clippy::unreachable
 )]
 
+mod cache;
+mod filter;
+mod view;
+mod zoom;
+
+pub use cache::{CacheStats, Region, TileCache, TileKey};
+pub use filter::Filter;
+pub use view::{ScoreView, TILE_SIDE, neighbours};
+pub use zoom::ZoomBucket;
+
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+
+/// Default bitmap budget for one open score: about 18 full-height letter pages on a display
+/// 2160 pixels tall.
+pub const DEFAULT_BUDGET: usize = 256 * 1024 * 1024;
 
 #[cfg(test)]
 mod tests {
