@@ -116,6 +116,33 @@ pub fn specs() -> Vec<CommandSpec> {
             swatch_set as _,
         ),
         spec(
+            "annotate.pen.preset.set",
+            "Save Preset",
+            "Markup>Presets",
+            r#"{"name":string}"#,
+            false,
+            always,
+            preset_set as _,
+        ),
+        spec(
+            "annotate.pen.preset.apply",
+            "Use Preset",
+            "Markup>Presets",
+            r#"{"name":string}"#,
+            true,
+            always,
+            preset_apply as _,
+        ),
+        spec(
+            "annotate.pen.preset.delete",
+            "Delete Preset",
+            "Markup>Presets",
+            r#"{"name":string}"#,
+            true,
+            always,
+            preset_delete as _,
+        ),
+        spec(
             "annotate.highlighter.roundEnds",
             "Round Highlighter Ends",
             "Settings>Markup",
@@ -434,6 +461,88 @@ fn swatch_set(session: &mut Session, params: &Value) -> Result<Value, EngineErro
         *sw = color;
     }
     m.apply_color(color);
+    Ok(state_json(session))
+}
+
+/// Longest preset name.
+const MAX_PRESET_NAME: usize = 64;
+
+fn preset_name(id: &str, p: Option<&Map<String, Value>>) -> Result<String, EngineError> {
+    let raw = crate::commands::req_str(id, p, "name")?;
+    crate::commands::check_len(id, "name", raw, MAX_PRESET_NAME)?;
+    let n = raw.trim();
+    if n.is_empty() {
+        return Err(bad(id, "`name` can't be empty".into()));
+    }
+    Ok(n.to_owned())
+}
+
+/// Saves the active drawing tool's colour and width under `name` (ANNO-4), replacing a preset
+/// of the same name.
+fn preset_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.pen.preset.set";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["name"])?;
+    let name = preset_name(ID, p)?;
+    let m = &mut session.markup;
+    let (tool, style) = m
+        .drawing()
+        .ok_or_else(|| bad(ID, "choose the pen or the highlighter first".into()))?;
+    let preset = crate::markup::Preset {
+        name: name.clone(),
+        tool,
+        color: style.color,
+        width: style.width,
+    };
+    match m.presets.iter_mut().find(|q| q.name == name) {
+        Some(slot) => *slot = preset,
+        None => {
+            if m.presets.len() >= crate::markup::MAX_PRESETS {
+                return Err(bad(
+                    ID,
+                    format!("at most {} presets are kept", crate::markup::MAX_PRESETS),
+                ));
+            }
+            m.presets.push(preset);
+        }
+    }
+    Ok(state_json(session))
+}
+
+/// Switches to a preset's tool, colour and width in one action.
+fn preset_apply(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.pen.preset.apply";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["name"])?;
+    let name = preset_name(ID, p)?;
+    let m = &mut session.markup;
+    let preset = m
+        .presets
+        .iter()
+        .find(|q| q.name == name)
+        .cloned()
+        .ok_or_else(|| OpError::Missing(format!("preset “{}”", truncate(&name, 64))))?;
+    m.tool = match preset.tool {
+        Tool::Highlighter => MarkupTool::Highlighter,
+        _ => MarkupTool::Pen,
+    };
+    m.whiteout_on = preset.tool == Tool::Whiteout;
+    let style = style_mut(m, preset.tool);
+    style.color = preset.color;
+    style.width = ToolStyle::widths(preset.tool).clamp(preset.width);
+    Ok(state_json(session))
+}
+
+fn preset_delete(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.pen.preset.delete";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["name"])?;
+    let name = preset_name(ID, p)?;
+    let before = session.markup.presets.len();
+    session.markup.presets.retain(|q| q.name != name);
+    if session.markup.presets.len() == before {
+        return Err(OpError::Missing(format!("preset “{}”", truncate(&name, 64))).into());
+    }
     Ok(state_json(session))
 }
 

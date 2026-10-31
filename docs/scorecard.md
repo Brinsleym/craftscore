@@ -13,8 +13,8 @@ supersede estimates elsewhere.
 | [Performance](#performance) | 4 | 0 | 9 | 13 scenarios, 4 measured |
 | [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
-| [Annotation](#annotation) | 0 | 12 | 9 | from annotation-parity |
-| [Automation](#automation) | 0 | 1 | 3 | 37 of 124 feature-map rows live (measured, `cargo xtask parity`) |
+| [Annotation](#annotation) | 0 | 13 | 8 | from annotation-parity |
+| [Automation](#automation) | 0 | 1 | 3 | 39 of 124 feature-map rows live (measured, `cargo xtask parity`) |
 | [Reliability](#reliability) | 2 | 1 | 2 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
 | [Distribution](#distribution) | 0 | 0 | 6 |  |
 
@@ -106,7 +106,7 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | ANN-19 | Stylus button / double-tap switches pen and eraser | missing |
 | ANN-20 | Ruler across the whole screen width, moved up and down, its button hidden unless a setting shows it | partial |
 | ANN-21 | Turn the ruler, angle shown (lowest priority) | missing |
-| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | missing |
+| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | partial |
 | ANN-31 | Undo/redo per score, one step per stroke | partial |
 | ANN-32 | Markings never alter the PDF; survive rotate, crop, reorder and page-range changes | partial |
 | ANN-33 | Markings imported from `.4sc` and from PDF annotations land in the right layers | missing |

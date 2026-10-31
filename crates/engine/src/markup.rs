@@ -58,6 +58,18 @@ impl EraserMode {
     }
 }
 
+/// A saved tool, colour and width (ANNO-4).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Preset {
+    pub name: String,
+    pub tool: Tool,
+    pub color: Color,
+    pub width: f32,
+}
+
+/// Most presets kept.
+pub const MAX_PRESETS: usize = 50;
+
 /// Markup settings. Session state, like the pedal map: the shell saves and restores it with
 /// `annotate.state` and the tool commands.
 #[derive(Debug, Clone)]
@@ -92,6 +104,8 @@ pub struct Markup {
     pub curve: PressureCurve,
     /// The layer new markings go into, per score; the score's top layer when unset.
     pub layers: BTreeMap<ScoreId, LayerId>,
+    /// Saved presets, in the order they were made.
+    pub presets: Vec<Preset>,
 }
 
 impl Default for Markup {
@@ -115,6 +129,7 @@ impl Default for Markup {
             ruler: None,
             curve: PressureCurve::default(),
             layers: BTreeMap::new(),
+            presets: Vec::new(),
         }
     }
 }
@@ -231,6 +246,16 @@ impl Markup {
                 "reach": RULER_REACH,
             })),
             "layer": active_layer.map(|l| l.to_string()),
+            "presets": self.presets.iter().map(|p| json!({
+                "name": p.name,
+                "tool": match p.tool {
+                    Tool::Pen => "pen",
+                    Tool::Highlighter => "highlighter",
+                    Tool::Whiteout => "whiteout",
+                },
+                "color": p.color.to_string(),
+                "width": p.width,
+            })).collect::<Vec<_>>(),
         })
     }
 }

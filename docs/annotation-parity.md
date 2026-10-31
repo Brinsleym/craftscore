@@ -24,7 +24,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Id | Target | Rows | Status |
 |---|---|---|---|
-| ANN-10 | Pen with colours, widths and presets; eight changeable swatches and a fixed 30-colour palette per tool (pen and highlighter differ); width per tool | ANNO-1, ANNO-4 | partial (swatches, palettes and widths in the engine, INK-25, -32; presets missing) |
+| ANN-10 | Pen with colours, widths and presets; eight changeable swatches and a fixed 30-colour palette per tool (pen and highlighter differ); width per tool | ANNO-1, ANNO-4 | partial (swatches, palettes, widths and presets in the engine, INK-25, -32, -36; no UI) |
 | ANN-11 | Highlighter: upright chisel nib (round ends as a setting), multiplied at full strength, no build-up within a stroke | ANNO-3 | partial (INK-5, -6, -29, -30) |
 | ANN-12 | Whiteout (opaque page-coloured ink, then write over) | ANNO-5 | partial (filter paper colour, INK-7, -28) |
 | ANN-13 | Stroke eraser | ANNO-6 | partial (INK-8) |
@@ -41,7 +41,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Id | Target | Rows | Status |
 |---|---|---|---|
-| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | ANNO-10, EXP-2 | missing |
+| ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | ANNO-10, EXP-2 | partial (all in the engine with undo, INK-11, -34, -35; export later) |
 | ANN-31 | Undo/redo per score, one step per stroke | ANNO-13 | partial (one step per stroke and per eraser gesture, INK-2, -8, -9) |
 | ANN-32 | Markings never alter the PDF; survive rotate, crop, reorder and page-range changes | ANNO-15 | partial (page space, rotate and reorder tested, INK-3, -12; crop isn't applied by the reader yet) |
 | ANN-33 | Markings imported from `.4sc` and from PDF annotations land in the right layers | IMP-5, IMP-7 | missing |
@@ -50,6 +50,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 2a: ANN-30 layers and ANN-10 presets partial |
 | 2026-10-31 | minor | Owner's answers and text observation: ANN-11 chisel at full strength, ANN-10 separate highlighter colours, ANN-15 observed text behaviour, ANN-16 stamps ours, ANN-19 pen and eraser, ANN-20 ruler across the screen, ANN-21 added |
 | 2026-10-31 | minor | M4 part 1: ANN-2..5, -10..14, -31, -32 partial; ANN-20 ruler added; ANN-17 becomes rectangle select (owner's observation) |
 | 2026-10-28 | major | First version |

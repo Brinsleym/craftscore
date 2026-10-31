@@ -84,6 +84,7 @@ pub fn registry() -> Vec<CommandSpec> {
     v.extend(crate::list_cmds::specs());
     v.extend(crate::edit_cmds::specs());
     v.extend(crate::annotate_cmds::specs());
+    v.extend(crate::layer_cmds::specs());
     v
 }
 

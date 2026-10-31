@@ -20,6 +20,7 @@ mod engine_cmds;
 mod error;
 pub mod feature_catalog;
 mod input_cmds;
+mod layer_cmds;
 mod library;
 mod library_cmds;
 mod list_cmds;
