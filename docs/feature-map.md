@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -38,7 +38,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Area | Prefix | Rows | P0 | Done | Partial | Missing |
 |---|---|---:|---:|---:|---:|---:|
 | Reading and display | READ | 15 | 8 | 0 | 7 | 8 |
-| Page turning inputs | TURN | 8 | 4 | 0 | 1 | 7 |
+| Page turning inputs | TURN | 8 | 4 | 0 | 5 | 3 |
 | Annotation | ANNO | 16 | 8 | 0 | 1 | 15 |
 | Library and organisation | LIB | 15 | 6 | 0 | 6 | 9 |
 | Page editing | PAGE | 8 | 4 | 0 | 5 | 3 |
@@ -51,7 +51,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 0 | 5 |
-| **Total** | | **122** | **39** | **0** | **25** | **97** |
+| **Total** | | **122** | **39** | **0** | **29** | **93** |
 
 Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft reuse and the S8 rows (P0 250–530, P1 360–700, P2 230–450, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -79,10 +79,10 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| TURN-1 | Tap zones turn forward and back | Free | S1, S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 3–6 | missing |
-| TURN-2 | Swipe to turn | Free | S1, S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 3–6 | missing |
-| TURN-3 | Keyboard arrow keys (and Page Up / Down, Space) | Free | S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 1–2 | missing |
-| TURN-4 | Bluetooth foot pedals (keyboard-emulating HID pedals, configurable key mapping) | Free | S1, S4 | `input.pedal.map` | input | P0 | 6–12 | missing |
+| TURN-1 | Tap zones turn forward and back | Free | S1, S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 3–6 | partial |
+| TURN-2 | Swipe to turn | Free | S1, S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 3–6 | partial |
+| TURN-3 | Keyboard arrow keys (and Page Up / Down, Space) | Free | S4 | `view.turn.next`, `view.turn.previous` | ui-egui | P0 | 1–2 | partial |
+| TURN-4 | Bluetooth foot pedals (keyboard-emulating HID pedals, configurable key mapping) | Free | S1, S4 | `input.pedal.map` | input | P0 | 6–12 | partial |
 | TURN-5 | MIDI pedals and controllers turn pages | Free | S1 | `input.midi.mapTurn` | midi, input | P2 | 6–12 | missing |
 | TURN-6 | Record page turns during audio playback (half-page turns included); replay them automatically | Free | S1, S8 | `play.turns.record`, `play.turns.follow` | engine, audio | P2 | 8–16 | missing |
 | TURN-7 | Turn across score boundaries inside a setlist (last page → next piece) | Pro | S1 | `list.turn.next` | engine | P1 | 3–6 | missing |
@@ -269,7 +269,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **122** | **39** | **0** | **25** | **97** |
+| **Total** | | **122** | **39** | **0** | **29** | **93** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -308,6 +308,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M3: TURN-1, -2, -3 and -4 partial (`input.pedal.map` with four pedal profiles; `input.key`, `input.tap`, `input.swipe`) |
 | 2026-10-31 | patch | M3: READ-2, -3, -5, -6, -12, -15, TURN-8 and NAV-5 partial (reader commands live in the engine); summary counts recounted from the rows (M1's 16 partial rows were missing from it) |
 | 2026-10-31 | patch | READ-1 partial: `score.open` opens a PDF and `view.render` renders pages through the page cache; the reader UI comes in M3 |
 | 2026-10-28 | minor | Owner's answers: SYNC-1, SYNC-5 and SYNC-7 describe Google Drive first, Wi-Fi device sync and download-everything; PLAT-1 puts the Windows tablet first and the iPad Swift pen host at P2; rows and estimates unchanged |

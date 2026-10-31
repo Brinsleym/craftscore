@@ -1156,6 +1156,7 @@ dependencies = [
  "scorecraft-doc",
  "scorecraft-format",
  "scorecraft-geom",
+ "scorecraft-input",
  "scorecraft-layout",
  "scorecraft-ops",
  "scorecraft-pdf",
@@ -1206,6 +1207,10 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-input"
 version = "0.0.1"
+dependencies = [
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-io"
