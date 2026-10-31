@@ -42,7 +42,18 @@ FULL_DPI = 150
 DETAIL_DPI = 300
 DETAIL_PAGES = 3
 # Bump the version when the renders change, so `cargo xtask test-corpus` redoes old references.
-MARKER = ".complete-v3"
+MARKER = ".complete-v4"
+
+
+# pdfcraft-render's caps: a page that would be larger is drawn at the largest scale that fits.
+MAX_SIDE = 8192.0
+MAX_PIXELS = 64.0e6
+
+
+def effective_scale(w_pt, h_pt, scale):
+    """The scale ScoreCraft actually renders at, as pdfcraft-render's `effective_scale`."""
+    w, h = max(w_pt, 1.0), max(h_pt, 1.0)
+    return min(scale, MAX_SIDE / max(w, h), math.sqrt(MAX_PIXELS / (w * h)))
 
 
 def device_pixels(pt, scale):
@@ -53,6 +64,7 @@ def device_pixels(pt, scale):
 def render(page, scale):
     """The page at exactly `scale`, on white, with annotations, images unsmoothed."""
     w_pt, h_pt = page.get_size()
+    scale = effective_scale(w_pt, h_pt, scale)
     w, h = device_pixels(w_pt, scale), device_pixels(h_pt, scale)
     bitmap = pdfium.PdfBitmap.new_native(w, h, pdfium_c.FPDFBitmap_BGRx)
     bitmap.fill_rect((255, 255, 255, 255), 0, 0, w, h)

@@ -38,7 +38,7 @@ Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lin
 |---|---|---|---|
 | M0 | ✅ | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run`; generated scorecard; testkit synthetic and hostile PDFs (2026-10-28, PRs #5–#8) |
 | M1 | ⬜ | Foundation | |
-| M2 | 🟡 | PDF integration (PDFCraft) | `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 (`65ff3a00`): open, pages, metadata, outline, page and tile render, text; no PDFCraft type in its API (checked by `xtask layers`); page and tile cache with background pre-rendering and dark/sepia filters in `scorecraft-render`; `score.open` and `view.render` live (parity 1 / 122), CLI `info` and `render` to PNG. Next: corpus, fuzz, 300 dpi budget |
+| M2 | 🟡 | PDF integration (PDFCraft) | `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 (`65ff3a00`): open, pages, metadata, outline, page and tile render, text; no PDFCraft type in its API (checked by `xtask layers`); page and tile cache with background pre-rendering and dark/sepia filters in `scorecraft-render`; `score.open` and `view.render` live (parity 1 / 122), CLI `info` and `render` to PNG. fuzz target (`crates/pdf/fuzz`, plus 600 mutations in CI); corpus harness (`cargo xtask test-corpus`): PDF-1 done, engraved scores all match, 15/20 overall, renderer gaps reported for PDFCraft ([file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00)); 300 dpi render 41 ms on the tablet (P13 ≤ 300 ms). Left: PDF-2 to 95% once PDFCraft fixes land |
 | M3 | ⬜ | Reader app | |
 | M4 | ⬜ | Ink | |
 | M5 | ⬜ | Library | |
@@ -104,6 +104,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M2 🟡: fuzz, corpus and perf done; PDF-2 waits on PDFCraft renderer fixes |
 | 2026-10-31 | patch | M2 🟡: `score.open` and `view.render` live; parity floor 1 |
 | 2026-10-31 | patch | M2 🟡: page cache and pre-rendering in `scorecraft-render` |
 | 2026-10-31 | patch | M2 🟡: `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 |

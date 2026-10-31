@@ -307,7 +307,7 @@ fn corpus_opens_and_matches_the_reference() {
         // report it, but leave it out of the rates.
         let unreadable = !o.opened
             && !o.locked
-            && refs.join(".complete-v3").is_file()
+            && refs.join(".complete-v4").is_file()
             && !refs.join(&id).is_dir();
         if unreadable {
             o.notes

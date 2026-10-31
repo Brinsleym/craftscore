@@ -286,8 +286,8 @@ pub fn test(root: &Path, args: &[String]) -> Result<(), String> {
     if o.library.is_none() {
         fetch_all(root)?;
     }
-    // reference.py writes `.complete-v3` last, so an interrupted run is redone.
-    if !reference_dir(root, &o).join(".complete-v3").is_file() {
+    // reference.py writes `.complete-v4` last, so an interrupted run is redone.
+    if !reference_dir(root, &o).join(".complete-v4").is_file() {
         references(root, &o)?;
     }
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());

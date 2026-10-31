@@ -10,8 +10,8 @@ supersede estimates elsewhere.
 
 | Area | Done | Partial | Missing | Key numbers |
 |---|---:|---:|---:|---|
-| [Performance](#performance) | 0 | 0 | 13 | 13 scenarios, none measured yet |
-| [File compatibility](#file-compatibility) | 0 | 0 | 6 | corpus floors not set |
+| [Performance](#performance) | 4 | 0 | 9 | 13 scenarios, 4 measured |
+| [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
 | [Annotation](#annotation) | 0 | 0 | 19 | from annotation-parity |
 | [Automation](#automation) | 0 | 1 | 3 | 1 of 122 feature-map rows live (measured, `cargo xtask parity`) |
@@ -26,9 +26,9 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | Id | Scenario | Budget | Measured |
 |---|---|---|---|
 | P1 | Turn to a pre-rendered page: input to first frame | ≤ 16 ms | not measured yet |
-| P2 | First render of a vector page at screen resolution (2× DPI) | ≤ 120 ms | not measured yet |
-| P3 | First render of a 600 dpi scanned page (JBIG2) | ≤ 250 ms | not measured yet |
-| P4 | Open a 300-page score to first page | ≤ 400 ms | not measured yet |
+| P2 | First render of a vector page at screen resolution (2× DPI) | ≤ 120 ms | 16 ms (corpus, 12 samples) |
+| P3 | First render of a 600 dpi scanned page (JBIG2) | ≤ 250 ms | 208 ms (corpus, 8 samples) |
+| P4 | Open a 300-page score to first page | ≤ 400 ms | 13 ms (synthetic, 3 samples) |
 | P5 | Pen-down to first ink (predicted) | ≤ 1 frame | not measured yet |
 | P6 | Library of 10,000 scores: cold open to grid | ≤ 1.5 s | not measured yet |
 | P7 | Search 10,000 scores (metadata) | ≤ 50 ms | not measured yet |
@@ -37,7 +37,7 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | P10 | Export a 20-page score with ink | ≤ 2 s | not measured yet |
 | P11 | Memory while reading a 300-page score | ≤ 400 MB | not measured yet |
 | P12 | Setlist transition to next piece's first page | ≤ 16 ms (pre-rendered) | not measured yet |
-| P13 | First render of a score page at 300 dpi (print, export, deep zoom) | ≤ 300 ms | not measured yet |
+| P13 | First render of a score page at 300 dpi (print, export, deep zoom) | ≤ 300 ms | 41 ms (corpus, 20 samples) |
 
 ## File compatibility
 
@@ -46,9 +46,9 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 
 | Id | Target | Status |
 |---|---|---|
-| PDF-1 | ≥ 99% of the pinned public-domain score corpus opens; none crash | missing |
-| PDF-2 | ≥ 95% render within tolerance of a reference rasteriser at 150 and 300 dpi | missing |
-| PDF-3 | Scanned scores: JBIG2, CCITT G4, DCT, JPX images decode | missing |
+| PDF-1 | ≥ 99% of the pinned public-domain score corpus opens; none crash | done |
+| PDF-2 | ≥ 95% render within tolerance of a reference rasteriser at 150 and 300 dpi | partial |
+| PDF-3 | Scanned scores: JBIG2, CCITT G4, DCT, JPX images decode | partial |
 | PDF-4 | Damaged files: broken xref and truncated streams are repaired or the bad page shows a placeholder | missing |
 | PDF-5 | Exported PDFs pass a validator (veraPDF or qpdf --check) and open in three other readers | missing |
 | PDF-6 | Encrypted PDFs with an empty user password open; others ask for the password | missing |
