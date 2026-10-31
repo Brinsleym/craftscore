@@ -164,7 +164,12 @@ It checks PDF-1 and PDF-2 in [file-format-parity](file-format-parity.md#pdf-fide
 `cargo xtask test-corpus` fetches the corpus, renders references if they are missing, and runs the
 test. The report goes to `corpus/report.md`. To test a private library, run
 `cargo xtask test-corpus --library "C:\path\to\scores" --max-pages 20`, and the report goes to
-`corpus/report-library.md`. With `SCORECRAFT_CORPUS_DUMP=1` set, the test also writes ScoreCraft's
+`corpus/report-library.md`. Public-domain scores that fail on a known PDFCraft render gap are listed in
+`crates/pdf/tests/corpus-known.txt`: they are reported but left out of the PDF-2 rate, and the list
+only shrinks. A private library is held to the PDF-1 floor; its PDF-2 rate is reported only. After
+every PDFCraft pin bump, run both and compare with the numbers in
+[file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00).
+With `SCORECRAFT_CORPUS_DUMP=1` set, the test also writes ScoreCraft's
 full-resolution grey render of each page that misses its reference to `corpus/diff/`.
 
 The corpus test needs files that CI can't download, so it runs on contributors' machines. The

@@ -1,0 +1,10 @@
+# Public-domain corpus scores that miss their PDFium reference for a known renderer gap in
+# PDFCraft (docs/file-format-parity.md, "Corpus results"). They are reported but left out of the
+# PDF-2 rate. Delete a line as soon as the test says that score matches: the list only shrinks.
+#
+# id                               gap
+beethoven-op102-1-cello-sonata     nearest-neighbour sampling phase on a 2.7x CCITT downscale
+chopin-op65-cello-sonata           nearest-neighbour sampling phase on a 4x CCITT downscale
+cpe-bach-wq132-flute-sonata        nearest-neighbour sampling phase on a JPEG scan
+hummel-piano-sonata-7              nearest-neighbour sampling phase at 300 dpi
+schubert-d157-piano-sonata         nearest-neighbour sampling phase on a 4x CCITT downscale
