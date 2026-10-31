@@ -1,0 +1,82 @@
+"""Reference renders for the score corpus (docs/development.md, "Test corpora").
+
+Renders the pages of every PDF under a directory (recursively) with PDFium (pypdfium2,
+Apache-2.0/BSD) at 150 dpi, and the first three pages at 300 dpi. `--max-pages N` stops after
+N pages of each file. With `--hash-ids`, each file is named by the first 16 hex digits of its
+SHA-256 instead of its file name, and byte-identical copies are rendered once: use it for a
+private library, so no file name leaves it. Each render is turned into 8-bit grey with the ITU-R
+BT.601 weights and box-averaged over 4 x 4 blocks, then written as a binary PGM:
+
+    <out>/<id>/p001-150.pgm
+
+The corpus test (`crates/pdf/tests/corpus.rs`) reduces ScoreCraft's renders the same way and
+compares the two. Run through `cargo xtask corpus --references`, which installs nothing:
+`pip install pypdfium2 pillow` first.
+"""
+
+import argparse
+import hashlib
+import pathlib
+import sys
+
+import pypdfium2 as pdfium
+from PIL import Image
+
+BLOCK = 4
+FULL_DPI = 150
+DETAIL_DPI = 300
+DETAIL_PAGES = 3
+
+
+def reduce(image):
+    grey = image.convert("RGB").convert("L")
+    return grey.reduce(BLOCK)
+
+
+def write_pgm(path, image):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    w, h = image.size
+    with open(path, "wb") as f:
+        f.write(b"P5\n%d %d\n255\n" % (w, h))
+        f.write(image.tobytes())
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("src")
+    parser.add_argument("out")
+    parser.add_argument("--hash-ids", action="store_true")
+    parser.add_argument("--max-pages", type=int, default=0)
+    args = parser.parse_args()
+    src, out = pathlib.Path(args.src), pathlib.Path(args.out)
+    files = sorted(p for p in src.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf")
+    if not files:
+        sys.exit(f"no PDFs under {src}")
+    seen = set()
+    for pdf_path in files:
+        if args.hash_ids:
+            doc_id = hashlib.sha256(pdf_path.read_bytes()).hexdigest()[:16]
+        else:
+            doc_id = pdf_path.stem
+        if doc_id in seen:
+            continue
+        seen.add(doc_id)
+        try:
+            pdf = pdfium.PdfDocument(str(pdf_path))
+        except pdfium.PdfiumError as e:
+            print(f"{doc_id}: PDFium cannot open it ({e}); no reference", file=sys.stderr)
+            continue
+        count = len(pdf) if args.max_pages <= 0 else min(len(pdf), args.max_pages)
+        for index in range(count):
+            page = pdf[index]
+            dpis = [FULL_DPI] + ([DETAIL_DPI] if index < DETAIL_PAGES else [])
+            for dpi in dpis:
+                bitmap = page.render(scale=dpi / 72, fill_color=(255, 255, 255, 255))
+                write_pgm(out / doc_id / f"p{index + 1:03}-{dpi}.pgm", reduce(bitmap.to_pil()))
+        (out / doc_id).mkdir(parents=True, exist_ok=True)
+        (out / doc_id / "pages.txt").write_text(str(len(pdf)))
+        print(f"{doc_id}: {count} of {len(pdf)} pages")
+
+
+if __name__ == "__main__":
+    main()

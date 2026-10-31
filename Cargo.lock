@@ -1179,6 +1179,7 @@ dependencies = [
  "bytemuck",
  "pdfcraft-render",
  "scorecraft-testkit",
+ "sha2",
 ]
 
 [[package]]
@@ -1678,6 +1679,7 @@ version = "0.0.1"
 dependencies = [
  "scorecraft-engine",
  "serde_json",
+ "sha2",
  "toml",
 ]
 

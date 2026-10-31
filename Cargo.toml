@@ -2,6 +2,8 @@
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
 default-members = ["crates/*", "apps/*"]
+# Fuzz targets build with nightly in their own workspace (crates/pdf/fuzz/Cargo.toml).
+exclude = ["crates/pdf/fuzz"]
 
 [workspace.package]
 version = "0.0.1"
@@ -50,6 +52,7 @@ pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a
 # Third-party
 bytemuck = "1"
 png = "0.18"
+sha2 = "0.11"
 serde_json = "1"
 toml = "0.9"
 

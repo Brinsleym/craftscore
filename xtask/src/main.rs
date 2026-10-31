@@ -9,9 +9,11 @@
 )]
 
 mod ci;
+mod corpus;
 mod graph;
 mod layers;
 mod parity;
+mod perf;
 mod scorecard;
 mod wasm;
 
@@ -22,9 +24,17 @@ const USAGE: &str = "usage: cargo xtask <task>
 
 tasks:
   ci       run fmt, clippy, tests, layers and wasm, as the Linux CI jobs do
+  corpus   the pinned public-domain score corpus: --all downloads and verifies it,
+           --references renders PDFium references (needs Python 3 with pypdfium2 and pillow);
+           takes --library and --max-pages like test-corpus
   layers   check crate layering, lints and crate-root attributes (docs/architecture.md §3)
   parity   regenerate the feature catalog and docs/parity-checklist.md (--check: fail if stale)
   scorecard regenerate docs/scorecard.md (--check: fail if stale)
+  perf     measure the render budgets (perf/budgets.toml); --update-baseline writes
+           perf/baseline.json
+  test-corpus  fetch the corpus and run the opt-in corpus test (PDF-1, PDF-2);
+           --library <dir> tests a private folder instead (read only, results in corpus/),
+           --max-pages <n> checks the first n pages of each score
   wasm     cargo check every L0–L6 crate for wasm32-unknown-unknown";
 
 fn workspace_root() -> PathBuf {
@@ -39,7 +49,10 @@ fn main() -> ExitCode {
     let root = workspace_root();
     let result = match args.first().map(String::as_str) {
         Some("ci") => ci::run(&root),
+        Some("corpus") => corpus::run(&root, &args),
         Some("layers") => layers::run(&root),
+        Some("perf") => perf::run(&root, args.iter().any(|a| a == "--update-baseline")),
+        Some("test-corpus") => corpus::test(&root, &args),
         Some("parity") => parity::run(&root, args.iter().any(|a| a == "--check")),
         Some("scorecard") => scorecard::run(&root, args.iter().any(|a| a == "--check")),
         Some("wasm") => wasm::run(&root),

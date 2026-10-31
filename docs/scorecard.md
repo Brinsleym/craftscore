@@ -10,7 +10,7 @@ supersede estimates elsewhere.
 
 | Area | Done | Partial | Missing | Key numbers |
 |---|---:|---:|---:|---|
-| [Performance](#performance) | 0 | 0 | 12 | 12 scenarios, none measured yet |
+| [Performance](#performance) | 0 | 0 | 13 | 13 scenarios, none measured yet |
 | [File compatibility](#file-compatibility) | 0 | 0 | 6 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
 | [Annotation](#annotation) | 0 | 0 | 19 | from annotation-parity |
@@ -37,6 +37,7 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | P10 | Export a 20-page score with ink | ≤ 2 s | not measured yet |
 | P11 | Memory while reading a 300-page score | ≤ 400 MB | not measured yet |
 | P12 | Setlist transition to next piece's first page | ≤ 16 ms (pre-rendered) | not measured yet |
+| P13 | First render of a score page at 300 dpi (print, export, deep zoom) | ≤ 300 ms | not measured yet |
 
 ## File compatibility
 

@@ -1,0 +1,228 @@
+# The pinned public-domain score corpus (docs/development.md, "Test corpora"). The files are never
+# committed: `cargo xtask corpus --all` downloads them into corpus/public-domain/<id>.pdf and checks
+# each one's SHA-256. Every file must be public domain worldwide; record where its licence is
+# stated in `source`.
+#
+# Engraved: Mutopia Project pieces whose Copyright field reads "Public Domain".
+# Scanned: Wikimedia Commons files tagged both PD-old-100-expired and PD-US-expired.
+# Collected 2026-10-31.
+
+[[score]]
+id = "bach-bwv-anh114-menuet"
+title = "Menuet (Anna Magdalena Notebook), BWV Anh. 114"
+composer = "J. S. Bach"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh114/anna-magdalena-04/anna-magdalena-04-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=75"
+licence = "Public Domain"
+sha256 = "6b34ba44122d9694156a113c749eee0bf3232f54ead431a44be6f2a1b6f32c8b"
+bytes = 180708
+
+[[score]]
+id = "bach-bwv793-sinfonia7"
+title = "Sinfonia 7, BWV 793"
+composer = "J. S. Bach"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/BachJS/BWV793/bwv793/bwv793-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=175"
+licence = "Public Domain"
+sha256 = "8daabaa1f1e3988225f8ad463085b7e7655c0d335d2817411fdf58484f9b650e"
+bytes = 80185
+
+[[score]]
+id = "joplin-search-light-rag"
+title = "Search-Light Rag"
+composer = "Scott Joplin"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/JoplinS/search/search-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=275"
+licence = "Public Domain"
+sha256 = "4cc2142af910abd55b01928da8c06a13c86a979e13269c9ca5451c607112788f"
+bytes = 239948
+
+[[score]]
+id = "carcassi-op60-etude7"
+title = "Etude 7, Op. 60"
+composer = "Matteo Carcassi"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/CarcassiM/O60/carcassi-op60-07/carcassi-op60-07-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=300"
+licence = "Public Domain"
+sha256 = "692bcec3596896b1c6d3365a77561c92a694992c2d335594720298ce8445f71f"
+bytes = 65719
+
+[[score]]
+id = "mozart-k154-fugue"
+title = "Fugue in G minor, K. 154/385k"
+composer = "W. A. Mozart"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/MozartWA/KV154/k154/k154-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=425"
+licence = "Public Domain"
+sha256 = "ea710cdea9159b5dca6fadc9f75c0d73d8e8b74dc13d39cfac0314c2986fd9ec"
+bytes = 183591
+
+[[score]]
+id = "sousa-liberty-bell"
+title = "The Liberty Bell March"
+composer = "J. P. Sousa"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/SousaJP/TheLibertyBell/TheLibertyBell-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=625"
+licence = "Public Domain"
+sha256 = "059578a4c9c835ff3400e58809554ba73597d834622aee3976cee2a6f325ab46"
+bytes = 156255
+
+[[score]]
+id = "reger-op42-sonata1"
+title = "Sonata No. 1 for Unaccompanied Violin, Op. 42"
+composer = "Max Reger"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/RegerM/O42/sonate/sonate-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1025"
+licence = "Public Domain"
+sha256 = "3d074fbc79b52fca2cc6947c7f5c484d88607791012ddea2f8bb88757c3caad9"
+bytes = 298299
+
+[[score]]
+id = "veni-emmanuel-hymn"
+title = "Veni Emmanuel (hymn tune)"
+composer = "Traditional"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/Traditional/veniemma/veniemma-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1300"
+licence = "Public Domain"
+sha256 = "630b194cfb6fb9b20cb232900aed398cba32181adf73d7ee8c413e8b468ba884"
+bytes = 49081
+
+[[score]]
+id = "verdi-traviata-n7"
+title = "La Traviata, No. 7: Scena e duetto"
+composer = "Giuseppe Verdi"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/VerdiG/Traviata_07/Traviata_07-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1400"
+licence = "Public Domain"
+sha256 = "3c1c323a5a73c3955d5b5156f6eb2023e6cedb8532649bf5deb37948eff83e92"
+bytes = 329864
+
+[[score]]
+id = "buxtehude-buxwv155-toccata"
+title = "Toccata, BuxWV 155"
+composer = "Dieterich Buxtehude"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/BuxtehudeD/Wx155/BuxWv155/BuxWv155-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2075"
+licence = "Public Domain"
+sha256 = "783bdfe7c49f556bebc62f9a24fe90a8517fe346aa6c587a5ac8cb2fb69190a2"
+bytes = 280383
+
+[[score]]
+id = "tchaikovsky-op39-16-old-french-song"
+title = "Old French Song, Op. 39 No. 16"
+composer = "P. I. Tchaikovsky"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/TchaikovskyPI/O39/16OldFrenchSong/16OldFrenchSong-a4.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2080"
+licence = "Public Domain"
+sha256 = "e051dabc69b63bf9e665ac8579273a5f2583768ea4c453de8ea138d55fae5c7e"
+bytes = 163813
+
+[[score]]
+id = "mozart-k265-guitar-duo"
+title = "Ah vous dirai-je, Maman, K. 265 (guitar duo, complete)"
+composer = "W. A. Mozart"
+kind = "engraved"
+url = "https://www.mutopiaproject.org/ftp/MozartWA/KV265/guitar-duo-complete/guitar-duo-complete-let.pdf"
+source = "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2236"
+licence = "Public Domain"
+sha256 = "1723a0a1efca4783908257daadd1b98438958995db2468bd3720b2a0146b0da3"
+bytes = 417574
+
+[[score]]
+id = "cpe-bach-wq132-flute-sonata"
+title = "Sonata in A minor for Solo Flute, Wq. 132"
+composer = "C. P. E. Bach"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/2/22/Sonata_in_A_minor_for_Solo_Flute%2C_Wq._132%2C_H_562_%28CPE_Bach%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Sonata_in_A_minor_for_Solo_Flute,_Wq._132,_H_562_(CPE_Bach).pdf"
+licence = "Public Domain"
+sha256 = "7896a787af170623848cb6e3d638361a6aa867d44234bff060c23c716f527148"
+bytes = 2217510
+
+[[score]]
+id = "le-rossignol-salon-piece"
+title = "Le rossignol: morceau de salon pour le piano"
+composer = "Benjamin Owen"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/5/50/Le_rossignol_-_morceau_de_salon_-_pour_le_piano_%28IA_b10009267%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Le_rossignol_-_morceau_de_salon_-_pour_le_piano_(IA_b10009267).pdf"
+licence = "Public Domain"
+sha256 = "58c55b688661a1ec7ec39afba112d98a40b425a1439cfa0cfed2fc8fa4abf4dd"
+bytes = 468869
+
+[[score]]
+id = "gertrudes-dream-waltz"
+title = "Gertrude's Dream Waltz (J. E. Gould, Philadelphia, c1853)"
+composer = "Anonymous (misattributed to Beethoven)"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/3/39/Gertrude%27s_dream_waltz_-_for_the_pianoforte_%28IA_b10316085%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Gertrude%27s_dream_waltz_-_for_the_pianoforte_(IA_b10316085).pdf"
+licence = "Public Domain"
+sha256 = "1407349d400d04c57a1f1361b150be627f82f17b09da12207b88625152dd39e2"
+bytes = 394544
+
+[[score]]
+id = "schubert-d157-piano-sonata"
+title = "Piano Sonata in E major, D. 157"
+composer = "Franz Schubert"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/4/48/Piano_Sonata%2C_D.157_%28IA_imslp-sonata-d157-schubert-franz%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Piano_Sonata,_D.157_(IA_imslp-sonata-d157-schubert-franz).pdf"
+licence = "Public Domain"
+sha256 = "01427f82e742979f0968ef229ef133719e9cd3a7c4b05b8bf90544e5e0e18986"
+bytes = 2018467
+
+[[score]]
+id = "beethoven-op102-1-cello-sonata"
+title = "Cello Sonata No. 4, Op. 102 No. 1"
+composer = "Ludwig van Beethoven"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/9/97/Cello_Sonata_No.4%2C_Op.102_No.1_%28IA_imslp-sonata-no4-op102-no1-beethoven-ludwig-van%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Cello_Sonata_No.4,_Op.102_No.1_(IA_imslp-sonata-no4-op102-no1-beethoven-ludwig-van).pdf"
+licence = "Public Domain"
+sha256 = "5c2585657b12f75b4c16499b52942371950f0d0c8814c888ab81d74938a38b05"
+bytes = 680077
+
+[[score]]
+id = "hummel-piano-sonata-7"
+title = "Piano Sonata No. 7"
+composer = "Johann Nepomuk Hummel"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/0/0e/Piano_Sonata_No.7_%28IA_imslp-sonata-no7-hummel-johann-nepomuk%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Piano_Sonata_No.7_(IA_imslp-sonata-no7-hummel-johann-nepomuk).pdf"
+licence = "Public Domain"
+sha256 = "5df1b5289bf1848a85883cb738cec486071314cfb6d68e7251ed6e53458d8b61"
+bytes = 981908
+
+[[score]]
+id = "vieuxtemps-op12-violin-sonata"
+title = "Violin Sonata, Op. 12"
+composer = "Henri Vieuxtemps"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/1/10/Violin_Sonata%2C_Op.12_%28IA_imslp-sonata-op12-vieuxtemps-henri%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Violin_Sonata,_Op.12_(IA_imslp-sonata-op12-vieuxtemps-henri).pdf"
+licence = "Public Domain"
+sha256 = "3134161f6b6c0ab204910b48262a6dae2db23a6dbba96cbd7a516e2df201c215"
+bytes = 1894107
+
+[[score]]
+id = "chopin-op65-cello-sonata"
+title = "Cello Sonata in G minor, Op. 65"
+composer = "Frédéric Chopin"
+kind = "scanned"
+url = "https://upload.wikimedia.org/wikipedia/commons/9/91/Cello_Sonata%2C_Op.65_%28IA_imslp-sonata-op65-chopin-frdric%29.pdf"
+source = "https://commons.wikimedia.org/wiki/File:Cello_Sonata,_Op.65_(IA_imslp-sonata-op65-chopin-frdric).pdf"
+licence = "Public Domain"
+sha256 = "ed66a8b8da4f230be9b456240a9ec1c652cd9abb23cf5206a2e51d2047b7a623"
+bytes = 6091127
