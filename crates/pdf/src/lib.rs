@@ -1,7 +1,11 @@
-//! scorecraft-pdf: Thin adapter over PDFCraft's PDF crates: open, render tiles, text, outline, annotations, write. The only door to `pdfcraft-*`.
+//! scorecraft-pdf: the one door to PDFCraft's PDF crates (`docs/architecture.md` §15).
 //!
-//! Layer L0 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Opens a score, reports its pages, metadata and outline, rasterises pages and tiles, and
+//! extracts text. No `pdfcraft-*` type appears in this API, so the backend can be bumped, forked
+//! or replaced by touching this crate only. Every call returns a [`PdfError`] instead of
+//! panicking, whatever the input.
+//!
+//! Layer L0, standalone: no workspace dependencies.
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -11,8 +15,20 @@
     clippy::unreachable
 )]
 
-/// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
+mod document;
+mod error;
+
+pub use document::{
+    Bitmap, Document, MAX_PIXELS, MAX_SIDE, Metadata, OutlineEntry, PageGeometry, PageText,
+    TextGlyph, Tile, device_pixels, fit_scale,
+};
+pub use error::PdfError;
+
+/// The crate's package name, used in diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+
+/// Points per inch in PDF user space (ISO 32000-1 §8.3.2.3): `scale = dpi / POINTS_PER_INCH`.
+pub const POINTS_PER_INCH: f32 = 72.0;
 
 #[cfg(test)]
 mod tests {

@@ -380,6 +380,52 @@ pub fn check(root: &Path) -> Result<Vec<String>, String> {
         }
     }
     errors.extend(crate::graph::check(root)?);
+    errors.extend(check_pdf_api(&root.join("crates/pdf/src"))?);
+    Ok(errors)
+}
+
+/// Public items of `scorecraft-pdf` that name a PDFCraft type (architecture §15: no
+/// `pdfcraft-*` type in the adapter's public API). Lines are checked one by one: `pub` items and
+/// fields must not mention `pdfcraft` or the `backend` alias. `pub const` values may be taken
+/// from the backend, since only their primitive type is public.
+pub fn pdf_api_leaks(file: &str, source: &str) -> Vec<String> {
+    source
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| {
+            let t = line.trim_start();
+            t.starts_with("pub ")
+                && !t.starts_with("pub const ")
+                && !t.starts_with("pub(crate)")
+                && (t.contains("pdfcraft") || t.contains("backend::") || t.contains("backend "))
+        })
+        .map(|(n, line)| {
+            format!(
+                "scorecraft-pdf: {file}:{}: public API names a PDFCraft type: {}",
+                n + 1,
+                line.trim()
+            )
+        })
+        .collect()
+}
+
+fn check_pdf_api(src: &Path) -> Result<Vec<String>, String> {
+    let mut errors = Vec::new();
+    let entries = fs::read_dir(src).map_err(|e| format!("reading {}: {e}", src.display()))?;
+    for entry in entries {
+        let path = entry
+            .map_err(|e| format!("reading {}: {e}", src.display()))?
+            .path();
+        if path.extension().is_some_and(|x| x == "rs") {
+            let source = fs::read_to_string(&path)
+                .map_err(|e| format!("reading {}: {e}", path.display()))?;
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy())
+                .unwrap_or_default();
+            errors.extend(pdf_api_leaks(&name, &source));
+        }
+    }
     Ok(errors)
 }
 
@@ -398,6 +444,19 @@ pub fn run(root: &Path) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn pdf_api_leaks_are_found() {
+        let src = "use pdfcraft_render as backend;\n\
+                   pub const MAX: f32 = backend::MAX_SIDE;\n\
+                   pub struct Doc {\n\
+                   pub fn info(&self) -> backend::DocInfo {\n\
+                   pub use pdfcraft_render::Tile;\n\
+                   pub renderer: pdfcraft_render::PageRenderer,\n";
+        let leaks = super::pdf_api_leaks("x.rs", src);
+        assert_eq!(leaks.len(), 3, "{leaks:#?}");
+        assert!(leaks[0].contains("x.rs:4"));
+    }
+
     use super::*;
 
     const DENY: &str = "#![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, \

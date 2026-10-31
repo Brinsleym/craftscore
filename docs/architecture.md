@@ -1,10 +1,16 @@
 # ScoreCraft architecture
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (§16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (current state: PDF adapter on PDFCraft 0.15.0 with the vello_cpu patch; earlier: §16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
 
-## Current state (2026-10-28)
+## Current state (2026-10-31)
 
-Nothing is built yet. This page is the **design plan**: the workspace, the layering rules that
+- **PDF backend (§15).** `scorecraft-pdf` takes `pdfcraft-render` at PDFCraft 0.15.0
+  (`65ff3a00`, 2026-10-30) with the hayro, lopdf, `vello_common` and `vello_cpu` patches at the
+  same revision. The adapter opens, reports pages, metadata and outline, renders pages and tiles,
+  and extracts text. The other PDFCraft crates in §15 come in when a milestone needs them
+  (`model` and `annot` for ink, `organize` and `create` for page editing).
+
+Otherwise this page is the **design plan**: the workspace, the layering rules that
 keep the engine independent of the UI, the document model and how rendering, input, sync and
 automation fit together. Where code later differs, add a "Current state" summary here (as
 PhotoCraft does) and let it win over the plan below.
@@ -411,7 +417,7 @@ two have in common, nothing more. `cargo xtask layers` rejects these crates anyw
 resolved graph (`xtask/src/graph.rs`, `BANNED`).
 
 **PDFCraft's patches.** PDFCraft's root `[patch.crates-io]` has two parts: path patches into its
-`vendor/` (the hayro family, lopdf, vello_common), and git patches that swap in the storytold forks
+`vendor/` (the hayro family, lopdf, vello_common and, since 0.15, vello_cpu), and git patches that swap in the storytold forks
 of egui (14 crates) and winit. We repeat only the first part; the egui and winit forks are a UI
 matter, settled in §16. Cargo finds the vendored crates inside the PDFCraft repository even though
 its workspace excludes `vendor/` (checked 2026-10-28).
@@ -422,6 +428,11 @@ patches checks natively and for `wasm32-unknown-unknown` on Rust 1.99.1: 165 pac
 no egui, no craft-libs crates. Adding `craft-ui` (§16) still checks on both targets with one egui
 and one hayro. PDFCraft's full graph (794 packages, with `aws-lc-sys` and `boa_engine`) comes only
 from the crates we don't take.
+
+**Pinned build (2026-10-31).** The workspace takes `pdfcraft-render` at `65ff3a00` (0.15.0). That
+revision adds a `vello_cpu` vendor patch, which we repeat. The graph is 161 packages and checks
+natively and for wasm32 with one hayro and no egui. `cargo xtask layers` also checks that no
+public item in `crates/pdf/src` names a `pdfcraft` or `backend::` type.
 
 **Rules.**
 
@@ -490,6 +501,7 @@ framework, so it looks and behaves like a Craft app.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Current state: `scorecraft-pdf` on `pdfcraft-render` 0.15.0 (`65ff3a00`) with the `vello_cpu` patch; §15 pinned build |
 | 2026-10-28 | minor | §15: headless PDFCraft crates only, test build results, banned crates; §16: own UI on craft-ui with exactly one egui (the suite's fork), no craft-update; §17: Windows tablet first, web runtime limits; §9: sync is Google Drive plus device-to-device, download everything; §10: Windows Ink first, Swift pen host on iPad |
 | 2026-10-28 | minor | §15: the PDF backend reuses PDFCraft's crates (git dependencies pinned by revision); `pdf` becomes an adapter |
 | 2026-10-28 | major | First version: design plan adapted from PhotoCraft's architecture for a score reader |

@@ -10,23 +10,28 @@ compatibility and comparison.
 
 Third-party material
 
-This repository does not yet bundle third-party material. The per-file list (author, source,
-licence) is in ATTRIBUTION.md.
+Builds include these crates and the assets they embed (docs/architecture.md §15). The per-file
+list for anything stored in this repository (author, source, licence) is in ATTRIBUTION.md.
 
-Planned dependencies whose notices builds will carry (docs/architecture.md §15):
-
-- PdfCraft crates (pdfcraft-geom, -filters, -crypt, -cos, -model, -content, -fonts, -render,
-  -annot, -organize, -create, -print, -ocr), https://github.com/storytold/pdfcraft, used as git
-  dependencies at a pinned revision. Copyright (c) 2026 ArtCraft Team and the PdfCraft
-  contributors. MIT OR Apache-2.0. The ArtCraft name and logos are not covered by that licence and
-  are not used by ScoreCraft.
+- PdfCraft crates pdfcraft-render, -cos, -crypt, -filters and -fonts,
+  https://github.com/storytold/pdfcraft, used as git dependencies at one pinned revision
+  (Cargo.toml). Copyright (c) 2026 ArtCraft Team and the PdfCraft contributors. MIT OR Apache-2.0.
+  The ArtCraft name and logos are not covered by that licence and are not used by ScoreCraft.
+- Fonts embedded by pdfcraft-fonts: Inter (Copyright the Inter Project Authors) and Dancing Script
+  (Copyright the Dancing Script Project Authors), SIL Open Font License 1.1; licence texts in
+  PdfCraft's assets/fonts/OFL-Inter.txt and OFL-DancingScript.txt.
 - hayro, hayro-interpret, hayro-syntax, hayro-cmap, hayro-postscript, hayro-jbig2 (as patched by
-  PdfCraft) — Apache-2.0 OR MIT, Copyright the hayro authors. hayro's embed-fonts feature bundles
-  the Foxit standard-14 Type 1 fonts: Copyright 2014 PDFium Authors. All rights reserved. Original
-  code copyright 2014 Foxit Software Inc. BSD-3-Clause. hayro-cmap bundles Adobe CMap resources:
-  Copyright 1990-2023 Adobe. All rights reserved. BSD-3-Clause; neither the name of Adobe nor the
-  names of its contributors are used to endorse or promote this product.
-- lopdf — MIT. vello_common — Apache-2.0 OR MIT.
+  PdfCraft), hayro-ccitt, hayro-jpeg2000 — Apache-2.0 OR MIT, Copyright the hayro authors. hayro
+  bundles the Foxit standard-14 Type 1 fonts: Copyright 2014 PDFium Authors. All rights reserved.
+  Original code copyright 2014 Foxit Software Inc. BSD-3-Clause. hayro-cmap bundles Adobe CMap
+  resources: Copyright 1990-2023 Adobe. All rights reserved. BSD-3-Clause; neither the name of
+  Adobe nor the names of its contributors are used to endorse or promote this product.
+- lopdf — MIT. vello_common, vello_cpu (as patched by PdfCraft) — Apache-2.0 OR MIT.
 - CGATS001Compat-v2-micro.icc in hayro-interpret — CC0-1.0, Clinton Ingram.
+
+Planned, not yet in builds:
+
+- Further PdfCraft crates (pdfcraft-model, -content, -annot, -organize, -create, -print, -ocr)
+  as the features that need them land; the same copyright and licence as above.
 - ocrs and its recognition models (through pdfcraft-ocr), if OCR ships — licences to be recorded
   here before the first release that includes them.

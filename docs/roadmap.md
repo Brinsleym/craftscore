@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M2 in progress: PDF adapter; earlier: owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -38,7 +38,7 @@ Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lin
 |---|---|---|---|
 | M0 | ✅ | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run`; generated scorecard; testkit synthetic and hostile PDFs (2026-10-28, PRs #5–#8) |
 | M1 | ⬜ | Foundation | |
-| M2 | ⬜ | PDF integration (PDFCraft) | |
+| M2 | 🟡 | PDF integration (PDFCraft) | `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 (`65ff3a00`): open, pages, metadata, outline, page and tile render, text; no PDFCraft type in its API (checked by `xtask layers`). Next: tile cache, engine commands, corpus, fuzz, 300 dpi budget |
 | M3 | ⬜ | Reader app | |
 | M4 | ⬜ | Ink | |
 | M5 | ⬜ | Library | |
@@ -104,6 +104,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M2 🟡: `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 |
 | 2026-10-28 | minor | Owner's answers to the M0 review: page turns and the pedal come first after M2, so TURN-4 moves from M6 to M3 (M3 66–122 h, M6 44–88 h; totals unchanged); M3 targets the Windows tablet first; M7 iPad uses a Swift pen host; M8 is Google Drive first, then device-to-device |
 | 2026-10-28 | minor | M0 done; alpha ~310–630 → ~250–530 h: `cargo xtask scorecard` generates the scorecard from `perf/budgets.toml` and `scorecard/*.toml`; testkit writes synthetic and hostile PDFs |
 | 2026-10-28 | minor | M0: engine `Session::dispatch` and command registry, generated feature catalog and parity checklist (0 of 122, floor 0), `panic_hunt`, CLI `commands`/`run` |
