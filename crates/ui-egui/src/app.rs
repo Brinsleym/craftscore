@@ -90,14 +90,23 @@ impl App {
 
     /// Opens a score file and applies the saved reader preferences.
     pub fn open_path(&mut self, path: &str) -> Result<Value, EngineError> {
-        let r = self
-            .session
-            .dispatch("score.open", &json!({ "path": path }))?;
+        self.command("score.open", &json!({ "path": path }))
+    }
+
+    /// After a score opens, by any route: fresh textures, the saved reader preferences, and
+    /// remember it for the next launch.
+    fn opened(&mut self, params: &Value) {
         self.reader.clear();
         self.settings.apply_to_reader(&mut self.session);
-        self.settings.last_score = Some(path.to_owned());
+        if let Some(path) = params.get("path").and_then(Value::as_str) {
+            self.settings.last_score = Some(path.to_owned());
+        }
         self.save();
-        Ok(r)
+    }
+
+    /// Whether every visible page has been rendered (screenshots wait for this).
+    pub fn pages_ready(&mut self) -> bool {
+        ReaderCanvas::pages_ready(&mut self.session)
     }
 
     fn save(&mut self) {
@@ -113,6 +122,10 @@ impl App {
         } else {
             self.session.dispatch(id, params)
         };
+        if r.is_ok() && id == "score.open" {
+            self.opened(params);
+            return r;
+        }
         let changes_prefs = id.starts_with("view.layout")
             || id.starts_with("view.turn.halfPage")
             || id.starts_with("view.turn.alternating")
@@ -601,8 +614,11 @@ mod tests {
     use scorecraft_testkit::pdf::{PageSpec, PdfBuilder};
 
     fn app_with_score(pages: usize) -> (App, std::path::PathBuf) {
+        // A directory per call: tests run in parallel and must not share a file.
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let dir =
-            std::env::temp_dir().join(format!("scorecraft-ui-{}-{pages}", std::process::id()));
+            std::env::temp_dir().join(format!("scorecraft-ui-{}-{n}-{pages}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("score.pdf");
         std::fs::write(
@@ -675,6 +691,25 @@ mod tests {
         assert_eq!(
             app.command("ui.nope", &json!({})).unwrap_err().code(),
             "unknown_command"
+        );
+    }
+
+    #[test]
+    fn a_score_opened_by_command_gets_the_window_viewport() {
+        let (mut app, _) = app_with_score(2);
+        let (_, second) = app_with_score(3);
+        let ctx = Context::default();
+        ctx.set_pixels_per_point(1.25);
+        frames(&mut app, &ctx, 2, Vec::new());
+        let r = app.command("score.open", &json!({ "path": second.to_string_lossy() }));
+        assert!(r.is_ok(), "{r:?}");
+        frames(&mut app, &ctx, 1, Vec::new());
+        let st = app.session.reader_state().unwrap();
+        assert_eq!(st["pageCount"], 3);
+        assert_eq!(st["viewport"]["pixelsPerPoint"], 1.25, "{}", st["viewport"]);
+        assert_eq!(
+            app.settings.last_score.as_deref(),
+            Some(&*second.to_string_lossy())
         );
     }
 

@@ -35,9 +35,12 @@ in `scorecraft-automation::control`). The rest of the table is the plan.
 - `ui.key` and `ui.pointer` inject real input events into the next frame, so they take the same
   path as a keyboard, pedal or finger, and answer with `ui.state` after that frame.
   `modifiers` is a list of `ctrl`, `alt`, `shift`, `cmd`. Pointer coordinates are window points.
-  A pedal is a key: `ui.key {"key":"PageDown"}`.
-- `ui.screenshot` returns `{"width","height","png"}`: the window's real pixels from the next
-  frame, captured even when the window is minimised. Without a window, `view.snapshot` (an
+  A pedal is a key: `ui.key {"key":"PageDown"}`. Turn keys pass the pedal's bounce filter, so
+  repeats of the same key less than 80 ms apart are dropped: to turn several pages quickly, use
+  `command view.turn.next` (or `view.page.goto`) instead.
+- `ui.screenshot` returns `{"width","height","png"}`: the window's real pixels, captured even
+  when the window is minimised. It waits (up to 15 s) until every visible page has finished
+  rendering, so it never shows a placeholder or a blurry stand-in. Without a window, `view.snapshot` (an
   engine command) composes the reader on the CPU instead.
 
 | Method | Params | Result |

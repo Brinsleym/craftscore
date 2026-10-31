@@ -67,9 +67,19 @@ impl ReaderCanvas {
         ReaderCanvas::default()
     }
 
+    /// Whether every visible page has its bitmap at the right scale (nothing still rendering).
+    pub fn pages_ready(session: &mut Session) -> bool {
+        session
+            .reader_frame(false)
+            .is_none_or(|slots| slots.iter().all(|s| s.bitmap.is_some()))
+    }
+
     /// Forgets every texture (a new score).
     pub fn clear(&mut self) {
         self.textures.clear();
+        // The engine's new reader starts with a default viewport: send ours again.
+        self.sent_viewport = None;
+        self.press = None;
     }
 
     /// Draws the reader in `ui`'s remaining space and handles its input. `keys` is false while
@@ -233,14 +243,20 @@ impl ReaderCanvas {
         session: &mut Session,
         tokens: &Tokens,
     ) {
-        let mut slots = session.reader_frame(false).unwrap_or_default();
-        // A page with no bitmap and no stand-in (just opened, or jumped far) renders now, once.
-        if slots
-            .iter()
-            .any(|s| s.bitmap.is_none() && !self.textures.contains_key(&s.file_page))
+        // Native builds pre-render in the background, so a frame never waits on rendering: a
+        // page not ready yet shows its last texture or a placeholder until it arrives. The web
+        // build has no worker thread and renders here.
+        let render_now = cfg!(target_arch = "wasm32");
+        let slots = session.reader_frame(false).unwrap_or_default();
+        let slots = if render_now
+            && slots
+                .iter()
+                .any(|s| s.bitmap.is_none() && !self.textures.contains_key(&s.file_page))
         {
-            slots = session.reader_frame(true).unwrap_or_default();
-        }
+            session.reader_frame(true).unwrap_or_default()
+        } else {
+            slots
+        };
         if slots.iter().any(|s| s.bitmap.is_none()) {
             ctx.request_repaint_after(std::time::Duration::from_millis(30));
         }
@@ -276,6 +292,24 @@ impl ReaderCanvas {
             }
             mesh.indices.extend([0, 1, 2, 0, 2, 3]);
             painter.add(Shape::mesh(mesh));
+        }
+        // A half-page turn shows parts of two pages one above the other: mark the seam.
+        for a in &slots {
+            for b in &slots {
+                if a.file_page != b.file_page
+                    && (a.dst.y1 - b.dst.y0).abs() < 0.5
+                    && a.dst.x0 < b.dst.x1
+                    && b.dst.x0 < a.dst.x1
+                {
+                    let y = rect.min.y + b.dst.y0 as f32;
+                    let x0 = rect.min.x + a.dst.x0.max(b.dst.x0) as f32;
+                    let x1 = rect.min.x + a.dst.x1.min(b.dst.x1) as f32;
+                    painter.line_segment(
+                        [pos2(x0, y), pos2(x1, y)],
+                        egui::Stroke::new(2.0, tokens.accent),
+                    );
+                }
+            }
         }
         // Keep textures for what is on screen only; the engine's cache holds the rest.
         self.textures.retain(|page, _| on_screen.contains(page));
