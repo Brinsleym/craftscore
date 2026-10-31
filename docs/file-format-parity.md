@@ -79,16 +79,17 @@ count only; see [development](development.md#test-corpora)).
   password; none crash. Two library files that PDFium can't open either are not counted.
 - **PDF-2:** 15/20 public-domain scores match (all 12 engraved ones); about two thirds of the
   library. Every remaining failure is in PDFCraft's renderer (hayro), to fix upstream and re-pin:
-  1. A full-page JBIG2 halftone image is drawn blank, with no error (PDF-3).
+  1. A full-page JBIG2 halftone image is drawn blank, with no error (PDF-3). Likely covered by
+     storytold/pdfcraft#2134.
   2. An image on a page with /Rotate 90 and an offset crop box lands a few pixels off and
-     slightly mis-scaled.
+     slightly mis-scaled. Not yet tracked upstream.
   3. 1-bit images downscaled about 3× come out 5–8% lighter than PDFium's: thin lines are
-     point-sampled away.
+     point-sampled away. Tracked: storytold/pdfcraft#2393, #3858.
   4. Strokes thinner than a device pixel are drawn at their exact coverage (up to 32% lighter
-     staff lines); PDFium widens them to one pixel.
+     staff lines); PDFium widens them to one pixel. Not yet tracked upstream.
   5. Unsmoothed images pick different source pixels from PDFium (1-px flips along edges). The
-     ink and layout match; only the 4 × 4 tolerance sees it.
-  6. One file's page tree yields one page where PDFium finds six.
+     ink and layout match; only the 4 × 4 tolerance sees it. Tracked with item 3.
+  6. One file's page tree yields one page where PDFium finds six. Not yet tracked upstream.
 - Images are not smoothed when they are scaled, because hayro honours each image's /Interpolate
   flag. Scans therefore look harder-edged than in PDFium-based readers. An "always smooth
   images" render option in PDFCraft would fix that and items 3 and 5.
