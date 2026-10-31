@@ -20,6 +20,25 @@ pub trait Platform {
     fn set_keep_awake(&mut self, on: bool) -> Result<(), String>;
     /// Stores the settings for the next launch.
     fn save_settings(&mut self, _settings: &Settings) {}
+    /// Where the library lives (markings are kept there). `None` keeps a library in memory for
+    /// the session only.
+    fn library_dir(&self) -> Option<String> {
+        None
+    }
+    /// Asks where to save an exported PDF, suggesting `name`. `None` if cancelled or there is no
+    /// dialog.
+    fn pick_export_path(&mut self, _name: &str) -> Option<String> {
+        None
+    }
+    /// Asks for a folder to import. `None` if cancelled or there is no dialog.
+    fn pick_folder(&mut self) -> Option<String> {
+        None
+    }
+    /// Plays the metronome's click at (BPM, beats per bar), or stops it with `None`. An error
+    /// says why there is no sound (the pulse still shows).
+    fn set_click(&mut self, _click: Option<(f64, u8)>) -> Result<(), String> {
+        Err("this build has no audio output".into())
+    }
 }
 
 /// A platform that does nothing (tests, snapshots).
@@ -45,6 +64,8 @@ pub const SHELL_COMMANDS: &[(&str, &str, &str)] = &[
         "Show or Hide Controls",
         r#"{"on":bool?}"#,
     ),
+    ("ui.library.show", "Library", r#"{"on":bool?}"#),
+    ("ui.library.view", "Library View", r#"{"view":"grid|list"}"#),
 ];
 
 pub struct App {
@@ -57,6 +78,16 @@ pub struct App {
     sent_full_screen: Option<bool>,
     /// The theme last applied to egui.
     applied_theme: Option<Theme>,
+    /// The library window (LIB-14).
+    library: crate::library_view::LibraryView,
+    /// The Score panel: details, pages, bookmarks.
+    score_panel: crate::score_panel::ScorePanel,
+    /// `library.score.get` for the open score, while the Score panel is open; cleared by every
+    /// command so the panel never shows stale pages.
+    score_cache: Option<Value>,
+    /// The click last asked of the platform, and why there is none, if there is none.
+    sent_click: Option<Option<(f64, u8)>>,
+    click_error: Option<String>,
 }
 
 fn bool_param(params: &Value, key: &str) -> Result<Option<bool>, EngineError> {
@@ -73,10 +104,30 @@ fn bool_param(params: &Value, key: &str) -> Result<Option<bool>, EngineError> {
 impl App {
     pub fn new(platform: Box<dyn Platform>, settings: Settings) -> App {
         let mut session = Session::new();
-        settings.apply_to_session(&mut session);
         let mut state = UiState::new();
+        // Scores open through the library, so markings are kept with them (ANNO-15).
+        let opened = match platform.library_dir() {
+            Some(dir) => {
+                let id = if std::path::Path::new(&dir).exists() {
+                    "library.open"
+                } else {
+                    "library.create"
+                };
+                session.dispatch(id, &json!({ "path": dir })).map(|_| ())
+            }
+            None => session.create_memory_library().map(|_| ()),
+        };
+        if let Err(e) = opened {
+            state.message = Some(format!(
+                "The library couldn't be opened ({e}); markings made now won't be kept."
+            ));
+            let _ = session.create_memory_library();
+        }
+        settings.apply_to_session(&mut session);
+        settings.apply_markup(&mut session);
         state.theme = settings.theme;
         state.keep_awake.wanted = settings.keep_awake;
+        state.library_grid = settings.library_grid;
         App {
             session,
             state,
@@ -85,12 +136,21 @@ impl App {
             platform,
             sent_full_screen: None,
             applied_theme: None,
+            library: crate::library_view::LibraryView::new(),
+            score_panel: crate::score_panel::ScorePanel::new(),
+            score_cache: None,
+            sent_click: None,
+            click_error: None,
         }
     }
 
     /// Opens a score file and applies the saved reader preferences.
     pub fn open_path(&mut self, path: &str) -> Result<Value, EngineError> {
-        self.command("score.open", &json!({ "path": path }))
+        if self.session.library().is_some() {
+            self.command("library.openFile", &json!({ "path": path }))
+        } else {
+            self.command("score.open", &json!({ "path": path }))
+        }
     }
 
     /// After a score opens, by any route: fresh textures, the saved reader preferences, and
@@ -122,17 +182,50 @@ impl App {
         } else {
             self.session.dispatch(id, params)
         };
-        if r.is_ok() && id == "score.open" {
-            self.opened(params);
+        if r.is_ok() && id == "list.play" {
+            // A list opens its first score in the reader.
+            self.reader.clear();
+            self.state.library = false;
+            self.library.dirty = true;
             return r;
         }
+        if let (Ok(_), true) = (&r, id == "score.open" || id == "library.openFile") {
+            self.opened(params);
+            self.state.library = false;
+            self.library.dirty = true;
+            return r;
+        }
+        if r.is_ok() {
+            // Imports, edits and sorts change what the library window lists.
+            self.library.dirty = true;
+            self.score_cache = None;
+        }
+        // Markup settings are kept between launches; gestures and queries are not settings.
+        let markup_setting = (id.starts_with("annotate.")
+            && !matches!(
+                id,
+                "annotate.stroke"
+                    | "annotate.state"
+                    | "annotate.page.list"
+                    | "annotate.ruler.set"
+                    | "annotate.mode.set"
+            )
+            && !id.starts_with("annotate.select.")
+            && !id.starts_with("annotate.text.")
+            && !id.starts_with("annotate.stamp.")
+            && !id.starts_with("annotate.layer."))
+            || id == "input.pen.only"
+            || id == "input.touch.lock"
+            || id == "library.sort.set"
+            || id == "ui.library.view";
         let changes_prefs = id.starts_with("view.layout")
             || id.starts_with("view.turn.halfPage")
             || id.starts_with("view.turn.alternating")
             || id == "view.zoom.landscapeFit"
             || id == "input.pedal.map"
             || id == "ui.theme.set"
-            || id == "ui.power.keepAwake";
+            || id == "ui.power.keepAwake"
+            || markup_setting;
         if r.is_ok() && changes_prefs {
             self.save();
         }
@@ -169,9 +262,50 @@ impl App {
             "ui.chrome.toggle" => {
                 self.state.chrome = bool_param(params, "on")?.unwrap_or(!self.state.chrome);
             }
+            "ui.library.show" => {
+                self.state.library = bool_param(params, "on")?.unwrap_or(!self.state.library);
+            }
+            "ui.library.view" => {
+                self.state.library_grid = match params.get("view").and_then(Value::as_str) {
+                    Some("grid") => true,
+                    Some("list") => false,
+                    _ => {
+                        return Err(EngineError::BadParams {
+                            command: id.into(),
+                            message: "`view` must be grid or list".into(),
+                        });
+                    }
+                };
+            }
             _ => return Err(EngineError::UnknownCommand(id.chars().take(128).collect())),
         }
         serde_json::to_value(&self.state).map_err(|e| EngineError::Io(e.to_string()))
+    }
+
+    /// Keeps the platform's click in step with the metronome (PRAC-1).
+    fn sync_click(&mut self) {
+        let st = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+            .unwrap_or(Value::Null);
+        let want = (st.get("running").and_then(Value::as_bool) == Some(true)).then(|| {
+            (
+                st.get("bpm").and_then(Value::as_f64).unwrap_or(100.0),
+                st.get("beats")
+                    .and_then(Value::as_u64)
+                    .and_then(|b| u8::try_from(b).ok())
+                    .unwrap_or(4),
+            )
+        });
+        if self.sent_click == Some(want) {
+            return;
+        }
+        self.sent_click = Some(want);
+        match self.platform.set_click(want) {
+            Ok(()) => self.click_error = None,
+            Err(e) if want.is_some() => self.click_error = Some(e),
+            Err(_) => {}
+        }
     }
 
     /// Keeps the screen awake while wanted and a score is open (READ-9).
@@ -206,6 +340,7 @@ impl App {
             self.sent_full_screen = Some(self.state.full_screen);
         }
         self.sync_keep_awake();
+        self.sync_click();
         self.shortcuts(&ctx);
         self.dropped_files(&ctx);
 
@@ -219,6 +354,24 @@ impl App {
                         .inner_margin(egui::Margin::symmetric(8, 4)),
                 )
                 .show(ui, |ui| self.toolbar(ui, &tokens));
+        }
+        let markup = self
+            .session
+            .dispatch("annotate.state", &json!({}))
+            .unwrap_or(Value::Null);
+        if self.state.chrome
+            && self.session.has_score()
+            && markup.get("mode").and_then(Value::as_bool) == Some(true)
+        {
+            egui::Panel::top("markup")
+                .exact_size(tokens.toolbar_height)
+                .resizable(false)
+                .frame(
+                    egui::Frame::NONE
+                        .fill(tokens.toolbar_bg)
+                        .inner_margin(egui::Margin::symmetric(8, 4)),
+                )
+                .show(ui, |ui| self.markup_bar(ui, &tokens, &markup));
         }
         if let Some(msg) = self.state.message.clone() {
             egui::Panel::bottom("message")
@@ -237,15 +390,22 @@ impl App {
                     });
                 });
         }
+        self.score_window(&ctx, &tokens);
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(tokens.reader_bg))
             .show(ui, |ui| {
-                if !self.session.has_score() {
-                    self.empty(ui, &tokens);
+                if self.state.library || !self.session.has_score() {
+                    if self.session.library().is_some() {
+                        self.library_window(ui, &tokens);
+                    } else {
+                        self.empty(ui, &tokens);
+                    }
                     return;
                 }
                 let keys = !ctx.egui_wants_keyboard_input();
+                let area = ui.available_rect_before_wrap();
                 let out = self.reader.show(ui, &mut self.session, &tokens, keys);
+                self.metronome_pulse(ui, area, &tokens);
                 if out.toggle_chrome {
                     self.state.chrome = !self.state.chrome;
                 }
@@ -253,6 +413,177 @@ impl App {
                     self.state.message = Some(e);
                 }
             });
+    }
+
+    fn library_window(&mut self, ui: &mut Ui, tokens: &Tokens) {
+        self.library.grid = self.state.library_grid;
+        egui::Frame::NONE
+            .fill(tokens.toolbar_bg)
+            .inner_margin(egui::Margin::same(12))
+            .show(ui, |ui| {
+                let actions = self.library.show(ui, &mut self.session, tokens);
+                for a in actions {
+                    match a {
+                        crate::library_view::LibraryAction::Open(id) => {
+                            let r = self.command("score.open", &json!({ "score": id }));
+                            self.report(r);
+                        }
+                        crate::library_view::LibraryAction::Command(id, p) => {
+                            let r = self.command(id, &p);
+                            self.report(r);
+                        }
+                        crate::library_view::LibraryAction::ImportFolder => {
+                            if let Some(path) = self.platform.pick_folder() {
+                                let r = self.command(
+                                    "library.import.folder",
+                                    &json!({ "path": path, "keepFolders": true }),
+                                );
+                                match r {
+                                    Ok(v) => self.state.message = Some(import_report(&v)),
+                                    Err(e) => self.state.message = Some(e.to_string()),
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+    }
+
+    /// The Score panel, while open over a library score.
+    fn score_window(&mut self, ctx: &Context, tokens: &Tokens) {
+        let Some(id) = self.session.library_score_id() else {
+            self.score_panel.open = false;
+            return;
+        };
+        if !self.score_panel.open {
+            return;
+        }
+        if self.score_cache.is_none() {
+            self.score_cache = self
+                .session
+                .dispatch("library.score.get", &json!({ "score": id }))
+                .ok();
+        }
+        let Some(score) = self.score_cache.clone() else {
+            return;
+        };
+        // The page on screen, as a position in the score's pages.
+        let shown = self
+            .session
+            .reader_state()
+            .and_then(|st| st.get("page").and_then(Value::as_u64));
+        let reader_page = shown.and_then(|n| {
+            score
+                .get("visiblePages")
+                .and_then(Value::as_array)
+                .and_then(|v| v.get(usize::try_from(n).ok()?.checked_sub(1)?))
+                .and_then(Value::as_u64)
+                .map(|i| i + 1)
+        });
+        let run = self.score_panel.show(ctx, tokens, &score, reader_page);
+        for (cmd, p) in run {
+            let r = self.command(cmd, &p);
+            self.report(r);
+        }
+    }
+
+    /// The metronome's light pulse along the top edge of the reader (PRAC-1): bright on each
+    /// beat, brighter and in the accent colour on the first of the bar, fading through the beat.
+    fn metronome_pulse(&mut self, ui: &Ui, area: Rect, tokens: &Tokens) {
+        let Ok(st) = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+        else {
+            return;
+        };
+        let Some(beat) = st.get("beat").filter(|b| b.is_object()) else {
+            return;
+        };
+        let phase = beat.get("phase").and_then(Value::as_f64).unwrap_or(1.0) as f32;
+        let accent = beat.get("accent").and_then(Value::as_bool).unwrap_or(false);
+        let fade = (1.0 - phase * 2.5).clamp(0.0, 1.0);
+        if fade > 0.0 {
+            let colour = if accent {
+                tokens.accent
+            } else {
+                Color32::from_gray(140)
+            };
+            let h = if accent { 10.0 } else { 6.0 };
+            let bar = Rect::from_min_size(area.min, vec2(area.width(), h));
+            ui.painter()
+                .rect_filled(bar, 0.0, colour.gamma_multiply(fade));
+        }
+        // Wake for the fade and the next beat.
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(if fade > 0.0 {
+                16
+            } else {
+                40
+            }));
+    }
+
+    fn metronome_menu(&mut self, ui: &mut Ui, run: &mut Vec<(&'static str, Value)>) {
+        let st = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+            .unwrap_or(Value::Null);
+        let running = st.get("running").and_then(Value::as_bool).unwrap_or(false);
+        let bpm = st.get("bpm").and_then(Value::as_f64).unwrap_or(100.0);
+        let beats = st.get("beats").and_then(Value::as_u64).unwrap_or(4);
+        ui.menu_button(format!("♩ {bpm:.0}"), |ui| {
+            if ui
+                .selectable_label(running, if running { "Stop" } else { "Start" })
+                .clicked()
+            {
+                run.push(("practice.metronome.toggle", json!({})));
+            }
+            if let Some(e) = &self.click_error {
+                ui.label(RichText::new(format!("No click: {e}")).weak());
+            }
+            if ui.button("Tap tempo").clicked() {
+                run.push(("practice.metronome.tap", json!({})));
+            }
+            let mut b = bpm;
+            if ui
+                .add(egui::Slider::new(&mut b, 20.0..=300.0).text("BPM"))
+                .changed()
+            {
+                run.push(("practice.metronome.set", json!({ "bpm": b.round() })));
+            }
+            ui.horizontal(|ui| {
+                for m in [2u64, 3, 4, 6] {
+                    if ui.radio(beats == m, m.to_string()).clicked() {
+                        run.push(("practice.metronome.set", json!({ "beats": m })));
+                    }
+                }
+            });
+        });
+    }
+
+    fn markup_bar(&mut self, ui: &mut Ui, tokens: &Tokens, markup: &Value) {
+        let mut run = Vec::new();
+        let mut changed = false;
+        let mut show_ruler = self.settings.show_ruler_button;
+        crate::markup_bar::bar(
+            ui,
+            tokens,
+            markup,
+            self.session.library_score_id().as_deref(),
+            &mut self.reader.ink,
+            crate::markup_bar::BarSettings {
+                show_ruler_button: &mut show_ruler,
+                changed: &mut changed,
+            },
+            &mut run,
+        );
+        if changed {
+            self.settings.show_ruler_button = show_ruler;
+            self.save();
+        }
+        for (id, p) in run {
+            let r = self.command(id, &p);
+            self.report(r);
+        }
     }
 
     fn report(&mut self, r: Result<Value, EngineError>) {
@@ -288,6 +619,21 @@ impl App {
         let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped {
             let r = self.open_path(&path.to_string_lossy());
+            self.report(r);
+        }
+    }
+
+    /// Exports the open score with its visible layers' ink (EXP-2).
+    fn export(&mut self, mode: &str) {
+        let name = self
+            .settings
+            .last_score
+            .as_deref()
+            .and_then(|p| std::path::Path::new(p).file_stem())
+            .map(|s| format!("{} (marked).pdf", s.to_string_lossy()))
+            .unwrap_or_else(|| "Score (marked).pdf".to_owned());
+        if let Some(path) = self.platform.pick_export_path(&name) {
+            let r = self.command("score.export.pdf", &json!({ "path": path, "mode": mode }));
             self.report(r);
         }
     }
@@ -350,6 +696,31 @@ impl App {
             if self.icon_button(ui, tokens, "Open Score…", false, Icon::Open) {
                 self.pick_and_open();
             }
+            if self.session.library().is_some()
+                && self.icon_button(ui, tokens, "Library", self.state.library, Icon::Library)
+            {
+                run.push(("ui.library.show", json!({})));
+            }
+            if self.session.library_score_id().is_some()
+                && ui
+                    .selectable_label(self.score_panel.open, "Score")
+                    .on_hover_text("Details, pages and bookmarks")
+                    .clicked()
+            {
+                self.score_panel.open = !self.score_panel.open;
+            }
+            if has {
+                ui.menu_button("Export", |ui| {
+                    if ui.button("PDF with ink drawn in…").clicked() {
+                        self.export("flatten");
+                        ui.close();
+                    }
+                    if ui.button("PDF with ink as annotations…").clicked() {
+                        self.export("annotations");
+                        ui.close();
+                    }
+                });
+            }
             ui.add_enabled_ui(has, |ui| {
                 if self.icon_button(ui, tokens, "Previous Page", false, Icon::Previous) {
                     run.push(("view.turn.previous", json!({})));
@@ -383,7 +754,8 @@ impl App {
                 ui.separator();
                 let half = mode == "halfPage";
                 if self.icon_button(ui, tokens, "Half-Page Turns", half, Icon::Half) {
-                    run.push(("view.turn.halfPage", json!({ "on": !half })));
+                    // Turning it on snaps the split to the gap between systems (G2).
+                    run.push(("view.turn.halfPage", json!({ "on": !half, "snap": !half })));
                 }
                 let alt = mode == "alternating";
                 if self.icon_button(ui, tokens, "Alternating Turns", alt, Icon::Alternate) {
@@ -405,8 +777,46 @@ impl App {
                 if self.icon_button(ui, tokens, "Zoom In", false, Icon::ZoomIn) {
                     run.push(("view.zoom.set", json!({ "zoom": (zoom * 1.25).min(8.0) })));
                 }
+                ui.separator();
+                self.metronome_menu(ui, &mut run);
+                let marking = self
+                    .session
+                    .dispatch("annotate.state", &json!({}))
+                    .ok()
+                    .and_then(|m| m.get("mode").and_then(Value::as_bool))
+                    .unwrap_or(false);
+                if self.icon_button(ui, tokens, "Markup", marking, Icon::Markup) {
+                    run.push(("annotate.mode.set", json!({ "on": !marking })));
+                }
             });
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let playing = self
+                    .session
+                    .dispatch("list.state", &json!({}))
+                    .unwrap_or(Value::Null);
+                if playing.get("playing").and_then(Value::as_bool) == Some(true) {
+                    if ui.button("Stop list").clicked() {
+                        run.push(("list.stop", json!({})));
+                    }
+                    let s = |k: &str| playing.get(k).and_then(Value::as_str).unwrap_or("");
+                    let n = |k: &str| playing.get(k).and_then(Value::as_u64).unwrap_or(0);
+                    let next = if s("next").is_empty() {
+                        String::new()
+                    } else {
+                        format!(" · next: {}", s("next"))
+                    };
+                    ui.label(
+                        RichText::new(format!(
+                            "{} {}/{}: {}{next}",
+                            s("name"),
+                            n("entry"),
+                            n("entries"),
+                            s("title")
+                        ))
+                        .color(tokens.text),
+                    );
+                    ui.separator();
+                }
                 let dark = self.state.theme == Theme::Dark;
                 if self.icon_button(ui, tokens, "Dark Theme", dark, Icon::Theme) {
                     run.push((
@@ -440,6 +850,66 @@ impl App {
     }
 }
 
+/// What an import did, in a sentence (IMP-6): imported, already in the library, ignored, and
+/// each file that couldn't be read with why.
+pub fn import_report(v: &Value) -> String {
+    let n = |k: &str| match v.get(k) {
+        Some(Value::Array(a)) => a.len() as u64,
+        Some(x) => x.as_u64().unwrap_or(0),
+        None => 0,
+    };
+    let plural = |n: u64, one: &str, many: &str| {
+        if n == 1 {
+            format!("1 {one}")
+        } else {
+            format!("{n} {many}")
+        }
+    };
+    let mut parts = vec![format!(
+        "Imported {}",
+        plural(n("imported"), "score", "scores")
+    )];
+    if n("skipped") > 0 {
+        parts.push(format!("{} already in the library", n("skipped")));
+    }
+    if n("ignored") > 0 {
+        parts.push(format!(
+            "{} not PDFs",
+            plural(n("ignored"), "file", "files")
+        ));
+    }
+    let failed: Vec<String> = v
+        .get("failed")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .take(5)
+        .map(|f| {
+            let path = f.get("path").and_then(Value::as_str).unwrap_or("?");
+            let name = std::path::Path::new(path)
+                .file_name()
+                .map_or_else(|| path.to_owned(), |n| n.to_string_lossy().into_owned());
+            format!(
+                "{name}: {}",
+                f.get("message")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unreadable")
+            )
+        })
+        .collect();
+    let mut out = parts.join("; ");
+    if n("failed") > 0 {
+        out.push_str(&format!(
+            "; {} couldn't be read ({}{})",
+            n("failed"),
+            failed.join("; "),
+            if n("failed") > 5 { "; …" } else { "" }
+        ));
+    }
+    out.push('.');
+    out
+}
+
 /// The toolbar's icons, painted with shapes so the shell ships no icon assets.
 #[derive(Debug, Clone, Copy)]
 enum Icon {
@@ -457,6 +927,8 @@ enum Icon {
     FullScreen,
     Awake,
     Theme,
+    Markup,
+    Library,
 }
 
 fn paint_icon(ui: &Ui, rect: Rect, c: Color32, icon: Icon) {
@@ -592,6 +1064,32 @@ fn paint_icon(ui: &Ui, rect: Rect, c: Color32, icon: Icon) {
                 );
             }
         }
+        Icon::Library => {
+            // Three book spines.
+            let w = r.width() / 4.0;
+            for i in 0..3 {
+                let x = r.left() + i as f32 * (w + 2.0);
+                p.rect_stroke(
+                    Rect::from_min_max(
+                        pos2(x, r.top() + (i % 2) as f32 * 3.0),
+                        pos2(x + w, r.bottom()),
+                    ),
+                    1.0,
+                    line,
+                    egui::StrokeKind::Middle,
+                );
+            }
+        }
+        Icon::Markup => {
+            // A pen, nib down to the left.
+            let (a, b) = (pos2(r.left(), r.bottom()), pos2(r.right(), r.top()));
+            p.line_segment([a + vec2(3.0, -3.0), b], Stroke::new(3.0, c));
+            p.add(egui::Shape::convex_polygon(
+                vec![a, a + vec2(6.0, 0.0), a + vec2(0.0, -6.0)],
+                c,
+                Stroke::NONE,
+            ));
+        }
         Icon::Theme => {
             let ctr = r.center();
             let rad = r.width() * 0.45;
@@ -711,6 +1209,264 @@ mod tests {
             app.settings.last_score.as_deref(),
             Some(&*second.to_string_lossy())
         );
+    }
+
+    /// Runs one frame per entry of `script` at 1280 × 800, each with its events, 16 ms apart.
+    fn script(app: &mut App, ctx: &Context, start: f64, script: Vec<Vec<egui::Event>>) {
+        for (k, events) in script.into_iter().enumerate() {
+            let input = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(pos2(0.0, 0.0), vec2(1280.0, 800.0))),
+                time: Some(start + k as f64 * 0.016),
+                events,
+                ..Default::default()
+            };
+            let mut out = ctx.run_ui(input, |ui| app.ui(ui));
+            out.textures_delta.clear();
+        }
+    }
+
+    fn touch(id: u64, phase: egui::TouchPhase, x: f32, y: f32, pen: bool) -> egui::Event {
+        egui::Event::Touch {
+            device_id: egui::TouchDeviceId(1),
+            id: egui::TouchId(id),
+            phase,
+            pos: pos2(x, y),
+            force: pen.then_some(0.6),
+        }
+    }
+
+    /// A drag from (`x0`, `y`) to (`x1`, `y`) by touch `id`, one sample per frame.
+    fn drag(id: u64, x0: f32, x1: f32, y: f32, pen: bool) -> Vec<Vec<egui::Event>> {
+        use egui::TouchPhase::{End, Move, Start};
+        let mut v = vec![vec![touch(id, Start, x0, y, pen)]];
+        for k in 1..8 {
+            let x = x0 + (x1 - x0) * k as f32 / 8.0;
+            v.push(vec![touch(id, Move, x, y, pen)]);
+        }
+        v.push(vec![touch(id, End, x1, y, pen)]);
+        v
+    }
+
+    fn strokes_on_page(app: &mut App) -> usize {
+        app.session
+            .dispatch("annotate.page.list", &json!({}))
+            .unwrap()["annotations"]
+            .as_array()
+            .unwrap()
+            .len()
+    }
+
+    fn markup_app() -> (App, Context) {
+        let (mut app, _) = app_with_score(3);
+        let ctx = Context::default();
+        frames(&mut app, &ctx, 2, Vec::new());
+        app.command("annotate.mode.set", &json!({ "on": true }))
+            .unwrap();
+        frames(&mut app, &ctx, 1, Vec::new());
+        (app, ctx)
+    }
+
+    #[test]
+    fn a_pen_draws_in_markup_mode_and_a_finger_only_with_draw_with_touch() {
+        let (mut app, ctx) = markup_app();
+        script(&mut app, &ctx, 1.0, drag(7, 400.0, 700.0, 300.0, true));
+        script(&mut app, &ctx, 2.0, vec![Vec::new(), Vec::new()]);
+        assert_eq!(strokes_on_page(&mut app), 1, "the pen drew");
+        assert_eq!(app.session.reader_state().unwrap()["page"], 1);
+        // Without Draw with Touch, a finger's drag is left to the reader (egui-winit turns it
+        // into pointer events there): no ink.
+        script(&mut app, &ctx, 3.0, drag(8, 900.0, 300.0, 400.0, false));
+        script(&mut app, &ctx, 4.0, vec![Vec::new(), Vec::new()]);
+        assert_eq!(strokes_on_page(&mut app), 1, "the finger drew nothing");
+        // With it, the finger draws.
+        app.command("input.pen.only", &json!({ "on": false }))
+            .unwrap();
+        script(&mut app, &ctx, 5.0, drag(10, 450.0, 700.0, 500.0, false));
+        script(&mut app, &ctx, 6.0, vec![Vec::new()]);
+        assert_eq!(strokes_on_page(&mut app), 2, "{:?}", app.state.message);
+    }
+
+    #[test]
+    fn ink_20_a_hand_leaning_while_the_pen_draws_does_nothing() {
+        use egui::TouchPhase::{End, Move, Start};
+        let (mut app, ctx) = markup_app();
+        let mut s = vec![vec![touch(7, Start, 400.0, 300.0, true)]];
+        // The palm lands while the pen is down, drags and lifts.
+        s.push(vec![
+            touch(7, Move, 450.0, 300.0, true),
+            touch(9, Start, 1100.0, 500.0, false),
+        ]);
+        s.push(vec![
+            touch(7, Move, 500.0, 300.0, true),
+            touch(9, Move, 600.0, 520.0, false),
+        ]);
+        s.push(vec![touch(9, End, 300.0, 540.0, false)]);
+        s.push(vec![touch(7, Move, 550.0, 300.0, true)]);
+        s.push(vec![touch(7, End, 600.0, 300.0, true)]);
+        s.push(Vec::new());
+        script(&mut app, &ctx, 1.0, s);
+        assert_eq!(app.session.reader_state().unwrap()["page"], 1, "no turn");
+        assert_eq!(strokes_on_page(&mut app), 1, "the stroke is unaffected");
+    }
+
+    #[test]
+    fn ink_17_18_the_mouse_draws_only_with_draw_with_touch() {
+        let (mut app, ctx) = markup_app();
+        let button = |pressed, x| egui::Event::PointerButton {
+            pos: pos2(x, 300.0),
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::NONE,
+        };
+        let mouse = |start: f64, app: &mut App| {
+            let mut s = vec![vec![
+                egui::Event::PointerMoved(pos2(400.0, 300.0)),
+                button(true, 400.0),
+            ]];
+            for k in 1..6 {
+                s.push(vec![egui::Event::PointerMoved(pos2(
+                    400.0 + k as f32 * 40.0,
+                    300.0,
+                ))]);
+            }
+            s.push(vec![button(false, 640.0)]);
+            s.push(Vec::new());
+            script(app, &ctx, start, s);
+        };
+        mouse(1.0, &mut app);
+        assert_eq!(strokes_on_page(&mut app), 0, "pen only by default");
+        app.command("input.pen.only", &json!({ "on": false }))
+            .unwrap();
+        mouse(2.0, &mut app);
+        assert_eq!(strokes_on_page(&mut app), 1);
+        assert_eq!(app.session.reader_state().unwrap()["page"], 1);
+    }
+
+    #[test]
+    fn markup_tools_and_colours_come_back_next_launch() {
+        let (mut app, _) = markup_app();
+        app.command("annotate.tool.highlighter", &json!({}))
+            .unwrap();
+        app.command("annotate.swatch.select", &json!({ "index": 3 }))
+            .unwrap();
+        app.command("annotate.style.set", &json!({ "width": 20.0 }))
+            .unwrap();
+        app.command("annotate.shapes", &json!({ "on": true }))
+            .unwrap();
+        app.command("input.pen.only", &json!({ "on": false }))
+            .unwrap();
+        let before = app.session.dispatch("annotate.state", &json!({})).unwrap();
+        let saved = Settings::parse(&app.settings.to_json_string());
+        let mut next = App::new(Box::new(NoPlatform), saved);
+        let after = next.session.dispatch("annotate.state", &json!({})).unwrap();
+        for key in [
+            "tool",
+            "highlighter",
+            "highlighterSwatch",
+            "penSwatches",
+            "shapes",
+            "penOnly",
+            "pen",
+        ] {
+            assert_eq!(after[key], before[key], "{key}");
+        }
+        assert_eq!(after["mode"], false, "markup mode itself is not kept");
+    }
+
+    #[test]
+    fn libs_10_the_library_window_lists_scores_with_covers() {
+        let (mut app, _) = app_with_score(2);
+        let ctx = Context::default();
+        let r = app.command("ui.library.show", &json!({})).unwrap();
+        assert_eq!(r["library"], true);
+        let mut ready = 0;
+        for k in 0..200 {
+            script(&mut app, &ctx, k as f64 * 0.016, vec![Vec::new()]);
+            ready = app.library.ready_covers();
+            if ready > 0 {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert_eq!(ready, 1, "the score's cover arrives");
+        let r = app
+            .command("ui.library.view", &json!({ "view": "list" }))
+            .unwrap();
+        assert_eq!(r["libraryGrid"], false);
+        frames(&mut app, &ctx, 1, Vec::new());
+        assert_eq!(
+            app.command("ui.library.view", &json!({ "view": "shelf" }))
+                .unwrap_err()
+                .code(),
+            "bad_params"
+        );
+        // Opening a score from the library closes the window.
+        let id = app.session.library_score_id().unwrap();
+        app.command("score.open", &json!({ "score": id })).unwrap();
+        assert!(!app.state.library);
+    }
+
+    #[test]
+    fn perf_5_imports_report_what_happened() {
+        let v = json!({
+            "imported": ["a", "b"],
+            "skipped": 1,
+            "ignored": 3,
+            "failed": [{ "path": "/x/broken.pdf", "message": "not a PDF" }],
+        });
+        assert_eq!(
+            import_report(&v),
+            "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: not a PDF)."
+        );
+        assert_eq!(
+            import_report(&json!({ "imported": ["a"] })),
+            "Imported 1 score."
+        );
+    }
+
+    #[test]
+    fn perf_12_a_list_made_in_the_library_window_plays() {
+        let (mut app, _) = app_with_score(2);
+        let ctx = Context::default();
+        let score = app.session.library_score_id().unwrap();
+        let list = app.command("list.new", &json!({ "name": "Gig" })).unwrap()["list"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        app.command("list.entry.add", &json!({ "list": list, "score": score }))
+            .unwrap();
+        app.command("ui.library.show", &json!({ "on": true }))
+            .unwrap();
+        app.library.open_list = Some(list.clone());
+        frames(&mut app, &ctx, 2, Vec::new());
+        app.command("list.play", &json!({ "list": list })).unwrap();
+        assert!(!app.state.library, "playing shows the reader");
+        frames(&mut app, &ctx, 2, Vec::new());
+        let st = app.session.dispatch("list.state", &json!({})).unwrap();
+        assert_eq!(
+            (st["playing"].as_bool(), st["name"].as_str()),
+            (Some(true), Some("Gig"))
+        );
+    }
+
+    #[test]
+    fn the_score_panel_shows_the_open_score_and_its_edits() {
+        let (mut app, _) = app_with_score(3);
+        let ctx = Context::default();
+        app.score_panel.open = true;
+        frames(&mut app, &ctx, 2, Vec::new());
+        let cached = app.score_cache.clone().unwrap();
+        assert_eq!(cached["pages"].as_array().unwrap().len(), 3);
+        let id = app.session.library_score_id().unwrap();
+        app.command("page.setHidden", &json!({ "score": id, "page": 2 }))
+            .unwrap();
+        assert!(app.score_cache.is_none(), "an edit drops the stale copy");
+        frames(&mut app, &ctx, 1, Vec::new());
+        assert_eq!(
+            app.score_cache.as_ref().unwrap()["pages"][1]["hidden"],
+            true
+        );
+        assert_eq!(app.session.reader_state().unwrap()["pageCount"], 2);
     }
 
     #[test]

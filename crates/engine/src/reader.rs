@@ -246,10 +246,26 @@ pub(crate) fn file_pages(doc: &Document) -> Vec<ShownPage> {
 }
 
 /// A library score's shown pages: its page list within the page range, without hidden pages
-/// and without pages the file doesn't have.
-pub(crate) fn score_pages(doc: &Document, score: &Score) -> Vec<ShownPage> {
-    score
-        .visible_pages()
+/// and without pages the file doesn't have. With `range` (a setlist entry's), only page
+/// positions inside it are kept; a range that keeps nothing keeps everything, so the reader is
+/// never left without a page.
+pub(crate) fn score_pages_within(
+    doc: &Document,
+    score: &Score,
+    range: Option<scorecraft_doc::PageRange>,
+) -> Vec<ShownPage> {
+    let mut visible = score.visible_pages();
+    if let Some(r) = range {
+        let kept: Vec<usize> = visible
+            .iter()
+            .copied()
+            .filter(|i| u32::try_from(*i).is_ok_and(|i| r.contains(i)))
+            .collect();
+        if !kept.is_empty() {
+            visible = kept;
+        }
+    }
+    visible
         .into_iter()
         .filter_map(|i| {
             let p = score.pages.get(i)?;
@@ -290,10 +306,15 @@ impl Session {
         let Some(id) = open.library_score else {
             return;
         };
+        // While a setlist plays, its entry's page range narrows the score's pages (LIST-2).
+        let range = self
+            .playback
+            .filter(|p| p.score == id)
+            .and_then(|p| p.range);
         let shown = self
             .library()
             .and_then(|lib| lib.scores.get(&id))
-            .map(|s| score_pages(open.view.document(), s));
+            .map(|s| score_pages_within(open.view.document(), s, range));
         if let (Some(shown), Some(open)) = (shown, self.score.as_mut()) {
             open.reader.reshow(shown);
         }
@@ -310,8 +331,12 @@ impl Session {
 
     /// Queues the pages a turn will show next for background rendering.
     pub(crate) fn prefetch_reader(&mut self) {
+        let lib = self.library.as_ref().map(|l| &l.lib);
+        let curve = self.markup.curve;
         if let Some(open) = self.score.as_mut() {
             let list = open.reader.prefetch_list();
+            let score = crate::markup::library_score(lib, open.library_score);
+            crate::markup::sync_ink(&open.view, score, curve, list.iter().map(|p| p.0));
             open.view.prefetch_each(&list);
         }
     }
@@ -321,7 +346,18 @@ impl Session {
     /// waits on rendering and missing bitmaps come back as `None`. `None` with no score open.
     pub fn reader_frame(&mut self, render: bool) -> Option<Vec<FrameSlot>> {
         self.refresh_reader();
+        let lib = self.library.as_ref().map(|l| &l.lib);
+        let curve = self.markup.curve;
         let open = self.score.as_mut()?;
+        let score = crate::markup::library_score(lib, open.library_score);
+        let on_screen: Vec<usize> = open
+            .reader
+            .frame()
+            .slots
+            .iter()
+            .filter_map(|s| open.reader.shown.get(s.page).map(|p| p.file_page))
+            .collect();
+        crate::markup::sync_ink(&open.view, score, curve, on_screen);
         let frame = open.reader.frame();
         let mut out = Vec::with_capacity(frame.slots.len());
         for slot in frame.slots {
@@ -329,8 +365,10 @@ impl Session {
                 continue;
             };
             let scale = open.reader.render_scale(&slot);
+            // A page cached without its ink yet (just marked) is drawn now: a page is never
+            // shown without its ink.
             let bitmap = if render || open.view.is_cached(shown.file_page, scale) {
-                open.view.page(shown.file_page, scale).ok()
+                open.view.inked_page(shown.file_page, scale).ok()
             } else {
                 None
             };

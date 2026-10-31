@@ -14,7 +14,11 @@
 
 pub mod app;
 pub mod control;
+pub mod ink;
+pub mod library_view;
+pub mod markup_bar;
 pub mod reader;
+pub mod score_panel;
 pub mod settings;
 pub mod state;
 pub mod theme;

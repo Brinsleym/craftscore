@@ -23,6 +23,15 @@ pub struct Settings {
     pub keep_awake: bool,
     /// The score opened last, reopened at launch.
     pub last_score: Option<String>,
+    /// Markup tools, colours, swatches, widths and presets: `annotate.state`'s lasting part
+    /// (spec `docs/spec/ink.md`: markup opens with the last tool, colours, widths and swatches).
+    pub markup: Value,
+    /// The *Show ruler button* setting (ANNO-17), off by default.
+    pub show_ruler_button: bool,
+    /// The library's sort (LIB-9): `library.sort.set`'s `sort`.
+    pub library_sort: Value,
+    /// The library shows covers (true) or a list (LIB-14).
+    pub library_grid: bool,
 }
 
 impl Default for Settings {
@@ -37,6 +46,10 @@ impl Default for Settings {
             theme: Theme::Light,
             keep_awake: true,
             last_score: None,
+            markup: Value::Null,
+            show_ruler_button: false,
+            library_sort: Value::Null,
+            library_grid: true,
         }
     }
 }
@@ -80,11 +93,149 @@ impl Settings {
             self.pedal_map = m.get("map").cloned().unwrap_or(Value::Null);
         }
         self.theme = ui.theme;
+        self.library_grid = ui.library_grid;
         self.keep_awake = ui.keep_awake.wanted;
+        if let Ok(v) = session.dispatch("library.sort.set", &json!({})) {
+            self.library_sort = v.get("sort").cloned().unwrap_or(Value::Null);
+        }
+        if let Ok(mut m) = session.dispatch("annotate.state", &json!({})) {
+            if let Some(o) = m.as_object_mut() {
+                // What belongs to this moment or this score, or follows from the rest.
+                for k in [
+                    "mode",
+                    "ruler",
+                    "selection",
+                    "layer",
+                    "swatches",
+                    "swatch",
+                    "palette",
+                    "penPalette",
+                    "highlighterPalette",
+                    "touchLabel",
+                    "drawWithTouch",
+                ] {
+                    o.remove(k);
+                }
+            }
+            self.markup = m;
+        }
+    }
+
+    /// Restores the markup tools saved by [`Settings::capture`]. Each step is best effort: a
+    /// value the engine refuses keeps its default.
+    pub fn apply_markup(&self, session: &mut Session) {
+        let m = &self.markup;
+        if !m.is_object() {
+            return;
+        }
+        let mut run = |id: &str, p: Value| {
+            let _ = session.dispatch(id, &p);
+        };
+        let get = |path: &str| m.pointer(path).cloned().unwrap_or(Value::Null);
+        let tool_cmd = |tool: &str| match tool {
+            "highlighter" => "annotate.tool.highlighter",
+            "whiteout" => "annotate.tool.whiteout",
+            _ => "annotate.tool.pen",
+        };
+        for p in m
+            .get("presets")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            let tool = p.get("tool").and_then(Value::as_str).unwrap_or("pen");
+            let mut style = json!({ "width": p.get("width") });
+            if tool != "whiteout"
+                && let Some(o) = style.as_object_mut()
+            {
+                o.insert(
+                    "color".into(),
+                    p.get("color").cloned().unwrap_or(Value::Null),
+                );
+            }
+            run(tool_cmd(tool), style);
+            run("annotate.pen.preset.set", json!({ "name": p.get("name") }));
+        }
+        for (tool, list, chosen) in [
+            ("annotate.tool.pen", "/penSwatches", "/penSwatch"),
+            (
+                "annotate.tool.highlighter",
+                "/highlighterSwatches",
+                "/highlighterSwatch",
+            ),
+        ] {
+            run(tool, json!({}));
+            for (i, c) in get(list).as_array().into_iter().flatten().enumerate() {
+                run("annotate.swatch.set", json!({ "color": c, "index": i + 1 }));
+            }
+            if get(chosen).is_u64() {
+                run("annotate.swatch.select", json!({ "index": get(chosen) }));
+            }
+        }
+        run(
+            "annotate.tool.highlighter",
+            json!({ "color": get("/highlighter/color"), "width": get("/highlighter/width") }),
+        );
+        run(
+            "annotate.tool.whiteout",
+            json!({ "width": get("/whiteout/width") }),
+        );
+        let eraser = if get("/eraser/mode") == "pixel" {
+            "annotate.tool.pixelEraser"
+        } else {
+            "annotate.tool.strokeEraser"
+        };
+        run(eraser, json!({ "width": get("/eraser/width") }));
+        run("annotate.tool.text", json!({}));
+        run(
+            "annotate.style.set",
+            json!({ "width": get("/text/size"), "color": get("/text/color") }),
+        );
+        run(
+            "annotate.tool.stamp",
+            json!({ "stamp": get("/stamp/stamp"), "size": get("/stamp/size") }),
+        );
+        run(
+            "annotate.tool.pen",
+            json!({ "color": get("/pen/color"), "width": get("/pen/width") }),
+        );
+        for (id, key) in [
+            ("input.pen.only", "/penOnly"),
+            ("annotate.highlighter.roundEnds", "/highlighterRoundEnds"),
+            ("annotate.shapes", "/shapes"),
+        ] {
+            if get(key).is_boolean() {
+                run(id, json!({ "on": get(key) }));
+            }
+        }
+        if get("/penButton").is_string() {
+            run(
+                "annotate.pen.buttonTool",
+                json!({ "tool": get("/penButton") }),
+            );
+        }
+        if get("/touchLock") == true {
+            run("annotate.mode.set", json!({ "on": true }));
+            run("input.touch.lock", json!({ "on": true }));
+            run("annotate.mode.set", json!({ "on": false }));
+        }
+        let last = match get("/tool").as_str() {
+            Some("pen") if get("/whiteoutOn") == true => "annotate.tool.whiteout",
+            Some("highlighter") => "annotate.tool.highlighter",
+            Some("eraser") => eraser,
+            Some("text") => "annotate.tool.text",
+            Some("stamp") => "annotate.tool.stamp",
+            Some("select") => "annotate.tool.select",
+            _ => "annotate.tool.pen",
+        };
+        run(last, json!({}));
     }
 
     /// Applies the pedal map. Bad entries are ignored, keeping the default map.
     pub fn apply_to_session(&self, session: &mut Session) {
+        if self.library_sort.is_object() {
+            let _ = session.dispatch("library.sort.set", &self.library_sort);
+        }
         if self.pedal_map.is_object() {
             let _ = session.dispatch("input.pedal.map", &json!({ "map": self.pedal_map }));
         }

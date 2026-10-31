@@ -83,6 +83,18 @@ pub fn registry() -> Vec<CommandSpec> {
     v.extend(crate::page_cmds::specs());
     v.extend(crate::list_cmds::specs());
     v.extend(crate::edit_cmds::specs());
+    v.extend(crate::annotate_cmds::specs());
+    v.extend(crate::layer_cmds::specs());
+    v.extend(crate::text_cmds::specs());
+    v.extend(crate::stamp_cmds::specs());
+    v.extend(crate::select_cmds::specs());
+    v.extend(crate::export_cmds::specs());
+    v.extend(crate::find_cmds::specs());
+    v.extend(crate::fulltext_cmds::specs());
+    v.extend(crate::cover_cmds::specs());
+    v.extend(crate::play_cmds::specs());
+    v.extend(crate::metronome_cmds::specs());
+    v.extend(crate::nav_cmds::specs());
     v
 }
 
