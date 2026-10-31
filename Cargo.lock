@@ -1139,6 +1139,13 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-doc"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "scorecraft-geom",
+ "serde",
+ "serde_json",
+ "uuid",
+]
 
 [[package]]
 name = "scorecraft-engine"
@@ -1256,6 +1263,11 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-testkit"
 version = "0.0.1"
+dependencies = [
+ "scorecraft-doc",
+ "scorecraft-geom",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-text"
@@ -1551,6 +1563,17 @@ name = "unicode-properties"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
+
+[[package]]
+name = "uuid"
+version = "1.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a0e2d11620c50695fe12bbbfde96b3477fe606e7284c22d505c12ce51214514"
+dependencies = [
+ "js-sys",
+ "serde_core",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "vello_common"

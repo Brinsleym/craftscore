@@ -13,6 +13,7 @@
     clippy::unreachable
 )]
 
+pub mod library;
 pub mod pdf;
 
 /// The crate's package name, used in diagnostics.
