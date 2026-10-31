@@ -525,6 +525,25 @@ impl InkCanvas {
             return;
         }
         let off = rect.min.to_vec2();
+        // Score Shortcuts show as faint outlines in markup mode only (NAV-1).
+        let blue = Color32::from_rgb(0x30, 0x70, 0xe0);
+        for ([x0, y0, x1, y1], target) in session.shortcut_rects() {
+            let r = Rect::from_min_max(pos2(x0 as f32, y0 as f32), pos2(x1 as f32, y1 as f32))
+                .translate(off);
+            painter.rect_stroke(
+                r,
+                2.0,
+                Stroke::new(1.0, blue.gamma_multiply(0.7)),
+                egui::StrokeKind::Middle,
+            );
+            painter.text(
+                r.left_top() + vec2(2.0, 1.0),
+                egui::Align2::LEFT_TOP,
+                target.map_or_else(|| "→ hidden".to_owned(), |t| format!("→ p. {t}")),
+                egui::FontId::proportional(11.0),
+                blue,
+            );
+        }
         for p in &self.pending {
             painter.add(Shape::line(
                 p.shape.iter().map(|q| *q + off).collect(),

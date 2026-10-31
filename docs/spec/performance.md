@@ -68,8 +68,9 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
   mode and invisible otherwise; tapping it in the reader jumps instead of turning.
 - With the rectangle tool, any rectangle (even one with no markings in it) offers *Shortcut to
   page n*. A target page that is hidden or outside the score's range is not jumped to; the tap
-  turns as usual. Shortcuts are deleted like any marking, one undo step. (The outline in markup
-  mode is still to come.)
+  turns as usual. Shortcuts are deleted like any marking, one undo step. In markup mode each
+  shows as a thin blue outline labelled with its target page ("→ hidden" when that page isn't
+  shown).
 
 ### PAGE-7 Score Snips
 
@@ -78,8 +79,10 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
   like ink, on its own layer, and can be moved, resized and deleted.
 - With the rectangle tool, *Snip* then a tap places the rectangle's copy with its top-left corner
   at the tap, kept inside the page, at the same size, framed by a thin grey line. It is drawn
-  from the source page rendered at the reader's scale, under the page's filter; it is not yet
-  written by export (EXP-2). Moving keeps it inside its page; resizing is still to come.
+  from the source page rendered at the reader's scale, under the page's filter. Export (EXP-2)
+  writes it as the source page's own vector content, clipped to the rectangle over white paper,
+  with the same frame, in both export modes. Moving keeps it inside its page; resizing keeps its
+  shape, from 10% to 4 times the snipped width.
 
 ## Acceptance tests
 
@@ -114,6 +117,7 @@ PERF-1 also checks that the window and layout carry over to the next score.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M6 part 4: shortcut outlines, snips in export, snip resizing |
 | 2026-10-31 | patch | M6 part 4: the Lists panel and the now-playing strip; scores in a list keep the window and layout; PERF-12 |
 | 2026-10-31 | patch | M6 part 3: shortcuts and snips from the rectangle, how they behave; PERF-9..11 |
 | 2026-10-31 | patch | M6 part 2: the metronome's pulse and timing, PERF-6..8 |

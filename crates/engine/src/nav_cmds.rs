@@ -57,7 +57,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "page.snip.place",
             "Move Snip",
             "",
-            r#"{"annotation":id,"x":number,"y":number,"space":"view|page"="view","page":int?}"#,
+            r#"{"annotation":id,"x":number,"y":number,"space":"view|page"="view","page":int?,"width":number?}"#,
             false,
             snip_place as _,
         ),
@@ -221,15 +221,13 @@ fn contains(r: Rect, p: Point) -> bool {
     p.x >= r.x0 && p.x <= r.x1 && p.y >= r.y0 && p.y <= r.y1
 }
 
-/// The snip's place: the same size as `from`, its top-left corner at `top_left`, inside `page`.
-fn place_rect(from: Rect, top_left: Point, page: Rect) -> Rect {
+/// The snip's place: `from`'s shape at `width` points wide (its own width by default), its
+/// top-left corner at `top_left`, inside `page`.
+fn place_rect(from: Rect, top_left: Point, page: Rect, width: Option<f64>) -> Rect {
+    let w = width.unwrap_or(from.width());
+    let h = w * from.height() / from.width().max(1e-9);
     fit_inside(
-        Rect::new(
-            top_left.x,
-            top_left.y - from.height(),
-            top_left.x + from.width(),
-            top_left.y,
-        ),
+        Rect::new(top_left.x, top_left.y - h, top_left.x + w, top_left.y),
         page,
     )
 }
@@ -276,7 +274,7 @@ fn snip_create(session: &mut Session, params: &Value) -> Result<Value, EngineErr
     let (from_page, from) = rect_on_page(session, ID, p)?;
     let (to_page, top_left) = destination(session, ID, p, "toX", "toY", "toPage")?;
     let bounds = page_rect(session, to_page)?;
-    let to = place_rect(from, top_left, bounds);
+    let to = place_rect(from, top_left, bounds, None);
     let aid = insert(
         session,
         ID,
@@ -304,8 +302,10 @@ fn snip_create(session: &mut Session, params: &Value) -> Result<Value, EngineErr
 fn snip_place(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "page.snip.place";
     let p = params_object(ID, params)?;
-    reject_unknown_keys(ID, p, &["annotation", "x", "y", "space", "page"])?;
+    reject_unknown_keys(ID, p, &["annotation", "x", "y", "space", "page", "width"])?;
     let aid: AnnotationId = req_id(ID, p, "annotation")?;
+    // Resizing keeps the snip's shape: 10% to 4× its source's width.
+    let width = crate::commands::opt_f64(ID, p, "width")?;
     let score_id = open_score(session, ID)?;
     let (page, mut a) = find(session, score_id, aid)?;
     let (fp, top_left) = destination(session, ID, p, "x", "y", "page")?;
@@ -316,7 +316,16 @@ fn snip_place(session: &mut Session, params: &Value) -> Result<Value, EngineErro
     let AnnotationKind::Snip(s) = &mut a.kind else {
         return Err(bad(ID, "that marking is not a snip".into()));
     };
-    s.to.rect = place_rect(s.from.rect, top_left, bounds);
+    if let Some(w) = width {
+        let fw = s.from.rect.width();
+        if !(w.is_finite() && w >= fw * 0.1 && w <= fw * 4.0) {
+            return Err(bad(
+                ID,
+                "`width` must be from 10% to 4 times the snipped width".into(),
+            ));
+        }
+    }
+    s.to.rect = place_rect(s.from.rect, top_left, bounds, width);
     let rect = s.to.rect;
     let now = session.now_ms();
     let l = session.lib_mut(ID)?;

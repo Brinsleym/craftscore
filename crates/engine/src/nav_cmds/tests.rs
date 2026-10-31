@@ -60,6 +60,22 @@ fn perf_9_a_shortcut_jumps_to_its_page_when_tapped() {
         json!({ "x": 100, "y": 100, "space": "page", "page": 1 }),
     );
     assert_eq!(miss["followed"], false);
+    // The reader can outline it where it shows, and a tap there follows it.
+    let rects = s.shortcut_rects();
+    assert_eq!(rects.len(), 1);
+    let ([x0, y0, x1, y1], target) = rects[0];
+    assert_eq!(target, Some(3));
+    assert!(x1 > x0 && y1 > y0);
+    let tap = run(
+        &mut s,
+        "nav.shortcut.follow",
+        json!({ "x": (x0 + x1) / 2.0, "y": (y0 + y1) / 2.0 }),
+    );
+    assert_eq!(
+        tap["followed"], true,
+        "a tap in view space on the outline follows it"
+    );
+    run(&mut s, "view.page.goto", json!({ "page": 1 }));
     let hit = run(
         &mut s,
         "nav.shortcut.follow",
@@ -116,6 +132,25 @@ fn perf_10_a_snip_shows_another_pages_bars_and_moves() {
         json!({ "annotation": aid, "x": 50, "y": 40, "space": "page", "page": 1 }),
     );
     assert_eq!(r["rect"][1], 0.0);
+    // Resized to half its width, it keeps its shape.
+    let r = run(
+        &mut s,
+        "page.snip.place",
+        json!({ "annotation": aid, "x": 50, "y": 300, "space": "page", "page": 1, "width": 255 }),
+    );
+    let (w, h) = (
+        r["rect"][2].as_f64().unwrap() - r["rect"][0].as_f64().unwrap(),
+        r["rect"][3].as_f64().unwrap() - r["rect"][1].as_f64().unwrap(),
+    );
+    assert_eq!((w, h), (255.0, 50.0));
+    assert!(
+        s.dispatch(
+            "page.snip.place",
+            &json!({ "annotation": aid, "x": 1, "y": 1, "space": "page", "page": 1, "width": 5000 })
+        )
+        .is_err()
+    );
+    run(&mut s, "edit.undo", json!({ "score": id }));
     run(&mut s, "edit.undo", json!({ "score": id }));
     let AnnotationKind::Snip(snip) = &kinds(&s, &id, 0)[0] else {
         panic!()

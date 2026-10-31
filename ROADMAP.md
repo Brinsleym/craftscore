@@ -68,6 +68,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | M6 part 4: shortcut outlines in markup mode; snips exported as vector copies of their source page; snip resizing |
 | 2026-10-31 | M6 part 4: lists in the app: the Lists panel (make, fill, reorder, play) and a now-playing strip; each next score keeps the window and layout |
 | 2026-10-31 | M6 part 3: Score Shortcuts (tap to jump) and Score Snips (another page's bars drawn into this one), from the rectangle tool; parity 57 of 124 |
 | 2026-10-31 | M6 part 2: the metronome: 20–300 BPM in 2, 3, 4 or 6, tap tempo, entry tempos, a pulse along the reader's top edge (the click waits on audio output); parity 55 of 124 |
