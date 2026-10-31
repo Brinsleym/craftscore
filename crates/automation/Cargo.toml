@@ -9,6 +9,11 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+serde_json = { workspace = true }
+
+# The control channel is native only: loopback TCP and the OS random source.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = { workspace = true }
 
 [lints]
 workspace = true

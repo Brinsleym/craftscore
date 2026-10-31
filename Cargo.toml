@@ -59,6 +59,7 @@ eframe = { version = "0.37", default-features = false }
 # Third-party
 base64 = "0.22"
 bytemuck = "1"
+getrandom = "0.3"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 png = "0.18"
 proptest = { version = "1", default-features = false, features = ["std"] }

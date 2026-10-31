@@ -1,8 +1,8 @@
 # ScoreCraft roadmap
 
-**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~220–490 h away)
+**Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~170–395 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (M1 foundation and M2 PDF reading done; earlier: owner's priorities after the M0 review; earlier: M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (M3 reader app done; earlier: M1 foundation and M2 PDF reading done; earlier: owner's priorities after the M0 review; earlier: M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -18,30 +18,32 @@ repository has merged-PR history. About 75% of the work parallelizes.
 
 | | Value | Kind |
 |---|---|---|
-| **Feature breadth** | **14%** | measured: 17 of 122 feature-map rows live, engine only |
-| **Ready for real work** | **0%** | estimated |
+| **Feature breadth** | **30%** | measured, weighted: 32 of 122 feature-map rows live |
+| **Ready for real work** | **5%** | estimated: you can read a PDF and turn pages with a pedal on Windows, nothing more yet |
 | Practising musician | 0% | estimated ([method](docs/target-app-parity.md#practising-musician)) |
 | Essentials user | 0% | estimated ([method](docs/target-app-parity.md#essentials-user)) |
-| Remaining to **alpha** | **~220–490 h** | estimated |
-| Remaining to **beta** | **~670–1,370 h** | estimated |
-| Remaining to **full parity** | **~900–1,820 h** | estimated |
+| Remaining to **alpha** | **~170–395 h** | estimated |
+| Remaining to **beta** | **~620–1,275 h** | estimated |
+| Remaining to **full parity** | **~850–1,725 h** | estimated |
 
 **Why pre-alpha.** The project has its process, clean-room rules, architecture and feature map, and
 the M0 skeleton, PDF reading over PDFCraft (M2) and the foundation (M1): the document model,
 undo history and a crash-safe on-disk library, driven by about 35 engine commands (import,
-folders, metadata, page edits, bookmarks, setlists, undo, verify). There is no UI yet, so
-nothing is ready for real work; next is the reader app with page turns and the pedal (M3).
+folders, metadata, page edits, bookmarks, setlists, undo, verify). M3 added the first app: a
+Windows desktop reader with single, two-page and half-page turns, zoom, full screen,
+keep-awake, Bluetooth pedal and key turning, and a control channel agents use to drive it. There
+is no library screen and no ink yet, so it is not ready for real work; next is ink (M4).
 
 ## By dimension
 
 | Dimension | % ready | Hours to full | Doc |
 |---|---:|---:|---|
 | Features (depth) | 0% | 840–1,690 | [feature-map](docs/feature-map.md) |
-| Page-turn reliability and latency | 0% | 60–120 | [ui-parity](docs/ui-parity.md) |
+| Page-turn reliability and latency | 60% | 20–40 | [ui-parity](docs/ui-parity.md) |
 | Ink feel | 0% | 40–80 | [annotation-parity](docs/annotation-parity.md) |
 | PDF fidelity (engine reused from [PDFCraft](https://github.com/storytold/pdfcraft)) | 0% | 20–40 | [file-format-parity](docs/file-format-parity.md) |
 | Stability | 0% | 50–100 | [gaps G3](docs/gaps.md#g3-stability-and-data-safety) |
-| Hardware (pedals, MIDI, stylus, e-ink) | 0% | 50–100 | [hardware-parity](docs/hardware-parity.md) |
+| Hardware (pedals, MIDI, stylus, e-ink) | 10% | 45–90 | [hardware-parity](docs/hardware-parity.md) |
 | Platforms | 0% | 80–200 | [gaps G9](docs/gaps.md#g9-mobile-platforms) |
 | Sync | 0% | 130–250 | [sync-parity](docs/sync-parity.md) |
 | Practice and audio | 0% | 60–120 | [practice-parity](docs/practice-parity.md) |
@@ -56,9 +58,9 @@ enScore lists fifteen languages. ScoreCraft ships English first; the rest follow
 
 | Rank | Milestone | Estimate |
 |---|---|---:|
-| 1 | M3 reader app, with page turns and the pedal | 66–122 h |
-| 2 | M4 ink | 80–150 h |
-| 3 | M5 library: search, sort, thumbnails, the library UI | 40–80 h |
+| 1 | M4 ink | 80–150 h |
+| 2 | M5 library: search, sort, thumbnails, the library UI | 40–80 h |
+| 3 | M3 follow-ups: half-page split that snaps between systems, first-render cost on big scans, more pedals | 20–40 h |
 
 Detail: [docs/roadmap.md](docs/roadmap.md).
 
@@ -66,6 +68,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | M3 done: desktop reader on craft-ui (layouts, half-page and alternating turns, zoom, full screen, keep-awake), pedal and key maps, control channel; checked on Windows with the owner's Bluetooth pedal and real scores; parity 32 of 122 |
 | 2026-10-31 | M1 done: `geom`, `raster`, `doc`, `ops` and `format` v1, about 35 library, page, list and undo commands; a save crashed at any write reopens intact; parity 17 of 122 |
 | 2026-10-31 | M2 done: PDF reading over PDFCraft 0.15.0, page cache and pre-rendering, `score.open` and `view.render`; render gaps tracked in PDFCraft |
 | 2026-10-28 | M0 review acted on: Rust 1.95 (PDFCraft's) with a pinned toolchain, one egui on craft-ui checked in CI, parity counts only implemented rows, CLI keeps partial results; owner's answers recorded (Windows tablet first, pedal in M3, Google Drive sync, Swift pen host on iPad) |
@@ -80,6 +83,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M3 done: breadth 14 → 30%, ready for real work 0 → 5%, alpha ~220–490 → ~170–395 h, beta and full ~50–95 h lower, page turns 60–120 → 20–40 h, hardware 50–100 → 45–90 h |
 | 2026-10-31 | minor | M1 and M2 done: breadth 0 → 14%, alpha ~250–530 → ~220–490 h, beta and full parity 40 h lower, stability 60–120 → 50–100 h |
 | 2026-10-28 | minor | Owner's priorities: pedal mapping moves into M3; headline numbers unchanged |
 | 2026-10-28 | minor | M0 done: remaining estimates drop by the M0 skeleton (60–100 h): alpha ~250–530 h, beta ~710–1,430 h, full ~940–1,880 h; upcoming starts at M2 |
