@@ -93,6 +93,7 @@ pub fn registry() -> Vec<CommandSpec> {
     v.extend(crate::cover_cmds::specs());
     v.extend(crate::play_cmds::specs());
     v.extend(crate::metronome_cmds::specs());
+    v.extend(crate::nav_cmds::specs());
     v
 }
 

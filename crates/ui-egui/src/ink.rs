@@ -131,6 +131,10 @@ pub struct InkCanvas {
     pub selection: Option<Rect>,
     /// The next selection drag copies instead of moving.
     pub copy_next: bool,
+    /// The next tap places a snip of the selection rectangle there (PAGE-7).
+    pub snip_armed: bool,
+    /// The page a shortcut from the selection rectangle jumps to (NAV-1), 1-based.
+    pub shortcut_target: u32,
 }
 
 impl InkCanvas {
@@ -440,13 +444,31 @@ impl InkCanvas {
                         }
                         note(error, session.dispatch("annotate.stamp.place", &p));
                     }
+                    "select" if self.snip_armed && live.travel() < TAP_TRAVEL => {
+                        if let Some(sel) = self.selection {
+                            let r = session.dispatch(
+                                "page.snip.create",
+                                &json!({
+                                    "x0": sel.min.x, "y0": sel.min.y,
+                                    "x1": sel.max.x, "y1": sel.max.y,
+                                    "toX": a.x, "toY": a.y,
+                                }),
+                            );
+                            note(error, r);
+                        }
+                        self.snip_armed = false;
+                        self.selection = None;
+                        let _ = session.dispatch("annotate.select.clear", &json!({}));
+                    }
                     "select" => {
                         let r = session.dispatch(
                             "annotate.select.rect",
                             &json!({ "x0": a.x, "y0": a.y, "x1": b.x, "y1": b.y }),
                         );
+                        // An empty rectangle stays selected too: it can become a snip or a
+                        // shortcut (ANNO-12).
                         self.selection = note(error, r)
-                            .filter(|v| v.get("count").and_then(Value::as_u64).unwrap_or(0) > 0)
+                            .filter(|_| live.travel() >= TAP_TRAVEL)
                             .map(|_| Rect::from_two_pos(a, b));
                         if self.selection.is_none() {
                             let _ = session.dispatch("annotate.select.clear", &json!({}));

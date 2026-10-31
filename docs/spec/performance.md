@@ -1,6 +1,6 @@
 # Performance: setlists on stage, shortcuts, snips and the metronome
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 2: metronome; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 3: shortcuts and snips; earlier: M6 part 2: metronome; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 What a musician needs on stage, beyond reading one score: playing a setlist from piece to piece,
 jumping at repeats and codas, seeing the bars after a turn before it, and a metronome. Written
@@ -56,17 +56,25 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
   the tempo from the average of the last three intervals; taps more than 2 s apart start again.
   A playing list's entry tempo sets it when the entry opens.
 
-### NAV-1 Score Shortcuts (M6 part 3)
+### NAV-1 Score Shortcuts
 
 - A shortcut is a rectangle on a page (drawn with the rectangle tool, ANNO-12) that jumps to a
   target page, and optionally a part of it, when tapped. It is drawn as a faint outline in markup
   mode and invisible otherwise; tapping it in the reader jumps instead of turning.
+- With the rectangle tool, any rectangle (even one with no markings in it) offers *Shortcut to
+  page n*. A target page that is hidden or outside the score's range is not jumped to; the tap
+  turns as usual. Shortcuts are deleted like any marking, one undo step. (The outline in markup
+  mode is still to come.)
 
-### PAGE-7 Score Snips (M6 part 3)
+### PAGE-7 Score Snips
 
 - A snip copies a rectangle of one page and shows it at a place on another, typically the first
   bars of the next page at the foot of this one, so the turn can wait. It is drawn into the page
   like ink, on its own layer, and can be moved, resized and deleted.
+- With the rectangle tool, *Snip* then a tap places the rectangle's copy with its top-left corner
+  at the tap, kept inside the page, at the same size, framed by a thin grey line. It is drawn
+  from the source page rendered at the reader's scale, under the page's filter; it is not yet
+  written by export (EXP-2). Moving keeps it inside its page; resizing is still to come.
 
 ## Acceptance tests
 
@@ -79,12 +87,15 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 | PERF-6 | 120 BPM in 3, started at t = 1 s | the beat is asked for at 1.0 s, 1.75 s and 2.5 s | beat 1 (accented, next at 1.5 s); beat 2 half way; beat 1 of the next bar |
 | PERF-7 | Taps at 0, 500, 1000, 1500 ms, then 2100, then 5000 | each tap | 120 BPM at the fourth; the fifth averages the last three intervals; after the pause, nothing until four more |
 | PERF-8 | The engine's clock | the metronome is set to 120 in 3, started, read 1.1 s later, then tapped every 400 ms | the third beat of the bar; 150 BPM; out-of-range tempos and meters refused |
+| PERF-9 | A shortcut on page 1 to page 3 | the page is tapped beside it, then on it; then page 3 is hidden and it is tapped again | nothing; page 3; nothing |
+| PERF-10 | A snip of the top of page 2 at the foot of page 1 | it is created, moved below the page, and the move undone | same size, top at the tap; kept on the page; back where it was |
+| PERF-11 | Page 1 | a snip of page 2 is placed on it | page 1's picture changes |
 | PERF-5 | An import of two new PDFs, one already imported, three other files and one broken PDF | it finishes | "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: …)." |
 
 PERF-1 to PERF-4 are engine tests (`crates/engine/src/play_cmds/tests.rs`); PERF-5 is a shell
 test (`crates/ui-egui/src/app.rs`); PERF-6 and PERF-7 are `scorecraft-practice` tests, PERF-8 an
-engine test (`crates/engine/src/metronome_cmds.rs`). Shortcuts and snips get theirs when their
-part lands.
+engine test (`crates/engine/src/metronome_cmds.rs`); PERF-9 to PERF-11 are engine tests
+(`crates/engine/src/nav_cmds/tests.rs`).
 
 ## Open questions
 
@@ -96,5 +107,6 @@ part lands.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M6 part 3: shortcuts and snips from the rectangle, how they behave; PERF-9..11 |
 | 2026-10-31 | patch | M6 part 2: the metronome's pulse and timing, PERF-6..8 |
 | 2026-10-31 | major | First version for M6: playing a list, one score in many lists, the import report; the metronome, shortcuts and snips outlined for parts 2 and 3; PERF-1..5 |

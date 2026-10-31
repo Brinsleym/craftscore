@@ -29,6 +29,7 @@ mod library_cmds;
 mod list_cmds;
 mod markup;
 mod metronome_cmds;
+mod nav_cmds;
 mod page_cmds;
 pub mod parity;
 mod play_cmds;
