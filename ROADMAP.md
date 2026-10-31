@@ -68,6 +68,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | The Score panel in the app: details (title, composer, tags…), the page editor (turn, hide, reorder, delete) and bookmarks; the alpha gate re-graded: code complete but for the metronome click, fuzzing and the tablet checks |
 | 2026-10-31 | M6 part 4: shortcut outlines in markup mode; snips exported as vector copies of their source page; snip resizing |
 | 2026-10-31 | M6 part 4: lists in the app: the Lists panel (make, fill, reorder, play) and a now-playing strip; each next score keeps the window and layout |
 | 2026-10-31 | M6 part 3: Score Shortcuts (tap to jump) and Score Snips (another page's bars drawn into this one), from the rectangle tool; parity 57 of 124 |

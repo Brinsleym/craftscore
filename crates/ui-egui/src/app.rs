@@ -75,6 +75,11 @@ pub struct App {
     applied_theme: Option<Theme>,
     /// The library window (LIB-14).
     library: crate::library_view::LibraryView,
+    /// The Score panel: details, pages, bookmarks.
+    score_panel: crate::score_panel::ScorePanel,
+    /// `library.score.get` for the open score, while the Score panel is open; cleared by every
+    /// command so the panel never shows stale pages.
+    score_cache: Option<Value>,
 }
 
 fn bool_param(params: &Value, key: &str) -> Result<Option<bool>, EngineError> {
@@ -124,6 +129,8 @@ impl App {
             sent_full_screen: None,
             applied_theme: None,
             library: crate::library_view::LibraryView::new(),
+            score_panel: crate::score_panel::ScorePanel::new(),
+            score_cache: None,
         }
     }
 
@@ -181,6 +188,7 @@ impl App {
         if r.is_ok() {
             // Imports, edits and sorts change what the library window lists.
             self.library.dirty = true;
+            self.score_cache = None;
         }
         // Markup settings are kept between launches; gestures and queries are not settings.
         let markup_setting = (id.starts_with("annotate.")
@@ -345,6 +353,7 @@ impl App {
                     });
                 });
         }
+        self.score_window(&ctx, &tokens);
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(tokens.reader_bg))
             .show(ui, |ui| {
@@ -401,6 +410,44 @@ impl App {
                     }
                 }
             });
+    }
+
+    /// The Score panel, while open over a library score.
+    fn score_window(&mut self, ctx: &Context, tokens: &Tokens) {
+        let Some(id) = self.session.library_score_id() else {
+            self.score_panel.open = false;
+            return;
+        };
+        if !self.score_panel.open {
+            return;
+        }
+        if self.score_cache.is_none() {
+            self.score_cache = self
+                .session
+                .dispatch("library.score.get", &json!({ "score": id }))
+                .ok();
+        }
+        let Some(score) = self.score_cache.clone() else {
+            return;
+        };
+        // The page on screen, as a position in the score's pages.
+        let shown = self
+            .session
+            .reader_state()
+            .and_then(|st| st.get("page").and_then(Value::as_u64));
+        let reader_page = shown.and_then(|n| {
+            score
+                .get("visiblePages")
+                .and_then(Value::as_array)
+                .and_then(|v| v.get(usize::try_from(n).ok()?.checked_sub(1)?))
+                .and_then(Value::as_u64)
+                .map(|i| i + 1)
+        });
+        let run = self.score_panel.show(ctx, tokens, &score, reader_page);
+        for (cmd, p) in run {
+            let r = self.command(cmd, &p);
+            self.report(r);
+        }
     }
 
     /// The metronome's light pulse along the top edge of the reader (PRAC-1): bright on each
@@ -613,6 +660,14 @@ impl App {
                 && self.icon_button(ui, tokens, "Library", self.state.library, Icon::Library)
             {
                 run.push(("ui.library.show", json!({})));
+            }
+            if self.session.library_score_id().is_some()
+                && ui
+                    .selectable_label(self.score_panel.open, "Score")
+                    .on_hover_text("Details, pages and bookmarks")
+                    .clicked()
+            {
+                self.score_panel.open = !self.score_panel.open;
             }
             if has {
                 ui.menu_button("Export", |ui| {
@@ -1351,6 +1406,26 @@ mod tests {
             (st["playing"].as_bool(), st["name"].as_str()),
             (Some(true), Some("Gig"))
         );
+    }
+
+    #[test]
+    fn the_score_panel_shows_the_open_score_and_its_edits() {
+        let (mut app, _) = app_with_score(3);
+        let ctx = Context::default();
+        app.score_panel.open = true;
+        frames(&mut app, &ctx, 2, Vec::new());
+        let cached = app.score_cache.clone().unwrap();
+        assert_eq!(cached["pages"].as_array().unwrap().len(), 3);
+        let id = app.session.library_score_id().unwrap();
+        app.command("page.setHidden", &json!({ "score": id, "page": 2 }))
+            .unwrap();
+        assert!(app.score_cache.is_none(), "an edit drops the stale copy");
+        frames(&mut app, &ctx, 1, Vec::new());
+        assert_eq!(
+            app.score_cache.as_ref().unwrap()["pages"][1]["hidden"],
+            true
+        );
+        assert_eq!(app.session.reader_state().unwrap()["pageCount"], 2);
     }
 
     #[test]

@@ -19,18 +19,18 @@ The workflows a performing musician runs every week, checked end to end on the m
 
 | Core workflow | Works end to end? | Rows | Hours to pass |
 |---|---|---|---:|
-| Build a library: import PDFs and a folder, set title/composer/tags, find a score by search | no | LIB-1, LIB-3..5, LIB-9, IMP-6 | 40–80 |
-| Read: open a score, single and two-page layouts, half-page turns, turn by tap, keys and a Bluetooth pedal, screen stays awake | no | READ-1..5, READ-9, READ-15, TURN-1..4 | 60–120 |
-| Mark up: pen with pressure, highlighter, stroke eraser, text note, undo; quit, reopen, markings intact and the PDF untouched | no | ANNO-1..3, ANNO-6, ANNO-8, ANNO-13..15 | 60–110 |
-| Perform a setlist: build a list, play it through with the pedal, pieces flow, no crash | no | LIST-1, LIST-4, LIST-6, NAV-5 | 15–30 |
-| Edit pages: reorder, rotate, hide, delete; bookmarks | no | PAGE-1..4, LIB-11 | 10–20 |
-| Share: export a PDF with markings that opens in other PDF readers | no | EXP-2 (♻ pdfcraft-annot) | 4–8 |
-| Count in: metronome with tap tempo | no | PRAC-1 | 6–12 |
+| Build a library: import PDFs and a folder, set title/composer/tags, find a score by search | code complete: import, folders, search and the library window, and the Score panel's details (title, composer, arranger, key, genre, tags); needs the device run-through | LIB-1, LIB-3..5, LIB-9, IMP-6 | 40–80 |
+| Read: open a score, single and two-page layouts, half-page turns, turn by tap, keys and a Bluetooth pedal, screen stays awake | yes on Windows with a pedal (M3 check); the tablet check is left | READ-1..5, READ-9, READ-15, TURN-1..4 | 60–120 |
+| Mark up: pen with pressure, highlighter, stroke eraser, text note, undo; quit, reopen, markings intact and the PDF untouched | code complete (M4); needs the tablet check with a pen | ANNO-1..3, ANNO-6, ANNO-8, ANNO-13..15 | 60–110 |
+| Perform a setlist: build a list, play it through with the pedal, pieces flow, no crash | code complete (M6: Lists panel, `list.play`); needs a run-through on the device | LIST-1, LIST-4, LIST-6, NAV-5 | 15–30 |
+| Edit pages: reorder, rotate, hide, delete; bookmarks | code complete: the Score panel turns, hides, reorders and deletes pages and keeps bookmarks; needs the device run-through | PAGE-1..4, LIB-11 | 10–20 |
+| Share: export a PDF with markings that opens in other PDF readers | code complete (M4 part 5); check the files in other readers | EXP-2 (♻ pdfcraft-annot) | 4–8 |
+| Count in: metronome with tap tempo | partial: the pulse and tap tempo are in; the click waits on audio output | PRAC-1 | 6–12 |
 
 Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lints on every crate,
 `panic_hunt` green, fuzzed `pdf` and library loader.
 
-**Result: does not pass** (2026-10-28, no code).
+**Result: does not pass** (2026-10-31: code complete for reading, markup, setlists and export; left: the metronome click, fuzzing the `pdf` and library loaders, and the end-to-end checks on the Windows tablet).
 
 ## Milestones
 
@@ -103,6 +103,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Alpha gate re-graded: reading, markup, setlists, export, library and page editing code complete in the app; the Score panel (details, pages, bookmarks) added |
 | 2026-10-31 | patch | M6 🟡: part 3, shortcuts and snips; parity floor 57 |
 | 2026-10-31 | patch | M6 🟡: part 2, the metronome; parity floor 55 |
 | 2026-10-31 | patch | M6 🟡: part 1, playing a list, one score in many lists, import report; parity floor 54 |
