@@ -49,6 +49,8 @@ struct Shared {
 struct State {
     cache: TileCache,
     queue: VecDeque<TileKey>,
+    /// The worker is rendering a request (native only; the web build has no worker).
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     busy: bool,
     closing: bool,
 }
