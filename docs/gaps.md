@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -18,11 +18,11 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 |---|---|---|---|---:|---|
 | G1 | PDF engine: parse, render, write (reusing PDFCraft). Reading is in (M2); PDF-2 is partial on six PDFCraft render gaps (blank JBIG2 halftone, rotated-page image placement, short page tree, faint hairlines, light 1-bit downscales, sampling phase), fixed upstream then re-pinned | file format | blocks alpha | 15–30 h | [file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00) |
 | G2 | Reader layout and page turns | features, UI | blocks alpha | 40–80 h | [ui-parity](ui-parity.md) |
-| G3 | Stability and data safety | stability | blocks alpha | 60–120 h | [scorecard](scorecard.md#reliability) |
+| G3 | Stability and data safety | stability | blocks alpha | 50–100 h | [scorecard](scorecard.md#reliability) |
 | G4 | Ink engine and markup tools | features, UI | blocks alpha | 80–150 h + human | [annotation-parity](annotation-parity.md) |
-| G5 | Library store, organisation and search | features | blocks alpha | 60–120 h | [file-format-parity](file-format-parity.md#scorecraft-library-format) |
+| G5 | Library store, organisation and search | features | blocks alpha | 40–80 h | [file-format-parity](file-format-parity.md#scorecraft-library-format) |
 | G6 | Foot pedals and keyboard turning | hardware | blocks alpha | 10–20 h + human | [hardware-parity](hardware-parity.md) |
-| G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 40–80 h | [feature-map](feature-map.md#list-setlists) |
+| G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 30–65 h | [feature-map](feature-map.md#list-setlists) |
 | G8 | Import, export, print and forScore migration | file format | blocks beta | 70–140 h + human | [file-format-parity](file-format-parity.md) |
 | G9 | Mobile platforms | platforms | blocks beta | 80–200 h + human | [hardware-parity](hardware-parity.md) |
 | G10 | Sync and backup | sync | blocks beta | 130–250 h | [sync-parity](sync-parity.md) |
@@ -71,13 +71,18 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G5. Library store, organisation and search
 
-- **Missing:** the on-disk library, folders, metadata, search, sort, bookmarks, Recently Deleted,
-  verify/repair, thumbnails, performance at 10,000 scores.
+- **Done (2026-10-31, M1):** the on-disk library (`scorecraft-format`, format v1), PDF import from
+  paths, folders, metadata, bookmarks, Recently Deleted with restore and empty, Verify & Repair,
+  all as engine commands with undo (LIB-1, -3, -4, -10, -11, -12 partial: no UI yet).
+- **Missing:** search, sort, recently opened list, folder and image import, thumbnails, the
+  library UI, performance at 10,000 scores.
 - **Rows:** LIB-1, LIB-3..5, LIB-9..15.
 
 ### G7. Setlists, Score Shortcuts and Score Snips
 
-- **Missing:** setlists with page ranges and tempos, continuous flow, shared setlist bundles;
+- **Done (2026-10-31, M1):** setlists with entries, placeholders, page ranges and tempos as
+  engine commands with undo (LIST-1, -2, -3, -7 partial); score page range (PAGE-8 partial).
+- **Missing:** continuous flow, shared setlist bundles, the lists UI;
   tappable repeat/coda jumps; snips that paste the bars after a turn before it.
 - **Rows:** LIST-1..7, NAV-1..4, PAGE-7, PAGE-8, TURN-7.
 - **Note:** paid (Pro) in enScore; free in ScoreCraft.
@@ -127,9 +132,12 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   `#![deny(...)]`, `clippy.toml`), checked by `cargo xtask layers` (measured: 36 of 36 packages).
 - **Done (2026-10-28):** `panic_hunt` dispatches every registered command with 267 adversarial
   params and runs in CI.
-- **Missing:** fuzz targets for `pdf`, `fsc`,
-  `midi`, the library loader and setlist bundles, atomic saves, crash recovery, the last-resort
-  panic guard.
+- **Done (2026-10-31, M1):** atomic per-file saves with a journal for multi-record saves; a test
+  crashes a save at every write and reopens to exactly the old or the new library; damaged
+  records are skipped on open and repaired by `library.verify`; `panic_hunt` also runs every
+  command against an open library with real ids and checks the library stays sound.
+- **Missing:** fuzz targets for `fsc`, `midi`, the library loader and setlist bundles; a real
+  kill-the-process save test on each OS; the last-resort panic guard.
 - **Impact:** a crash on stage or lost markings ends trust permanently.
 
 ## Hardware gaps
@@ -192,6 +200,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M1: G3 crash-safe saves (60–120 → 50–100 h), G5 library store and commands (60–120 → 40–80 h), G7 setlist model and commands (40–80 → 30–65 h) |
 | 2026-10-31 | patch | G1: reading lands in M2; six PDFCraft render gaps listed, estimate 15–30 h |
 | 2026-10-28 | minor | G3: `panic_hunt` lands with the engine command registry |
 | 2026-10-28 | minor | G3: never-crash lints land on every crate with the M0 workspace; estimate unchanged |

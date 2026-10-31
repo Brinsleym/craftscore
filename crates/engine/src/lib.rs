@@ -14,9 +14,14 @@
 )]
 
 pub mod commands;
+mod edit_cmds;
 mod engine_cmds;
 mod error;
 pub mod feature_catalog;
+mod library;
+mod library_cmds;
+mod list_cmds;
+mod page_cmds;
 pub mod parity;
 mod score_cmds;
 mod session;
@@ -24,6 +29,7 @@ mod view_cmds;
 
 pub use commands::{CommandInfo, CommandSpec, registry};
 pub use error::EngineError;
+pub use library::{AnyStorage, Clock, library_open};
 pub use session::Session;
 
 /// The crate's package name, used in diagnostics.

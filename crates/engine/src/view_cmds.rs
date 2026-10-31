@@ -16,16 +16,80 @@ pub const MAX_DPI: f64 = 4800.0;
 pub const DEFAULT_DPI: f64 = 144.0;
 
 pub fn specs() -> Vec<CommandSpec> {
-    vec![CommandSpec {
-        id: "view.render",
-        label: "Render Page",
-        menu: "",
-        shortcut: None,
-        params: r#"{"page":int?,"dpi":number=144,"filter":"normal|dark|sepia"?,"out":path?,"prefetch":bool=true}"#,
-        ours: false,
-        enabled: score_open,
-        run: render,
-    }]
+    vec![
+        CommandSpec {
+            id: "view.bookmark.goto",
+            label: "Go to Bookmark",
+            menu: "View>Bookmarks",
+            shortcut: None,
+            params: r#"{"bookmark":id}"#,
+            ours: false,
+            enabled: library_score_open,
+            run: bookmark_goto,
+        },
+        CommandSpec {
+            id: "view.render",
+            label: "Render Page",
+            menu: "",
+            shortcut: None,
+            params: r#"{"page":int?,"dpi":number=144,"filter":"normal|dark|sepia"?,"out":path?,"prefetch":bool=true}"#,
+            ours: false,
+            enabled: score_open,
+            run: render,
+        },
+    ]
+}
+
+/// Enabled while a score opened from the library is in the reader.
+fn library_score_open(session: &Session) -> bool {
+    session
+        .score
+        .as_ref()
+        .is_some_and(|s| s.library_score.is_some())
+}
+
+/// Moves the reader to a bookmark's page (LIB-11). Until page layout lands (M3) the reader shows
+/// the file's pages, so this goes to the bookmarked source page; `page` is 1-based.
+fn bookmark_goto(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "view.bookmark.goto";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["bookmark"])?;
+    let bid: scorecraft_doc::BookmarkId = crate::commands::req_id(ID, p, "bookmark")?;
+    let score_id = session
+        .score
+        .as_ref()
+        .and_then(|s| s.library_score)
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let lib = session
+        .library()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let s = lib
+        .scores
+        .get(&score_id)
+        .ok_or(scorecraft_ops::OpError::NoScore(score_id))?;
+    let b = s
+        .bookmarks
+        .iter()
+        .find(|b| b.id == bid)
+        .ok_or_else(|| scorecraft_ops::OpError::Missing(format!("bookmark {bid}")))?;
+    let (name, page) = (b.name.clone(), b.page.0 as usize);
+    let position = s.pages.iter().position(|pg| pg.source == b.page);
+    let open = session
+        .score
+        .as_mut()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    if page >= open.view.document().page_count() {
+        return Err(bad(
+            ID,
+            format!("bookmark `{name}` points past the end of the file"),
+        ));
+    }
+    open.page = page;
+    Ok(json!({
+        "bookmark": name,
+        "page": page + 1,
+        "scorePage": position.map(|p| p + 1),
+    }))
 }
 
 /// Renders a page (1-based `page`, default the current one) through the page cache and makes it

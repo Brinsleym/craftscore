@@ -11,7 +11,7 @@ note = "2026-10-28, checked by `cargo xtask layers`"
 id = "REL-2"
 target = "`panic_hunt` covers every command"
 status = "done"
-note = "2026-10-28: every registered command, 267 adversarial params each; in CI"
+note = "2026-10-28: every registered command, 267 adversarial params each; in CI. 2026-10-31: also with a library open and real ids, checking it stays sound"
 
 [[row]]
 id = "REL-3"
@@ -21,7 +21,8 @@ status = "missing"
 [[row]]
 id = "REL-4"
 target = "Atomic saves and crash recovery tested by kill-during-save"
-status = "missing"
+status = "partial"
+note = "2026-10-31: a save crashed at every write (simulated storage) reopens to the old or new library; a real process kill on each OS is still to do"
 
 [[row]]
 id = "REL-5"

@@ -15,6 +15,11 @@ pub enum EngineError {
     Pdf(scorecraft_pdf::PdfError),
     /// A file could not be read or written; the message names the path and the reason.
     Io(String),
+    /// A library edit was refused (missing record, out of range, would break integrity); carries
+    /// the ops layer's stable code.
+    Edit(scorecraft_ops::OpError),
+    /// The library store failed (unreadable, too new, not a library); carries its stable code.
+    Store(scorecraft_format::StoreError),
 }
 
 impl EngineError {
@@ -27,6 +32,8 @@ impl EngineError {
             EngineError::Unsupported(_) => "unsupported",
             EngineError::Pdf(e) => e.code(),
             EngineError::Io(_) => "io_error",
+            EngineError::Edit(e) => e.code(),
+            EngineError::Store(e) => e.code(),
         }
     }
 }
@@ -42,6 +49,8 @@ impl fmt::Display for EngineError {
             EngineError::Unsupported(what) => write!(f, "not supported yet: {what}"),
             EngineError::Pdf(e) => e.fmt(f),
             EngineError::Io(why) => f.write_str(why),
+            EngineError::Edit(e) => e.fmt(f),
+            EngineError::Store(e) => e.fmt(f),
         }
     }
 }
@@ -51,5 +60,17 @@ impl std::error::Error for EngineError {}
 impl From<scorecraft_pdf::PdfError> for EngineError {
     fn from(e: scorecraft_pdf::PdfError) -> Self {
         EngineError::Pdf(e)
+    }
+}
+
+impl From<scorecraft_ops::OpError> for EngineError {
+    fn from(e: scorecraft_ops::OpError) -> Self {
+        EngineError::Edit(e)
+    }
+}
+
+impl From<scorecraft_format::StoreError> for EngineError {
+    fn from(e: scorecraft_format::StoreError) -> Self {
+        EngineError::Store(e)
     }
 }

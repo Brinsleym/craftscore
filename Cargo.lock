@@ -952,6 +952,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "proptest"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8530004ccb15eae51c7e40009fbe317f341f804db54dc033eec1c50be28cfa0"
+dependencies = [
+ "bitflags",
+ "chacha20",
+ "core_detect",
+ "num-traits",
+ "rand",
+ "rand_xorshift",
+ "regex-syntax",
+ "unarray",
+]
+
+[[package]]
 name = "pxfm"
 version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -988,6 +1004,15 @@ name = "rand_core"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
+
+[[package]]
+name = "rand_xorshift"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60aa6af80be32871323012e02e6e65f8a7cc7890931ae421d217ad8fe0df2ccf"
+dependencies = [
+ "rand_core",
+]
 
 [[package]]
 name = "rangemap"
@@ -1046,6 +1071,12 @@ dependencies = [
  "font-types 0.12.7",
  "once_cell",
 ]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rustc-hash"
@@ -1108,12 +1139,24 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-doc"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "scorecraft-geom",
+ "serde",
+ "serde_json",
+ "uuid",
+]
 
 [[package]]
 name = "scorecraft-engine"
 version = "0.0.1"
 dependencies = [
+ "chrono",
  "scorecraft-codecs",
+ "scorecraft-doc",
+ "scorecraft-format",
+ "scorecraft-geom",
+ "scorecraft-ops",
  "scorecraft-pdf",
  "scorecraft-render",
  "scorecraft-testkit",
@@ -1123,6 +1166,16 @@ dependencies = [
 [[package]]
 name = "scorecraft-format"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "scorecraft-doc",
+ "scorecraft-geom",
+ "scorecraft-ops",
+ "scorecraft-testkit",
+ "serde",
+ "serde_json",
+ "sha2",
+]
 
 [[package]]
 name = "scorecraft-fsc"
@@ -1131,6 +1184,11 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-geom"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-gpu"
@@ -1171,6 +1229,14 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-ops"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "scorecraft-doc",
+ "scorecraft-geom",
+ "scorecraft-testkit",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-pdf"
@@ -1189,6 +1255,9 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-raster"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+]
 
 [[package]]
 name = "scorecraft-render"
@@ -1217,6 +1286,11 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-testkit"
 version = "0.0.1"
+dependencies = [
+ "scorecraft-doc",
+ "scorecraft-geom",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-text"
@@ -1481,6 +1555,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
+name = "unarray"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eaea85b334db583fe3274d12b4cd1880032beab409c0d774be044d4480ab9a94"
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1506,6 +1586,17 @@ name = "unicode-properties"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
+
+[[package]]
+name = "uuid"
+version = "1.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a0e2d11620c50695fe12bbbfde96b3477fe606e7284c22d505c12ce51214514"
+dependencies = [
+ "js-sys",
+ "serde_core",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "vello_common"

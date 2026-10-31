@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M2 done, PDF-2 partial on PDFCraft render gaps; earlier: M2 in progress: PDF adapter; earlier: owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (M1 done: geom, raster, doc, ops, format and the library commands; earlier: M2 done, PDF-2 partial on PDFCraft render gaps; earlier: M2 in progress: PDF adapter; earlier: owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -9,7 +9,7 @@ in [`gaps.md`](gaps.md); the one-page summary is [`ROADMAP.md`](../ROADMAP.md).
 Status legend: ✅ done · 🟡 in progress · ⬜ not started. Hours are agent wall-clock hours for one
 agent working sequentially, uncalibrated ([calibration](target-app-parity.md#remaining-effort-and-calibration)).
 
-**Stage: pre-alpha** (workspace skeleton only). Alpha needs the gate below: ~250–530 h.
+**Stage: pre-alpha** (engine foundation, PDF reading and the library store; no UI yet). Alpha needs the gate below: ~220–490 h.
 
 ## Alpha gate
 
@@ -37,7 +37,7 @@ Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lin
 | M | Status | Name | Where we are |
 |---|---|---|---|
 | M0 | ✅ | Skeleton | workspace, 29 crate and 6 app stubs, never-crash lints, `cargo xtask layers`, `wasm` and `ci`; CI on Linux, macOS, Windows, wasm32 and MSRV 1.85; engine command registry, feature catalog, `xtask parity` (0 / 122) and `panic_hunt`; CLI `commands` and `run`; generated scorecard; testkit synthetic and hostile PDFs (2026-10-28, PRs #5–#8) |
-| M1 | ⬜ | Foundation | |
+| M1 | ✅ | Foundation | `geom` (transforms, page boxes, curves), `raster` (bitmaps, tiles, pyramids, damage), `doc` (the whole §5 model), `ops` (reversible ops, transactions, per-score and library undo), `format` v1 (blobs, per-record JSON, atomic saves with a journal, verify and repair); about 35 library, page, list and undo commands; parity 17 / 122. DoD: property tests on history (random edits stay sound, undo-all restores, redo-all replays) and on the store; a save crashed at every write reopens to the old or new library; an unmapped `doc` field fails to compile in `format` (2026-10-31) |
 | M2 | ✅ | PDF integration (PDFCraft) | `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 (`65ff3a00`): open, pages, metadata, outline, page and tile render, text; no PDFCraft type in its API (checked by `xtask layers`); page and tile cache with background pre-rendering and dark/sepia filters in `scorecraft-render`; `score.open` and `view.render` live (parity 1 / 122), CLI `info` and `render` to PNG. fuzz target (`crates/pdf/fuzz`, plus 600 mutations in CI); corpus harness (`cargo xtask test-corpus`): PDF-1 done, engraved scores all match, 15/20 overall, renderer gaps reported for PDFCraft ([file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00)); 300 dpi render 41 ms on the tablet (P13 ≤ 300 ms). Closed 2026-10-31 by the owner with PDF-2 partial: the gaps are PDFCraft's and are tracked in G1; re-run `cargo xtask test-corpus` on every PDFCraft pin bump |
 | M3 | ⬜ | Reader app | |
 | M4 | ⬜ | Ink | |
@@ -63,21 +63,20 @@ Ranked; pick from the top unless an issue is assigned to you.
    write the `scorecraft-pdf` adapter, and run a 200-file public-domain score corpus through it
    (correctness, speed, wasm size). A test build on 2026-10-28 showed the crates we take check
    natively and for wasm32 with no C code.
-3. **Page turns and the pedal next** (owner's priority, 2026-10-28): M3 includes Bluetooth pedal
+3. ~~**M1 foundation**~~, done 2026-10-31: the model, history and library store under the reader.
+4. **Page turns and the pedal next** (owner's priority, 2026-10-28): M3 includes Bluetooth pedal
    mapping (TURN-4), on the owner's Windows tablet first. Start with `docs/spec/page-turning.md`,
    then `ink.md`, `library.md`, `setlists.md` from the public listings plus observation passes ([G17](gaps.md#g17-unknowns-behaviour-not-yet-observed)).
-4. **Create the corpus repository** with pinned public-domain scores and hostile synthetic PDFs.
+5. **Create the corpus repository** with pinned public-domain scores and hostile synthetic PDFs.
 
 ## What's next, with estimates
 
 | Rank | Milestone | Estimate |
 |---|---|---:|
-| 1 | M1 foundation (geom, raster, doc, ops, format v1) | 40–80 h |
-| 2 | M2 PDF integration (PDFCraft) | 20–40 h |
-| 3 | M3 reader app (layouts, turns, pedal, control channel, Windows tablet and desktop, then web) | 66–122 h |
-| 4 | M4 ink | 80–150 h |
-| 5 | M5 library | 60–120 h |
-| 6 | M6 performance (setlists, shortcuts, snips, metronome) | 44–88 h |
+| 1 | M3 reader app (layouts, turns, pedal, control channel, Windows tablet and desktop, then web) | 66–122 h |
+| 2 | M4 ink | 80–150 h |
+| 3 | M5 library (search, sort, thumbnails, the library UI) | 40–80 h |
+| 4 | M6 performance (setlists, shortcuts, snips, metronome) | 44–88 h |
 | Later | M7 mobile, M8 sync, M9 interop, M10 practice and MIDI, M11 parity | 490–980 h |
 
 ## Milestone definitions
@@ -104,6 +103,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M1 ✅: foundation crates and library commands; parity floor 17; alpha ~250–530 → ~220–490 h; M5 60–120 → 40–80 h |
 | 2026-10-31 | patch | M2 ✅: fuzz, corpus and perf done; PDF-2 partial, its PDFCraft render gaps tracked in G1 |
 | 2026-10-31 | patch | M2 🟡: `score.open` and `view.render` live; parity floor 1 |
 | 2026-10-31 | patch | M2 🟡: page cache and pre-rendering in `scorecraft-render` |

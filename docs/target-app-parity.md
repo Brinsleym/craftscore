@@ -1,6 +1,6 @@
 # ScoreCraft vs enScore: target-app parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M0 skeleton done, remaining hours lowered; earlier: 4 rows added from the Microsoft Store description; estimates lowered for PDFCraft reuse) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (M1 foundation done: breadth 14% measured, alpha ~220–490 h; earlier: M0 skeleton done, remaining hours lowered; earlier: 4 rows added from the Microsoft Store description; estimates lowered for PDFCraft reuse) · **Target:** enScore 3.7 (2026)
 
 The authoritative answer to "how close is ScoreCraft to enScore, and how much work is left". The
 one-page summary is [`ROADMAP.md`](../ROADMAP.md); the ranked work list is [`gaps.md`](gaps.md);
@@ -11,18 +11,18 @@ the feature catalog is [`feature-map.md`](feature-map.md); the measured checklis
 [practice and audio](practice-parity.md), [sync](sync-parity.md),
 [localization](localization-parity.md).
 
-## Headline (2026-10-28, no code yet)
+## Headline (2026-10-31, engine and library store, no UI yet)
 
 | Number | Value | Kind |
 |---|---|---|
-| **Feature breadth** (does each enScore feature exist?) | **0%** (0 of 122 feature-map rows) | measured by hand (no commands registered) |
+| **Feature breadth** (does each enScore feature exist?) | **14%** weighted (17 of 122 feature-map rows live, all `partial`: engine commands with tests, no UI yet) | measured by `cargo xtask parity` |
 | **Ready for real work** (could a musician replace enScore with it on stage?) | **0%** | estimated, weights below |
 | **Practising musician** (reads, marks, turns with a pedal, uses setlists) | 0% | estimated, [method](#practising-musician) |
 | **Essentials user** (open a PDF, turn pages, mark it up) | 0% | estimated, [method](#essentials-user) |
 | **Stage** | **pre-alpha** | the [alpha gate](roadmap.md#alpha-gate) does not pass |
-| Remaining to **alpha** | **~250–530 agent-hours** | estimated, uncalibrated: P0 rows (250–530 h, after PDFCraft reuse); the M0 skeleton is done (2026-10-28) |
-| Remaining to **beta** | **~710–1,430 agent-hours** | estimated, uncalibrated: alpha + P1 rows (360–700 h) + stability and performance (100–200 h) |
-| Remaining to **full parity** | **~940–1,880 agent-hours** | estimated, uncalibrated: beta + P2 rows (230–450 h); P3 (ours only) adds 80–170 h |
+| Remaining to **alpha** | **~220–490 agent-hours** | estimated, uncalibrated: P0 rows (220–490 h, after PDFCraft reuse); M0 (2026-10-28), M2 and M1 (2026-10-31) are done |
+| Remaining to **beta** | **~670–1,370 agent-hours** | estimated, uncalibrated: alpha + P1 rows (350–680 h) + stability and performance (100–200 h) |
+| Remaining to **full parity** | **~900–1,820 agent-hours** | estimated, uncalibrated: beta + P2 rows (230–450 h); P3 (ours only) adds 80–170 h |
 
 "Agent-hours" are wall-clock hours for one agent working sequentially, including tests, as in
 PhotoCraft's docs. They are **uncalibrated** until this repository has merged-PR history
@@ -45,19 +45,19 @@ parts.
 - enscore.app was not reachable from our build environment on 2026-10-28; reading it is the first
   re-measure task.
 
-## Feature breadth: 0% (weighted)
+## Feature breadth: 14% (weighted, 2026-10-31)
 
 | Component | Weight | Ours / enScore | % | Kind |
 |---|---:|---|---:|---|
-| Reading, layout and page turning (READ, TURN) | 25% | 0 / 23 | 0% | measured |
-| Annotation (ANNO) | 20% | 0 / 16 | 0% | measured |
-| Library, page editing, navigation (LIB, PAGE, NAV) | 15% | 0 / 28 | 0% | measured |
-| Setlists (LIST) | 10% | 0 / 7 | 0% | measured |
+| Reading, layout and page turning (READ, TURN) | 25% | 1 / 23 | 4% | measured |
+| Annotation (ANNO) | 20% | 1 / 16 | 6% | measured |
+| Library, page editing, navigation (LIB, PAGE, NAV) | 15% | 11 / 28 | 39% | measured |
+| Setlists (LIST) | 10% | 4 / 7 | 57% | measured |
 | Import, export, scanning, IMSLP, forScore (IMP, EXP) | 10% | 0 / 12 | 0% | measured |
 | Practice, audio, MIDI (PRAC, PLAY, MIDI) | 10% | 0 / 23 | 0% | measured |
 | Sync and backup (SYNC) | 5% | 0 / 8 | 0% | measured |
 | Platforms and languages (PLAT) | 5% | 0 / 5 | 0% | measured |
-| **Weighted** | 100% | | **0%** | |
+| **Weighted** | 100% | | **14%** | |
 
 Weights reflect what a performing musician relies on most; they are set here once and only moved by
 RFC.
@@ -132,6 +132,7 @@ performance hardening before beta 100–200.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M1 done (and M2 earlier the same day): breadth 0 → 14% (17 of 122 rows live, engine only); alpha ~250–530 → ~220–490 h, beta ~710–1,430 → ~670–1,370 h, full ~940–1,880 → ~900–1,820 h |
 | 2026-10-28 | minor | M0 skeleton done (PRs #5–#8): alpha ~310–630 → ~250–530 h, beta ~770–1,530 → ~710–1,430 h, full ~1,000–1,980 → ~940–1,880 h |
 | 2026-10-28 | minor | Microsoft Store description (S8): 118 → 122 rows; beta ~760–1,520 → ~770–1,530 h, full ~980–1,960 → ~1,000–1,980 h; alpha unchanged |
 | 2026-10-28 | minor | PDFCraft reuse: alpha ~350–720 → ~310–630 h, beta ~830–1,650 → ~760–1,520 h, full ~1,070–2,120 → ~980–1,960 h |
