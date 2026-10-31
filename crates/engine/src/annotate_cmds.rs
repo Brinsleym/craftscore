@@ -1,0 +1,971 @@
+//! Markup commands (spec `docs/spec/ink.md`): choosing tools, colours and widths (ANNO-3..7),
+//! *Draw with Touch* (ANNO-14), and `annotate.stroke`, which applies the active tool to one
+//! pen-down to pen-up gesture (ANNO-1, ANNO-2, ANNO-6, ANNO-7). Every marking is data in the
+//! library in source-page PDF space; the imported file is never touched (ANNO-15). Each gesture
+//! is one undo step in the score's history (ANNO-13).
+
+use serde_json::{Map, Value, json};
+
+use scorecraft_doc::{
+    Annotation, AnnotationId, AnnotationKind, Color, InkPoint, Layer, PageKey, Score, ScoreId,
+    Stroke, Tool,
+};
+use scorecraft_geom::Point;
+use scorecraft_ink::{
+    ERASER_WIDTHS, Erased, InkError, MAX_POINTS, PALETTE, Ruler, ToolStyle, erase, touches,
+};
+use scorecraft_input::PointerKind;
+use scorecraft_ops::{Op, OpError, Transaction};
+
+use crate::commands::{
+    CommandSpec, always, bad, opt_bool, opt_f64, opt_int, opt_str, params_object,
+    reject_unknown_keys, truncate,
+};
+use crate::markup::{EraserMode, MarkupTool, hit, library_score};
+use crate::{EngineError, Session};
+
+pub fn specs() -> Vec<CommandSpec> {
+    let spec = |id, label, menu, params, ours, enabled, run| CommandSpec {
+        id,
+        label,
+        menu,
+        shortcut: None,
+        params,
+        ours,
+        enabled,
+        run,
+    };
+    vec![
+        spec(
+            "annotate.tool.pen",
+            "Pen",
+            "Markup>Tools",
+            r##"{"color":"#rrggbb|#rrggbbaa"?,"width":number?}"##,
+            false,
+            always,
+            tool_pen as _,
+        ),
+        spec(
+            "annotate.tool.highlighter",
+            "Highlighter",
+            "Markup>Tools",
+            r##"{"color":"#rrggbb"?,"width":number?}"##,
+            false,
+            always,
+            tool_highlighter as _,
+        ),
+        spec(
+            "annotate.tool.whiteout",
+            "Whiteout",
+            "Markup>Tools",
+            r#"{"width":number?}"#,
+            false,
+            always,
+            tool_whiteout as _,
+        ),
+        spec(
+            "annotate.tool.strokeEraser",
+            "Eraser (Whole Strokes)",
+            "Markup>Tools",
+            r#"{"width":number?}"#,
+            false,
+            always,
+            tool_stroke_eraser as _,
+        ),
+        spec(
+            "annotate.tool.pixelEraser",
+            "Eraser (Part of a Stroke)",
+            "Markup>Tools",
+            r#"{"width":number?}"#,
+            false,
+            always,
+            tool_pixel_eraser as _,
+        ),
+        spec(
+            "annotate.style.set",
+            "Colour and Width",
+            "",
+            r##"{"color":"#rrggbb|#rrggbbaa"?,"width":number?}"##,
+            true,
+            always,
+            style_set as _,
+        ),
+        spec(
+            "input.pen.only",
+            "Draw with Touch",
+            "Markup",
+            r#"{"on":bool?}"#,
+            false,
+            always,
+            pen_only as _,
+        ),
+        spec(
+            "annotate.swatch.select",
+            "Swatch",
+            "",
+            r#"{"index":1..8}"#,
+            true,
+            always,
+            swatch_select as _,
+        ),
+        spec(
+            "annotate.swatch.set",
+            "Palette Colour",
+            "",
+            r##"{"color":"#rrggbb","index":1..8?}"##,
+            true,
+            always,
+            swatch_set as _,
+        ),
+        spec(
+            "annotate.mode.set",
+            "Markup",
+            "Markup",
+            r#"{"on":bool?}"#,
+            true,
+            always,
+            mode_set as _,
+        ),
+        spec(
+            "input.touch.lock",
+            "Touch Lock",
+            "Markup",
+            r#"{"on":bool?}"#,
+            false,
+            markup_mode,
+            touch_lock as _,
+        ),
+        spec(
+            "annotate.ruler.show",
+            "Ruler",
+            "Markup",
+            r#"{"on":bool?}"#,
+            false,
+            markup_ready,
+            ruler_show as _,
+        ),
+        spec(
+            "annotate.ruler.set",
+            "Move Ruler",
+            "",
+            r#"{"x":number,"y":number,"angle":number=0,"space":"view|page"="view","page":int?}"#,
+            false,
+            markup_ready,
+            ruler_set as _,
+        ),
+        spec(
+            "annotate.stroke",
+            "Draw",
+            "",
+            r#"{"points":[[x,y,pressure?,t?]],"space":"view|page"="view","page":int?,"device":"pen|eraser|mouse|touch"="pen"}"#,
+            false,
+            markup_ready,
+            stroke as _,
+        ),
+        spec(
+            "annotate.page.list",
+            "Markings on a Page",
+            "",
+            r#"{"page":int?}"#,
+            true,
+            markup_ready,
+            page_list as _,
+        ),
+        spec(
+            "annotate.state",
+            "Markup State",
+            "",
+            "{}",
+            true,
+            always,
+            state as _,
+        ),
+    ]
+}
+
+/// Enabled while a score from the library is open: markings are stored in the library.
+pub fn markup_ready(s: &Session) -> bool {
+    s.score.as_ref().and_then(|o| o.library_score).is_some() && s.library.is_some()
+}
+
+/// Optional colour param.
+fn opt_color(
+    id: &str,
+    p: Option<&Map<String, Value>>,
+    key: &str,
+) -> Result<Option<Color>, EngineError> {
+    opt_str(id, p, key)?
+        .map(|s| {
+            s.parse::<Color>()
+                .map_err(|e| bad(id, format!("`{key}`: {e}")))
+        })
+        .transpose()
+}
+
+/// Optional width param inside `range`.
+fn opt_width(
+    id: &str,
+    p: Option<&Map<String, Value>>,
+    range: scorecraft_ink::WidthRange,
+) -> Result<Option<f32>, EngineError> {
+    match opt_f64(id, p, "width")? {
+        None => Ok(None),
+        Some(w) if range.contains(w as f32) => Ok(Some(w as f32)),
+        Some(_) => Err(bad(
+            id,
+            format!("`width` must be from {} to {} points", range.min, range.max),
+        )),
+    }
+}
+
+fn state_json(s: &Session) -> Value {
+    let layer = s
+        .score
+        .as_ref()
+        .and_then(|o| library_score(s.library(), o.library_score))
+        .and_then(|sc| s.markup.layer(sc));
+    s.markup.to_json(layer)
+}
+
+/// Selects a stroke tool and applies optional colour and width to it.
+fn choose(
+    session: &mut Session,
+    id: &str,
+    params: &Value,
+    tool: Tool,
+    with_color: bool,
+) -> Result<Value, EngineError> {
+    let p = params_object(id, params)?;
+    let keys: &[&str] = if with_color {
+        &["color", "width"]
+    } else {
+        &["width"]
+    };
+    reject_unknown_keys(id, p, keys)?;
+    let color = if with_color {
+        opt_color(id, p, "color")?
+    } else {
+        None
+    };
+    let width = opt_width(id, p, ToolStyle::widths(tool))?;
+    let m = &mut session.markup;
+    m.tool = match tool {
+        Tool::Highlighter => MarkupTool::Highlighter,
+        _ => MarkupTool::Pen,
+    };
+    if tool == Tool::Whiteout {
+        m.whiteout_on = true;
+    } else if tool == Tool::Pen && color.is_none() && m.whiteout_on {
+        // Choosing the pen again after whiteout returns it to ink.
+        m.whiteout_on = false;
+    }
+    if let Some(c) = color {
+        m.apply_color(c);
+        select_matching_swatch(m, c);
+    }
+    if let Some(w) = width {
+        style_mut(m, tool).width = w;
+    }
+    Ok(state_json(session))
+}
+
+fn style_mut(m: &mut crate::markup::Markup, tool: Tool) -> &mut ToolStyle {
+    match tool {
+        Tool::Pen => &mut m.pen,
+        Tool::Highlighter => &mut m.highlighter,
+        Tool::Whiteout => &mut m.whiteout,
+    }
+}
+
+/// Marks the swatch holding `c`, if one does, as the active tool's selected swatch.
+fn select_matching_swatch(m: &mut crate::markup::Markup, c: Color) {
+    let rgb = Color::rgb(c.r, c.g, c.b);
+    if let Some(i) = m.swatches.iter().position(|s| *s == rgb)
+        && let Some(slot) = m.selected_swatch()
+    {
+        *slot = i;
+    }
+}
+
+fn tool_pen(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    choose(session, "annotate.tool.pen", params, Tool::Pen, true)
+}
+
+fn tool_highlighter(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    choose(
+        session,
+        "annotate.tool.highlighter",
+        params,
+        Tool::Highlighter,
+        true,
+    )
+}
+
+fn tool_whiteout(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    choose(
+        session,
+        "annotate.tool.whiteout",
+        params,
+        Tool::Whiteout,
+        false,
+    )
+}
+
+fn choose_eraser(
+    session: &mut Session,
+    id: &str,
+    params: &Value,
+    mode: EraserMode,
+) -> Result<Value, EngineError> {
+    let p = params_object(id, params)?;
+    reject_unknown_keys(id, p, &["width"])?;
+    let width = opt_width(id, p, ERASER_WIDTHS)?;
+    let m = &mut session.markup;
+    m.tool = MarkupTool::Eraser;
+    m.eraser = mode;
+    if let Some(w) = width {
+        m.eraser_width = w;
+    }
+    Ok(state_json(session))
+}
+
+fn tool_stroke_eraser(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    choose_eraser(
+        session,
+        "annotate.tool.strokeEraser",
+        params,
+        EraserMode::Stroke,
+    )
+}
+
+fn tool_pixel_eraser(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    choose_eraser(
+        session,
+        "annotate.tool.pixelEraser",
+        params,
+        EraserMode::Pixel,
+    )
+}
+
+/// The width slider and any colour: they change the active tool's style. Agents may give any
+/// colour here; the toolbar offers the swatches and the palette (`annotate.swatch.*`).
+fn style_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.style.set";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["color", "width"])?;
+    let color = opt_color(ID, p, "color")?;
+    let m = &mut session.markup;
+    let width = match m.tool {
+        MarkupTool::Eraser => {
+            if color.is_some() {
+                return Err(bad(ID, "the eraser has no colour".into()));
+            }
+            let w = opt_width(ID, p, ERASER_WIDTHS)?;
+            if let Some(w) = w {
+                m.eraser_width = w;
+            }
+            w
+        }
+        _ => {
+            let tool = m.drawing().map_or(Tool::Pen, |(t, _)| t);
+            let w = opt_width(ID, p, ToolStyle::widths(tool))?;
+            if let Some(w) = w {
+                style_mut(m, tool).width = w;
+            }
+            if let Some(c) = color {
+                m.apply_color(c);
+                select_matching_swatch(m, c);
+            }
+            w
+        }
+    };
+    if color.is_none() && width.is_none() {
+        return Err(bad(ID, "give `color` or `width`".into()));
+    }
+    Ok(state_json(session))
+}
+
+/// Tapping a swatch: the active tool takes its colour (ANNO-4).
+fn swatch_select(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.swatch.select";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["index"])?;
+    let i = swatch_index(ID, p)?.ok_or_else(|| bad(ID, "`index` is required".into()))?;
+    let m = &mut session.markup;
+    let color = m.swatches.get(i).copied().unwrap_or(Color::BLACK);
+    let slot = m
+        .selected_swatch()
+        .ok_or_else(|| bad(ID, "the eraser has no colour".into()))?;
+    *slot = i;
+    m.apply_color(color);
+    Ok(state_json(session))
+}
+
+/// Picking from the palette: the selected swatch (or swatch `index`) becomes that colour, and the
+/// active tool takes it (ANNO-4). Only palette colours are accepted.
+fn swatch_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.swatch.set";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["color", "index"])?;
+    let color = opt_color(ID, p, "color")?.ok_or_else(|| bad(ID, "`color` is required".into()))?;
+    let color = Color::rgb(color.r, color.g, color.b);
+    if !PALETTE.contains(&color) {
+        return Err(bad(
+            ID,
+            format!("{color} is not one of the palette's colours"),
+        ));
+    }
+    let index = swatch_index(ID, p)?;
+    let m = &mut session.markup;
+    let i = match (index, m.selected_swatch()) {
+        (Some(i), Some(slot)) => {
+            *slot = i;
+            i
+        }
+        (None, Some(slot)) => *slot,
+        (Some(i), None) => i,
+        (None, None) => {
+            return Err(bad(
+                ID,
+                "give `index`: the eraser has no selected swatch".into(),
+            ));
+        }
+    };
+    if let Some(sw) = m.swatches.get_mut(i) {
+        *sw = color;
+    }
+    m.apply_color(color);
+    Ok(state_json(session))
+}
+
+/// Optional 1-based swatch number, as a 0-based index.
+fn swatch_index(id: &str, p: Option<&Map<String, Value>>) -> Result<Option<usize>, EngineError> {
+    Ok(opt_int(id, p, "index", 1, 8)?.and_then(|n| usize::try_from(n - 1).ok()))
+}
+
+/// Markup mode on or off (no params toggles). Leaving it hides the ruler.
+fn mode_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.mode.set";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(!session.markup.mode);
+    session.markup.mode = on;
+    if !on {
+        session.markup.ruler = None;
+    }
+    Ok(state_json(session))
+}
+
+/// Touch lock (the padlock), in markup mode only (ANNO-14).
+fn touch_lock(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "input.touch.lock";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(!session.markup.touch_lock);
+    session.markup.touch_lock = on;
+    Ok(json!({ "touchLock": on }))
+}
+
+fn markup_mode(s: &Session) -> bool {
+    s.markup.mode
+}
+
+/// Shows or hides the ruler (ANNO-17): shown across the middle of the current page, horizontal.
+fn ruler_show(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.ruler.show";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(session.markup.ruler.is_none());
+    if !on {
+        session.markup.ruler = None;
+        return Ok(state_json(session));
+    }
+    session.refresh_reader();
+    let open = session
+        .score
+        .as_ref()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    // The middle of the current page on screen, horizontal on screen whatever its rotation.
+    let current = open.reader.reader.page();
+    let frame = open.reader.frame();
+    let slot = frame
+        .slots
+        .iter()
+        .find(|s| s.page == current)
+        .or_else(|| frame.slots.first())
+        .ok_or_else(|| bad(ID, "the score shows no pages".into()))?;
+    let (cx, cy) = (
+        (slot.dst.x0 + slot.dst.x1) / 2.0,
+        (slot.dst.y0 + slot.dst.y1) / 2.0,
+    );
+    let h = hit(&open.reader, open.view.document(), cx, cy)
+        .ok_or_else(|| bad(ID, "the score shows no pages".into()))?;
+    let ruler = h
+        .to_page(cx, cy)
+        .zip(h.angle_to_page(cx, cy, 0.0))
+        .and_then(|(o, a)| Ruler::new(o, a))
+        .ok_or_else(|| bad(ID, "the page has no size".into()))?;
+    session.markup.ruler = Some((h.file_page, ruler));
+    Ok(state_json(session))
+}
+
+/// Moves and turns the ruler. In view space, `x`, `y` is a point on the page on screen and `angle`
+/// is degrees clockwise on screen; in page space, a point in PDF space on score page `page` and
+/// degrees counter-clockwise.
+fn ruler_set(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.ruler.set";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["x", "y", "angle", "space", "page"])?;
+    let req = |k: &str| opt_f64(ID, p, k)?.ok_or_else(|| bad(ID, format!("`{k}` is required")));
+    let (x, y) = (req("x")?, req("y")?);
+    let angle = opt_f64(ID, p, "angle")?.unwrap_or(0.0);
+    let space = opt_str(ID, p, "space")?.unwrap_or("view");
+    session.refresh_reader();
+    let open = session
+        .score
+        .as_ref()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let (file_page, origin, page_angle) = match space {
+        "view" => {
+            if opt_int(ID, p, "page", 1, u64::from(u32::MAX))?.is_some() {
+                return Err(bad(ID, "`page` goes with `space: page` only".into()));
+            }
+            let h = hit(&open.reader, open.view.document(), x, y)
+                .ok_or_else(|| bad(ID, "the point is not on a page".into()))?;
+            let origin = h
+                .to_page(x, y)
+                .ok_or_else(|| bad(ID, "the point is not on a page".into()))?;
+            let a = h
+                .angle_to_page(x, y, angle)
+                .ok_or_else(|| bad(ID, "the angle can't be mapped onto the page".into()))?;
+            (h.file_page, origin, a)
+        }
+        "page" => {
+            let n = opt_int(ID, p, "page", 1, u64::from(u32::MAX))?
+                .ok_or_else(|| bad(ID, "`page` is required with `space: page`".into()))?;
+            let index =
+                usize::try_from(n - 1).map_err(|_| bad(ID, "`page` is too large".into()))?;
+            let shown = open.reader.shown.get(index).ok_or_else(|| {
+                bad(
+                    ID,
+                    format!("`page` must be from 1 to {}", open.reader.shown.len()),
+                )
+            })?;
+            (shown.file_page, Point::new(x, y), angle)
+        }
+        other => {
+            return Err(bad(
+                ID,
+                format!("`space` must be view or page, got {}", truncate(other, 32)),
+            ));
+        }
+    };
+    if origin.x.abs() > f64::from(scorecraft_ink::MAX_COORD)
+        || origin.y.abs() > f64::from(scorecraft_ink::MAX_COORD)
+    {
+        return Err(InkError::OutOfRange.into());
+    }
+    let ruler =
+        Ruler::new(origin, page_angle).ok_or_else(|| bad(ID, "bad ruler position".into()))?;
+    session.markup.ruler = Some((file_page, ruler));
+    Ok(state_json(session))
+}
+
+/// *Draw with Touch*: `on` sets pen-only drawing, no params toggles it.
+fn pen_only(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "input.pen.only";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(!session.markup.pen_only);
+    session.markup.pen_only = on;
+    Ok(json!({ "penOnly": on, "drawWithTouch": !on }))
+}
+
+fn state(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.state";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &[])?;
+    Ok(state_json(session))
+}
+
+/// `[x, y, pressure?, t?]` samples. Pressure is ignored (full) for mouse and touch.
+fn parse_points(
+    id: &str,
+    p: Option<&Map<String, Value>>,
+    with_pressure: bool,
+) -> Result<Vec<(f64, f64, f32, u32)>, EngineError> {
+    let items = match p.and_then(|m| m.get("points")) {
+        Some(Value::Array(a)) => a,
+        None | Some(Value::Null) => return Err(bad(id, "`points` is required".into())),
+        Some(_) => return Err(bad(id, "`points` must be a list of [x, y] samples".into())),
+    };
+    if items.len() > MAX_POINTS {
+        return Err(InkError::TooManyPoints {
+            count: items.len(),
+            max: MAX_POINTS,
+        }
+        .into());
+    }
+    if items.is_empty() {
+        return Err(InkError::Empty.into());
+    }
+    items
+        .iter()
+        .map(|v| {
+            let nums = v
+                .as_array()
+                .filter(|a| (2..=4).contains(&a.len()))
+                .ok_or_else(|| {
+                    bad(
+                        id,
+                        "each sample is [x, y], [x, y, pressure] or [x, y, pressure, t]".into(),
+                    )
+                })?;
+            let num = |i: usize| -> Result<Option<f64>, EngineError> {
+                match nums.get(i) {
+                    None | Some(Value::Null) => Ok(None),
+                    Some(n) => n
+                        .as_f64()
+                        .filter(|x| x.is_finite())
+                        .map(Some)
+                        .ok_or_else(|| bad(id, "sample values must be finite numbers".into())),
+                }
+            };
+            let (x, y) = (num(0)?.unwrap_or(0.0), num(1)?.unwrap_or(0.0));
+            let pressure = if with_pressure {
+                num(2)?.unwrap_or(1.0).clamp(0.0, 1.0) as f32
+            } else {
+                1.0
+            };
+            let t = num(3)?.unwrap_or(0.0).clamp(0.0, f64::from(u32::MAX)) as u32;
+            Ok((x, y, pressure, t))
+        })
+        .collect()
+}
+
+/// What a gesture changed, as `annotate.stroke` returns it.
+struct Done {
+    label: &'static str,
+    tx: Transaction,
+    result: Value,
+}
+
+/// Applies the active tool to one gesture.
+fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.stroke";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["points", "space", "page", "device"])?;
+    let device_id = opt_str(ID, p, "device")?.unwrap_or("pen");
+    let device = PointerKind::from_id(device_id).ok_or_else(|| {
+        bad(
+            ID,
+            format!(
+                "`device` must be pen, eraser, mouse or touch, got {}",
+                truncate(device_id, 32)
+            ),
+        )
+    })?;
+    let space = opt_str(ID, p, "space")?.unwrap_or("view");
+    if !matches!(space, "view" | "page") {
+        return Err(bad(
+            ID,
+            format!("`space` must be view or page, got {}", truncate(space, 32)),
+        ));
+    }
+    let raw = parse_points(ID, p, device.is_pen())?;
+    let page_param = opt_int(ID, p, "page", 1, u64::from(u32::MAX))?;
+    if device == PointerKind::Touch && session.markup.mode && session.markup.touch_lock {
+        // Touch lock: every touch is ignored in markup mode.
+        return Ok(json!({ "drawn": false, "reason": "touchLock" }));
+    }
+    if !device.is_pen() && session.markup.pen_only {
+        // Only a pen marks up (ANNO-14); the shell treats this gesture as a turn or pan.
+        return Ok(json!({ "drawn": false, "reason": "penOnly" }));
+    }
+    // Where on which page: map the samples into the page's PDF space.
+    session.refresh_reader();
+    let open = session
+        .score
+        .as_ref()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let score_id = open
+        .library_score
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let (page, file_page, pts): (usize, usize, Vec<Point>) = if space == "view" {
+        if page_param.is_some() {
+            return Err(bad(ID, "`page` goes with `space: page` only".into()));
+        }
+        let (x0, y0) = raw.first().map(|s| (s.0, s.1)).unwrap_or((0.0, 0.0));
+        let h = hit(&open.reader, open.view.document(), x0, y0)
+            .ok_or_else(|| bad(ID, "the gesture doesn't start on a page".into()))?;
+        let pts = raw
+            .iter()
+            .map(|s| {
+                h.to_page(s.0, s.1)
+                    .unwrap_or(Point::new(f64::NAN, f64::NAN))
+            })
+            .collect();
+        (h.page, h.file_page, pts)
+    } else {
+        let n =
+            page_param.ok_or_else(|| bad(ID, "`page` is required with `space: page`".into()))?;
+        let index = usize::try_from(n - 1).map_err(|_| bad(ID, "`page` is too large".into()))?;
+        let shown = open.reader.shown.get(index).ok_or_else(|| {
+            bad(
+                ID,
+                format!("`page` must be from 1 to {}", open.reader.shown.len()),
+            )
+        })?;
+        (
+            index,
+            shown.file_page,
+            raw.iter().map(|s| Point::new(s.0, s.1)).collect(),
+        )
+    };
+    let key =
+        PageKey(u32::try_from(file_page).map_err(|_| bad(ID, "the page is out of range".into()))?);
+    let now = session.now_ms();
+    let markup = session.markup.clone();
+    let l = session.lib_mut(ID)?;
+    let score = l
+        .lib
+        .scores
+        .get(&score_id)
+        .ok_or(OpError::NoScore(score_id))?;
+    let erasing = device == PointerKind::Eraser || markup.tool == MarkupTool::Eraser;
+    let done = if erasing {
+        // The stylus's eraser end always erases whole strokes (ANNO-11).
+        let mode = if device == PointerKind::Eraser {
+            EraserMode::Stroke
+        } else {
+            markup.eraser
+        };
+        let radius = f64::from(markup.eraser_width) / 2.0;
+        let finite: Vec<Point> = pts.into_iter().filter(|p| p.is_finite()).collect();
+        erase_gesture(
+            score,
+            key,
+            &finite,
+            radius,
+            mode,
+            &markup.curve,
+            &mut || {
+                l.hlc = l.hlc.tick(now);
+                (l.ids.id(now), l.hlc)
+            },
+        )?
+    } else {
+        let (tool, style) = markup.drawing().ok_or_else(|| {
+            bad(
+                ID,
+                format!("the {} tool doesn't draw strokes", markup.tool.id()),
+            )
+        })?;
+        let layer = markup
+            .layer(score)
+            .ok_or_else(|| OpError::Missing("layer".into()))?;
+        writable(score, layer)?;
+        let samples: Vec<InkPoint> = raw
+            .iter()
+            .zip(&pts)
+            .map(|(r, q)| InkPoint {
+                x: q.x as f32,
+                y: q.y as f32,
+                pressure: r.2,
+                tilt: 0.0,
+                twist: 0.0,
+                t: r.3,
+            })
+            .collect();
+        // Ruled along the ruler when it lies on this page and the stroke starts at its edge.
+        let samples = match markup.ruler {
+            Some((rp, r)) if rp == file_page => r.rule(&samples).unwrap_or(samples),
+            _ => samples,
+        };
+        let points = scorecraft_ink::prepare(&samples)?;
+        let count = points.len();
+        let id: AnnotationId = l.ids.id(now);
+        l.hlc = l.hlc.tick(now);
+        let stamp = l.hlc;
+        let index = score.annotations_on(key).len();
+        let annotation = Annotation {
+            id,
+            layer,
+            stamp,
+            kind: AnnotationKind::Stroke(Stroke {
+                tool,
+                color: style.color,
+                width: style.width,
+                points,
+            }),
+        };
+        Done {
+            label: match tool {
+                Tool::Pen => "Draw",
+                Tool::Highlighter => "Highlight",
+                Tool::Whiteout => "Whiteout",
+            },
+            tx: Transaction::single(Op::InsertAnnotation {
+                score: score_id,
+                page: key,
+                index,
+                annotation: Box::new(annotation),
+            }),
+            result: json!({
+                "tool": match tool {
+                    Tool::Pen => "pen",
+                    Tool::Highlighter => "highlighter",
+                    Tool::Whiteout => "whiteout",
+                },
+                "annotation": id.to_string(),
+                "points": count,
+            }),
+        }
+    };
+    let changed = !done.tx.is_empty();
+    if changed {
+        l.commit(done.label, done.tx)?;
+    }
+    let mut result = done.result;
+    crate::commands::set(&mut result, "drawn", json!(changed));
+    crate::commands::set(&mut result, "page", json!(page + 1));
+    crate::commands::set(&mut result, "filePage", json!(file_page + 1));
+    Ok(result)
+}
+
+/// Refuses to change a hidden or locked layer (spec ANNO-10, INK-10).
+fn writable(score: &Score, layer: scorecraft_doc::LayerId) -> Result<(), EngineError> {
+    let l: &Layer = score
+        .layer(layer)
+        .ok_or_else(|| OpError::Missing(format!("layer {layer}")))?;
+    if l.locked {
+        return Err(OpError::Invalid(format!(
+            "layer “{}” is locked; unlock it to draw on it",
+            truncate(&l.name, 64)
+        ))
+        .into());
+    }
+    if !l.visible {
+        return Err(OpError::Invalid(format!(
+            "layer “{}” is hidden; show it to draw on it",
+            truncate(&l.name, 64)
+        ))
+        .into());
+    }
+    Ok(())
+}
+
+/// One eraser gesture on one page: every touched stroke on a visible, unlocked layer.
+fn erase_gesture(
+    score: &Score,
+    page: PageKey,
+    path: &[Point],
+    radius: f64,
+    mode: EraserMode,
+    curve: &scorecraft_ink::PressureCurve,
+    next: &mut dyn FnMut() -> (AnnotationId, scorecraft_doc::Hlc),
+) -> Result<Done, EngineError> {
+    let open_layer = |id| {
+        score
+            .layer(id)
+            .is_some_and(|l: &Layer| l.visible && !l.locked)
+    };
+    let list = score.annotations_on(page);
+    let mut ops = Vec::new();
+    let (mut removed, mut added) = (0usize, 0usize);
+    // From the top of the list down, so inserting pieces never shifts an index still to come.
+    for (index, a) in list.iter().enumerate().rev() {
+        let AnnotationKind::Stroke(s) = &a.kind else {
+            continue;
+        };
+        if !open_layer(a.layer) {
+            continue;
+        }
+        let remove = Op::RemoveAnnotation {
+            score: score.id,
+            page,
+            annotation: a.id,
+        };
+        match mode {
+            EraserMode::Stroke => {
+                if touches(s, path, radius, curve) {
+                    ops.push(remove);
+                    removed += 1;
+                }
+            }
+            EraserMode::Pixel => match erase(s, path, radius, curve) {
+                Erased::Untouched => {}
+                Erased::Removed => {
+                    ops.push(remove);
+                    removed += 1;
+                }
+                Erased::Split(pieces) => {
+                    ops.push(remove);
+                    removed += 1;
+                    for (k, piece) in pieces.into_iter().enumerate() {
+                        let (id, stamp) = next();
+                        ops.push(Op::InsertAnnotation {
+                            score: score.id,
+                            page,
+                            index: index + k,
+                            annotation: Box::new(Annotation {
+                                id,
+                                layer: a.layer,
+                                stamp,
+                                kind: AnnotationKind::Stroke(piece),
+                            }),
+                        });
+                        added += 1;
+                    }
+                }
+            },
+        }
+    }
+    Ok(Done {
+        label: "Erase",
+        tx: Transaction::new(ops),
+        result: json!({
+            "tool": "eraser",
+            "mode": mode.id(),
+            "erased": removed,
+            "added": added,
+        }),
+    })
+}
+
+/// Every marking on a score page, for agents and tests.
+fn page_list(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.page.list";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["page"])?;
+    session.refresh_reader();
+    let open = session
+        .score
+        .as_ref()
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let count = open.reader.shown.len();
+    let index = match opt_int(ID, p, "page", 1, (count as u64).max(1))? {
+        Some(n) => usize::try_from(n - 1).map_err(|_| bad(ID, "`page` is too large".into()))?,
+        None => open.reader.reader.page(),
+    };
+    let shown = open
+        .reader
+        .shown
+        .get(index)
+        .ok_or_else(|| bad(ID, "the score shows no pages".into()))?;
+    let file_page = shown.file_page;
+    let score_id: Option<ScoreId> = open.library_score;
+    let score = library_score(session.library(), score_id)
+        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
+    let key = PageKey(u32::try_from(file_page).unwrap_or(u32::MAX));
+    let annotations = serde_json::to_value(score.annotations_on(key))
+        .map_err(|e| EngineError::Io(format!("listing markings: {e}")))?;
+    Ok(json!({
+        "page": index + 1,
+        "filePage": file_page + 1,
+        "annotations": annotations,
+    }))
+}
+
+#[cfg(test)]
+mod tests;

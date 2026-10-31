@@ -13,6 +13,7 @@
     clippy::unreachable
 )]
 
+mod annotate_cmds;
 pub mod commands;
 mod edit_cmds;
 mod engine_cmds;
@@ -22,6 +23,7 @@ mod input_cmds;
 mod library;
 mod library_cmds;
 mod list_cmds;
+mod markup;
 mod page_cmds;
 pub mod parity;
 mod reader;

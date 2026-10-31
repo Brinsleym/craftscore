@@ -1,6 +1,6 @@
 # Hardware parity: pedals, MIDI, styluses and displays
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Windows tablet is the first test platform, pedals in M3; earlier: HW-12 and HW-13 from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (HW-22 palm rejection with the platforms' own behaviour; earlier: Windows tablet is the first test platform, pedals in M3; earlier: HW-12 and HW-13 from the Microsoft Store description; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Status and evidence as in [`ui-parity.md`](ui-parity.md). Every **done** row names the device
 models and OS versions it was tested on.
@@ -34,6 +34,7 @@ USB keyboard pedal. The owner's Windows tablet is the first test platform (pedal
 |---|---|---|---|---|
 | HW-20 | Pressure and tilt from Apple Pencil, Windows Ink / Surface Pen, Android stylus (S Pen), Wacom on desktop | ANNO-2 | missing | |
 | HW-21 | Eraser end and barrel buttons | ANNO-11 | missing | |
+| HW-22 | Palm rejection while the pen draws, working with the platform's own: Windows' *Ignore touch input when I'm using my pen* setting (can be off or hidden), Android 13+ palm flags (cancelled touches); touch lock | ANNO-14 | missing | (logic in `scorecraft-input`, [spec](spec/ink.md#anno-14-pen-only-and-draw-with-touch-palm-rejection); needs the pen wired in the app and a device) |
 
 ## Displays and power
 
@@ -54,6 +55,7 @@ USB keyboard pedal. The owner's Windows tablet is the first test platform (pedal
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | HW-22: palm rejection on each platform, from the ink spec |
 | 2026-10-28 | minor | The owner's Windows tablet is the first pedal and pen test platform; pedals move to M3 |
 | 2026-10-28 | minor | HW-12 takes a list of messages; HW-13 per-setlist MIDI (MIDI-5), from the Microsoft Store description |
 | 2026-10-28 | major | First version |

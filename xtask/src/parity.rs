@@ -490,10 +490,10 @@ mod tests {
     }
 
     #[test]
-    fn real_feature_map_parses_with_122_rows() {
+    fn real_feature_map_parses_with_123_rows() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
         let text = fs::read_to_string(root.join(FEATURE_MAP)).unwrap();
-        assert_eq!(parse_feature_map(&text).unwrap().len(), 122);
+        assert_eq!(parse_feature_map(&text).unwrap().len(), 123);
     }
 
     #[test]

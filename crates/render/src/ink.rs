@@ -1,0 +1,630 @@
+//! Ink on a rendered page, on the CPU (architecture §7; spec `docs/spec/ink.md`).
+//!
+//! Each stroke's outline (from `scorecraft-ink`) is filled into a coverage mask with the
+//! non-zero rule, so overlapping parts of one stroke cover a pixel once, then blended onto the
+//! page bitmap:
+//!
+//! - **pen**: normal "over" blending in the stroke's colour;
+//! - **highlighter**: multiply, so notation under it stays black and the paper takes the colour
+//!   (on a dark page, where multiply would hide it, it blends "over" instead);
+//! - **whiteout**: the page's paper colour, opaque.
+//!
+//! This is the oracle every other ink renderer is checked against, and what export and
+//! `view.snapshot` draw with.
+
+use scorecraft_doc::{Annotation, AnnotationKind, Color, Layer, Stroke, Tool};
+use scorecraft_geom::{Affine, PageBox, Point, Rect};
+use scorecraft_ink::{PressureCurve, outline};
+use scorecraft_pdf::{Bitmap, PageGeometry};
+
+use crate::Filter;
+
+/// The ink a page carries, as the page cache keeps it: the strokes in drawing order and a key
+/// that changes whenever they do (the engine fingerprints ids and stamps).
+#[derive(Debug, Clone)]
+pub struct PageInk {
+    pub key: u64,
+    pub strokes: std::sync::Arc<Vec<Stroke>>,
+    pub curve: PressureCurve,
+}
+
+/// The strokes to draw on a page, in drawing order: layers bottom first in list order, each
+/// layer's markings in the order they were made. Hidden layers and markings on a layer the score
+/// doesn't have are left out.
+pub fn visible_strokes<'a>(layers: &[Layer], annotations: &'a [Annotation]) -> Vec<&'a Stroke> {
+    let mut out = Vec::new();
+    for layer in layers.iter().filter(|l| l.visible) {
+        for a in annotations.iter().filter(|a| a.layer == layer.id) {
+            if let AnnotationKind::Stroke(s) = &a.kind {
+                out.push(s);
+            }
+        }
+    }
+    out
+}
+
+/// A file page's geometry as a [`PageBox`]: its crop box (in unrotated PDF space) and `/Rotate`.
+pub fn page_box(geometry: &PageGeometry) -> PageBox {
+    let [x0, y0, x1, y1] = geometry.crop.map(f64::from);
+    let rotation = match geometry.rotation % 360 {
+        90 => scorecraft_geom::Rotation::R90,
+        180 => scorecraft_geom::Rotation::R180,
+        270 => scorecraft_geom::Rotation::R270,
+        _ => scorecraft_geom::Rotation::R0,
+    };
+    PageBox::new(Rect::new(x0, y0, x1, y1)).with_rotation(rotation)
+}
+
+/// The transform from source-page PDF space to `bitmap`'s pixels, for a bitmap of the whole page
+/// `geometry` describes (crop box, `/Rotate`). The bitmap's own size sets the scale, so a render
+/// whose scale was capped or rounded still lines up.
+pub fn page_to_bitmap(geometry: &PageGeometry, bitmap: &Bitmap) -> Option<Affine> {
+    let page = page_box(geometry);
+    let size = page.display_size_pt();
+    if !(size.width > 0.0 && size.height > 0.0) {
+        return None;
+    }
+    let sx = f64::from(bitmap.width) / size.width;
+    let sy = f64::from(bitmap.height) / size.height;
+    let m = page.to_display(1.0).then(Affine::scale_xy(sx, sy));
+    m.is_finite().then_some(m)
+}
+
+/// `base` with `strokes` drawn on it. Returns `None` when there is nothing to draw (the caller
+/// keeps the original bitmap, no copy) or the transform is degenerate.
+pub fn compose(
+    base: &Bitmap,
+    to_bitmap: Affine,
+    strokes: &[&Stroke],
+    filter: Filter,
+    curve: &PressureCurve,
+) -> Option<Bitmap> {
+    if strokes.is_empty() || !to_bitmap.is_finite() {
+        return None;
+    }
+    let mut out = base.clone();
+    for s in strokes {
+        draw_stroke(&mut out, to_bitmap, s, filter, curve);
+    }
+    Some(out)
+}
+
+/// Draws one stroke onto `bm`.
+pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve: &PressureCurve) {
+    let o = outline(s, curve);
+    let Some(mask) = Mask::fill(&o.polygons, m, bm.width, bm.height) else {
+        return;
+    };
+    let color = ink_color(s.tool, s.color, filter);
+    let alpha = f32::from(color.a) / 255.0;
+    let src = [color.r, color.g, color.b].map(|c| f32::from(c) / 255.0);
+    let multiply = s.tool == Tool::Highlighter && filter != Filter::Dark;
+    for row in 0..mask.h {
+        let y = mask.y0 + row;
+        for col in 0..mask.w {
+            let cov = mask.at(col, row);
+            if cov <= 0.0 {
+                continue;
+            }
+            let x = mask.x0 + col;
+            let Some(word) = y
+                .checked_mul(bm.width)
+                .and_then(|i| i.checked_add(x))
+                .and_then(|i| bm.words.get_mut(i as usize))
+            else {
+                continue;
+            };
+            let [dr, dg, db, da] = word.to_ne_bytes().map(f32::from);
+            let [sr, sg, sb] = src;
+            let k = alpha * cov;
+            let px = if multiply {
+                let m = |d: f32, s: f32| to_byte(d * (1.0 - k * (1.0 - s)));
+                [m(dr, sr), m(dg, sg), m(db, sb), to_byte(da)]
+            } else {
+                // Premultiplied "over".
+                let o = |d: f32, s: f32| to_byte(s * 255.0 * k + d * (1.0 - k));
+                [
+                    o(dr, sr),
+                    o(dg, sg),
+                    o(db, sb),
+                    to_byte(255.0 * k + da * (1.0 - k)),
+                ]
+            };
+            *word = u32::from_ne_bytes(px);
+        }
+    }
+}
+
+fn to_byte(v: f32) -> u8 {
+    v.round().clamp(0.0, 255.0) as u8
+}
+
+/// The colour a stroke draws in under `filter` (spec, "Drawing and colours under filters").
+pub fn ink_color(tool: Tool, color: Color, filter: Filter) -> Color {
+    match tool {
+        Tool::Whiteout => {
+            let paper = filter.colors().map_or([255, 255, 255], |c| c.paper);
+            Color::rgb(paper[0], paper[1], paper[2])
+        }
+        Tool::Pen if filter == Filter::Dark => {
+            let luma = 0.2126 * f32::from(color.r)
+                + 0.7152 * f32::from(color.g)
+                + 0.0722 * f32::from(color.b);
+            if luma < 128.0 {
+                let [r, g, b] = invert_lightness([color.r, color.g, color.b]);
+                Color::rgba(r, g, b, color.a)
+            } else {
+                color
+            }
+        }
+        _ => color,
+    }
+}
+
+/// The colour with its HSL lightness inverted and its hue and saturation kept.
+fn invert_lightness(rgb: [u8; 3]) -> [u8; 3] {
+    let [r, g, b] = rgb.map(|c| f32::from(c) / 255.0);
+    let max = r.max(g).max(b);
+    let min = r.min(g).min(b);
+    let l = (max + min) / 2.0;
+    let d = max - min;
+    let l2 = 1.0 - l;
+    if d <= f32::EPSILON {
+        let v = to_byte(l2 * 255.0);
+        return [v, v, v];
+    }
+    let s = if l > 0.5 {
+        d / (2.0 - max - min)
+    } else {
+        d / (max + min)
+    };
+    let h = if max == r {
+        ((g - b) / d).rem_euclid(6.0)
+    } else if max == g {
+        (b - r) / d + 2.0
+    } else {
+        (r - g) / d + 4.0
+    } / 6.0;
+    let q = if l2 < 0.5 {
+        l2 * (1.0 + s)
+    } else {
+        l2 + s - l2 * s
+    };
+    let p = 2.0 * l2 - q;
+    let ch = |t: f32| {
+        let t = t.rem_euclid(1.0);
+        let v = if t < 1.0 / 6.0 {
+            p + (q - p) * 6.0 * t
+        } else if t < 0.5 {
+            q
+        } else if t < 2.0 / 3.0 {
+            p + (q - p) * (2.0 / 3.0 - t) * 6.0
+        } else {
+            p
+        };
+        to_byte(v * 255.0)
+    };
+    [ch(h + 1.0 / 3.0), ch(h), ch(h - 1.0 / 3.0)]
+}
+
+/// Coverage (0..=1) of polygons over a pixel box, by signed-area accumulation: each edge adds
+/// the area it sweeps to the cells it crosses, and a running sum along each row gives the
+/// winding-weighted coverage. Clamping the sum's magnitude to 1 is the non-zero union.
+struct Mask {
+    x0: u32,
+    y0: u32,
+    w: u32,
+    h: u32,
+    /// `w + 2` accumulators per row (edges right of the box land in the spare cells).
+    acc: Vec<f32>,
+}
+
+/// Largest mask, in pixels: a stroke covering more is drawn over this much of the page only.
+const MAX_MASK_PIXELS: u64 = 64 * 1024 * 1024;
+
+impl Mask {
+    fn fill(polys: &[Vec<Point>], m: Affine, width: u32, height: u32) -> Option<Mask> {
+        let mapped: Vec<Vec<Point>> = polys
+            .iter()
+            .map(|p| p.iter().map(|q| m.apply(*q)).collect::<Vec<_>>())
+            .filter(|p: &Vec<Point>| p.iter().all(|q| q.is_finite()))
+            .collect();
+        let b = Rect::bounding(mapped.iter().flatten().copied())?;
+        let x0 = b.x0.floor().max(0.0);
+        let y0 = b.y0.floor().max(0.0);
+        let x1 = b.x1.ceil().min(f64::from(width));
+        let y1 = b.y1.ceil().min(f64::from(height));
+        if x1 <= x0 || y1 <= y0 {
+            return None;
+        }
+        let (x0, y0) = (x0 as u32, y0 as u32);
+        let (w, h) = (
+            (x1 as u32).saturating_sub(x0),
+            (y1 as u32).saturating_sub(y0),
+        );
+        if u64::from(w) * u64::from(h) > MAX_MASK_PIXELS || w == 0 || h == 0 {
+            return None;
+        }
+        let stride = w as usize + 2;
+        let mut mask = Mask {
+            x0,
+            y0,
+            w,
+            h,
+            acc: vec![0.0; stride * h as usize],
+        };
+        let off = Point::new(f64::from(x0), f64::from(y0));
+        for poly in &mapped {
+            for (i, a) in poly.iter().enumerate() {
+                let b = poly.get((i + 1) % poly.len()).unwrap_or(a);
+                mask.line(
+                    Point::new(a.x - off.x, a.y - off.y),
+                    Point::new(b.x - off.x, b.y - off.y),
+                );
+            }
+        }
+        // Running sums turn edge contributions into coverage.
+        for row in 0..h as usize {
+            let mut sum = 0.0f32;
+            for col in 0..stride {
+                if let Some(c) = mask.acc.get_mut(row * stride + col) {
+                    sum += *c;
+                    *c = sum.abs().min(1.0);
+                }
+            }
+        }
+        Some(mask)
+    }
+
+    fn at(&self, col: u32, row: u32) -> f32 {
+        let stride = self.w as usize + 2;
+        self.acc
+            .get(row as usize * stride + col as usize)
+            .copied()
+            .unwrap_or(0.0)
+    }
+
+    fn add(&mut self, row: usize, col: i64, v: f32) {
+        let stride = self.w as usize + 2;
+        let col = col.clamp(0, stride as i64 - 1) as usize;
+        if let Some(c) = self.acc.get_mut(row * stride + col) {
+            *c += v;
+        }
+    }
+
+    /// Accumulates one edge, in mask pixels (x clamped into the box; rows outside skipped).
+    fn line(&mut self, p0: Point, p1: Point) {
+        if p0.y == p1.y {
+            return;
+        }
+        let (dir, a, b) = if p0.y < p1.y {
+            (1.0f32, p0, p1)
+        } else {
+            (-1.0f32, p1, p0)
+        };
+        let h = f64::from(self.h);
+        let wmax = f64::from(self.w) + 1.0;
+        let dxdy = (b.x - a.x) / (b.y - a.y);
+        let y_start = a.y.max(0.0);
+        let y_end = b.y.min(h);
+        if y_start >= y_end {
+            return;
+        }
+        let mut x = a.x + dxdy * (y_start - a.y);
+        let mut y = y_start;
+        while y < y_end {
+            let row = y.floor();
+            let next = (row + 1.0).min(y_end);
+            let dy = next - y;
+            let xnext = x + dxdy * dy;
+            let d = (dy as f32) * dir;
+            let (xa, xb) = if x < xnext { (x, xnext) } else { (xnext, x) };
+            let (xa, xb) = (xa.clamp(0.0, wmax), xb.clamp(0.0, wmax));
+            let r = row as usize;
+            let x0f = xa.floor();
+            let x1c = xb.ceil();
+            let (x0i, x1i) = (x0f as i64, x1c as i64);
+            if x1i <= x0i + 1 {
+                // The edge stays within one cell on this row.
+                let xm = ((xa + xb) * 0.5 - x0f) as f32;
+                self.add(r, x0i, d * (1.0 - xm));
+                self.add(r, x0i + 1, d * xm);
+            } else {
+                let s = (1.0 / (xb - xa)) as f32;
+                let x0frac = (xa - x0f) as f32;
+                let a0 = 0.5 * s * (1.0 - x0frac) * (1.0 - x0frac);
+                let x1frac = (xb - x1c + 1.0) as f32;
+                let am = 0.5 * s * x1frac * x1frac;
+                self.add(r, x0i, d * a0);
+                if x1i == x0i + 2 {
+                    self.add(r, x0i + 1, d * (1.0 - a0 - am));
+                } else {
+                    let a1 = s * (1.5 - x0frac);
+                    self.add(r, x0i + 1, d * (a1 - a0));
+                    for xi in x0i + 2..x1i - 1 {
+                        self.add(r, xi, d * s);
+                    }
+                    let a2 = a1 + (x1i - x0i - 3) as f32 * s;
+                    self.add(r, x1i - 1, d * (1.0 - a2 - am));
+                }
+                self.add(r, x1i, d * am);
+            }
+            x = xnext;
+            y = next;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use scorecraft_doc::InkPoint;
+
+    fn page(w: u32, h: u32, rgba: [u8; 4]) -> Bitmap {
+        Bitmap {
+            width: w,
+            height: h,
+            words: vec![u32::from_ne_bytes(rgba); (w * h) as usize],
+        }
+    }
+
+    fn px(bm: &Bitmap, x: u32, y: u32) -> [u8; 4] {
+        bm.pixel(x, y).unwrap()
+    }
+
+    fn stroke(tool: Tool, color: Color, width: f32, pts: &[(f32, f32)]) -> Stroke {
+        Stroke {
+            tool,
+            color,
+            width,
+            points: pts.iter().map(|&(x, y)| InkPoint::new(x, y)).collect(),
+        }
+    }
+
+    /// 1 pixel per point, y flipped: a 100 × 100 pt page.
+    fn flip() -> Affine {
+        Affine::new([1.0, 0.0, 0.0, -1.0, 0.0, 100.0])
+    }
+
+    const WHITE: [u8; 4] = [255, 255, 255, 255];
+
+    #[test]
+    fn square_coverage_is_exact() {
+        let sq = vec![vec![
+            Point::new(10.0, 10.0),
+            Point::new(20.0, 10.0),
+            Point::new(20.0, 20.0),
+            Point::new(10.0, 20.0),
+        ]];
+        let m = Mask::fill(&sq, Affine::IDENTITY, 50, 50).unwrap();
+        let total: f32 = (0..m.h)
+            .flat_map(|r| (0..m.w).map(move |c| (c, r)))
+            .map(|(c, r)| m.at(c, r))
+            .sum();
+        assert!((total - 100.0).abs() < 0.01, "{total}");
+        // Half-pixel edges give half coverage.
+        let half = vec![vec![
+            Point::new(10.5, 10.0),
+            Point::new(20.0, 10.0),
+            Point::new(20.0, 20.0),
+            Point::new(10.5, 20.0),
+        ]];
+        let m = Mask::fill(&half, Affine::IDENTITY, 50, 50).unwrap();
+        assert!((m.at(0, 5) - 0.5).abs() < 1e-4);
+        assert!((m.at(5, 5) - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn pen_draws_its_colour() {
+        let mut bm = page(100, 100, WHITE);
+        let s = stroke(Tool::Pen, Color::RED, 4.0, &[(10.0, 50.0), (90.0, 50.0)]);
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &s,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert_eq!(px(&bm, 50, 49), [220, 30, 30, 255]);
+        assert_eq!(px(&bm, 50, 10), WHITE);
+    }
+
+    #[test]
+    fn ink_5_highlighter_does_not_build_up_within_a_stroke() {
+        let mut bm = page(100, 100, WHITE);
+        // Out and back over the same line, plus a crossing.
+        let s = stroke(
+            Tool::Highlighter,
+            Color::HIGHLIGHT,
+            10.0,
+            &[
+                (10.0, 50.0),
+                (90.0, 50.0),
+                (50.0, 50.0),
+                (50.0, 90.0),
+                (50.0, 10.0),
+            ],
+        );
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &s,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        let once = px(&bm, 20, 50);
+        let crossed = px(&bm, 50, 50);
+        assert_eq!(once, crossed);
+        assert_ne!(once, WHITE);
+        // A second stroke over it darkens it again, like a second pass.
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &s,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert!(px(&bm, 20, 50)[2] < once[2]);
+    }
+
+    #[test]
+    fn ink_6_highlighter_keeps_notation_black() {
+        let mut bm = page(100, 100, [0, 0, 0, 255]);
+        let s = stroke(
+            Tool::Highlighter,
+            Color::HIGHLIGHT,
+            10.0,
+            &[(10.0, 50.0), (90.0, 50.0)],
+        );
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &s,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert_eq!(px(&bm, 50, 50), [0, 0, 0, 255]);
+    }
+
+    #[test]
+    fn ink_7_whiteout_covers_then_pen_shows_on_top() {
+        let mut bm = page(100, 100, [0, 0, 0, 255]);
+        let wo = stroke(
+            Tool::Whiteout,
+            Color::WHITE,
+            20.0,
+            &[(10.0, 50.0), (90.0, 50.0)],
+        );
+        let pen = stroke(Tool::Pen, Color::BLUE, 2.0, &[(50.0, 45.0), (50.0, 55.0)]);
+        let out = compose(
+            &bm.clone(),
+            flip(),
+            &[&wo, &pen],
+            Filter::Normal,
+            &PressureCurve::default(),
+        )
+        .unwrap();
+        assert_eq!(px(&out, 30, 50), WHITE);
+        assert_eq!(px(&out, 50, 50), [30, 80, 220, 255]);
+        bm = out;
+        assert_eq!(
+            px(&bm, 30, 10),
+            [0, 0, 0, 255],
+            "outside the whiteout stays black"
+        );
+    }
+
+    #[test]
+    fn ink_14_dark_filter_lightens_dark_ink() {
+        assert_eq!(
+            ink_color(Tool::Pen, Color::BLACK, Filter::Dark),
+            Color::WHITE
+        );
+        let amber = Color::rgb(0xf2, 0xa9, 0x00);
+        assert_eq!(
+            ink_color(Tool::Pen, amber, Filter::Dark),
+            amber,
+            "light colours keep theirs"
+        );
+        let red = ink_color(Tool::Pen, Color::RED, Filter::Dark);
+        assert!(
+            red.r > 200 && red.g < 60 && red.b < 60,
+            "red stays red: {red:?}"
+        );
+        let navy = ink_color(Tool::Pen, Color::rgb(0, 0, 128), Filter::Dark);
+        assert!(navy.b > 200 && navy.r > 100, "{navy:?}");
+        assert_eq!(
+            ink_color(Tool::Pen, Color::BLACK, Filter::Sepia),
+            Color::BLACK
+        );
+        let paper = Filter::Dark.colors().unwrap().paper;
+        assert_eq!(
+            ink_color(Tool::Whiteout, Color::WHITE, Filter::Dark),
+            Color::rgb(paper[0], paper[1], paper[2])
+        );
+    }
+
+    #[test]
+    fn ink_11_hidden_layers_are_not_drawn() {
+        use scorecraft_doc::{AnnotationId, Hlc, LayerId};
+        let (l1, l2) = (LayerId::from(uuid(1)), LayerId::from(uuid(2)));
+        let layers = vec![
+            Layer {
+                id: l1,
+                name: "a".into(),
+                visible: true,
+                locked: false,
+            },
+            Layer {
+                id: l2,
+                name: "b".into(),
+                visible: false,
+                locked: false,
+            },
+        ];
+        let ann = |id: u128, layer| Annotation {
+            id: AnnotationId::from(uuid(id)),
+            layer,
+            stamp: Hlc::default(),
+            kind: AnnotationKind::Stroke(stroke(Tool::Pen, Color::BLACK, 1.0, &[(0.0, 0.0)])),
+        };
+        let anns = vec![ann(10, l2), ann(11, l1), ann(12, LayerId::from(uuid(9)))];
+        assert_eq!(visible_strokes(&layers, &anns).len(), 1);
+    }
+
+    fn uuid(n: u128) -> uuid::Uuid {
+        uuid::Uuid::from_u128(n)
+    }
+
+    #[test]
+    fn page_mapping_follows_rotation() {
+        let g = PageGeometry {
+            width: 200.0,
+            height: 100.0,
+            rotation: 90,
+            label: "1".into(),
+            crop: [0.0, 0.0, 100.0, 200.0],
+        };
+        let bm = page(400, 200, WHITE);
+        let m = page_to_bitmap(&g, &bm).unwrap();
+        // The page's top-left corner (0, 200) lands at the bitmap's top right after a quarter turn.
+        let p = m.apply(Point::new(0.0, 200.0));
+        assert!((p.x - 400.0).abs() < 1e-9 && p.y.abs() < 1e-9, "{p:?}");
+    }
+
+    #[test]
+    fn strokes_off_the_page_and_hostile_transforms() {
+        let mut bm = page(10, 10, WHITE);
+        let far = stroke(Tool::Pen, Color::BLACK, 2.0, &[(1e5, 1e5), (2e5, 2e5)]);
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &far,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert!(bm.words.iter().all(|w| w.to_ne_bytes() == WHITE));
+        let s = stroke(Tool::Pen, Color::BLACK, 2.0, &[(1.0, 1.0)]);
+        assert!(
+            compose(
+                &bm,
+                Affine::new([f64::NAN; 6]),
+                &[&s],
+                Filter::Normal,
+                &PressureCurve::default()
+            )
+            .is_none()
+        );
+        assert!(compose(&bm, flip(), &[], Filter::Normal, &PressureCurve::default()).is_none());
+        // A stroke straddling the left edge clips.
+        let edge = stroke(Tool::Pen, Color::BLACK, 4.0, &[(-5.0, 95.0), (5.0, 95.0)]);
+        draw_stroke(
+            &mut bm,
+            flip(),
+            &edge,
+            Filter::Normal,
+            &PressureCurve::default(),
+        );
+        assert_eq!(px(&bm, 0, 5), [0, 0, 0, 255]);
+    }
+}

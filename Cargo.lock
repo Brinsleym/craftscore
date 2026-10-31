@@ -3524,6 +3524,7 @@ dependencies = [
  "scorecraft-doc",
  "scorecraft-format",
  "scorecraft-geom",
+ "scorecraft-ink",
  "scorecraft-input",
  "scorecraft-layout",
  "scorecraft-ops",
@@ -3571,6 +3572,11 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-ink"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+ "scorecraft-doc",
+ "scorecraft-geom",
+]
 
 [[package]]
 name = "scorecraft-input"
@@ -3640,8 +3646,12 @@ dependencies = [
 name = "scorecraft-render"
 version = "0.0.1"
 dependencies = [
+ "scorecraft-doc",
+ "scorecraft-geom",
+ "scorecraft-ink",
  "scorecraft-pdf",
  "scorecraft-testkit",
+ "uuid",
 ]
 
 [[package]]

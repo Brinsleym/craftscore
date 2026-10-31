@@ -13,8 +13,8 @@ supersede estimates elsewhere.
 | [Performance](#performance) | 4 | 0 | 9 | 13 scenarios, 4 measured |
 | [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
-| [Annotation](#annotation) | 0 | 0 | 19 | from annotation-parity |
-| [Automation](#automation) | 0 | 1 | 3 | 29 of 122 feature-map rows live (measured, `cargo xtask parity`) |
+| [Annotation](#annotation) | 0 | 12 | 8 | from annotation-parity |
+| [Automation](#automation) | 0 | 1 | 3 | 37 of 123 feature-map rows live (measured, `cargo xtask parity`) |
 | [Reliability](#reliability) | 2 | 1 | 2 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
 | [Distribution](#distribution) | 0 | 0 | 6 |  |
 
@@ -85,28 +85,29 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 
 ## Annotation
 
-19 rows from [annotation-parity](annotation-parity.md).
+20 rows from [annotation-parity](annotation-parity.md).
 
 | Id | Target | Status |
 |---|---|---|
 | ANN-1 | Pen-down to first visible ink ≤ 1 frame at 120 Hz on supported tablets (predicted points, replaced by real ones) | missing |
-| ANN-2 | Pressure maps to width with a configurable curve; no jumps at stroke start | missing |
-| ANN-3 | Stroke smoothing that keeps sharp corners of handwritten fingerings | missing |
-| ANN-4 | Strokes stay crisp at every zoom (vector, not bitmap) | missing |
-| ANN-5 | Palm rejection; pen-only mode | missing |
-| ANN-10 | Pen with colours, widths and presets | missing |
-| ANN-11 | Highlighter (translucent, multiply-like over notation, stronger option) | missing |
-| ANN-12 | Whiteout (opaque page-coloured ink, then write over) | missing |
-| ANN-13 | Stroke eraser | missing |
-| ANN-14 | Pixel eraser splitting strokes | missing |
+| ANN-2 | Pressure maps to width with a configurable curve; no jumps at stroke start | partial |
+| ANN-3 | Stroke smoothing that keeps sharp corners of handwritten fingerings | partial |
+| ANN-4 | Strokes stay crisp at every zoom (vector, not bitmap) | partial |
+| ANN-5 | Palm rejection while the pen draws; pen only by default with Draw with Touch; touch lock | partial |
+| ANN-10 | Pen with colours, widths and presets; eight changeable swatches and a fixed 30-colour palette; width per tool | partial |
+| ANN-11 | Highlighter (translucent, multiply-like over notation, stronger option) | partial |
+| ANN-12 | Whiteout (opaque page-coloured ink, then write over) | partial |
+| ANN-13 | Stroke eraser | partial |
+| ANN-14 | Pixel eraser splitting strokes | partial |
 | ANN-15 | Text notes: font size, colour, move, edit | missing |
 | ANN-16 | Stamps from a SMuFL font: fingerings, dynamics, bowings, breath marks, custom stamps from a selection | missing |
-| ANN-17 | Lasso select, move, resize, recolour, delete | missing |
+| ANN-17 | Rectangle select: move, copy, resize, recolour, delete; starts snips and shortcuts | missing |
 | ANN-18 | Shapes and straight lines | missing |
 | ANN-19 | Stylus button / double-tap tool switching | missing |
+| ANN-20 | Ruler, its button hidden unless a setting shows it | partial |
 | ANN-30 | Layers: new, rename, reorder, show/hide, lock; hidden layers excluded from performance view and optionally from export | missing |
-| ANN-31 | Undo/redo per score, one step per stroke | missing |
-| ANN-32 | Markings never alter the PDF; survive rotate, crop, reorder and page-range changes | missing |
+| ANN-31 | Undo/redo per score, one step per stroke | partial |
+| ANN-32 | Markings never alter the PDF; survive rotate, crop, reorder and page-range changes | partial |
 | ANN-33 | Markings imported from `.4sc` and from PDF annotations land in the right layers | missing |
 
 ## Automation

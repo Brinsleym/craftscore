@@ -41,6 +41,13 @@ files).
 | 16 | [`lists/16-lists-recital-two-scores.png`](lists/16-lists-recital-two-scores.png) | "Recital" list with two scores: cover image, score count, open-list button, entries with reorder handles | LIST-1, LIST-4 |
 | 17 | [`lists/17-lists-more-menu-zoom.png`](lists/17-lists-more-menu-zoom.png) | Zoom of the list's "…" menu expanded (visible in photo 16): rename, change image, delete list | LIST-1 |
 
+## Markup
+
+| # | File | What it shows | Feature-map ids |
+|---|---|---|---|
+| 24 | [`markup/24-markup-toolbar.png`](markup/24-markup-toolbar.png) | The markup toolbar on Windows (2026-10-31): Draw with Touch toggle, padlock, pen (selected), highlighter, eraser, text, rectangle select, ruler, eight colour swatches, custom colour picker, width slider. Described in [anno-markup-toolbar.md](../anno-markup-toolbar.md) | ANNO-1, ANNO-3, ANNO-4, ANNO-6, ANNO-8, ANNO-12, ANNO-14 |
+| 25 | [`markup/25-markup-colour-palette.png`](markup/25-markup-colour-palette.png) | The palette button's grid of 30 extra colours (6 × 5) opened under the swatches, black selected; the ruler button shown active | ANNO-4 |
+
 ## Store promo
 
 Not user screenshots: these are enScore's own promotional images (store listing art),

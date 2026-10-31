@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -15,7 +15,8 @@ row, mark it `dropped` with a reason.
 
 User screenshots of the running app are indexed by photo number in
 [`observations/screenshots/`](observations/screenshots/README.md) (Library and Lists so far), with the
-feature-map ids each one informs. Cite them as "screenshot 13" in observation notes and specs.
+feature-map ids each one informs. `obs.` in the Source column means an observation note in
+[`observations/`](observations/README.md) (for ANNO, [the markup toolbar](observations/anno-markup-toolbar.md)). Cite them as "screenshot 13" in observation notes and specs.
 
 ## Columns
 
@@ -39,7 +40,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 |---|---|---:|---:|---:|---:|---:|
 | Reading and display | READ | 15 | 8 | 0 | 9 | 6 |
 | Page turning inputs | TURN | 8 | 4 | 0 | 5 | 3 |
-| Annotation | ANNO | 16 | 8 | 0 | 1 | 15 |
+| Annotation | ANNO | 17 | 8 | 0 | 10 | 7 |
 | Library and organisation | LIB | 15 | 6 | 0 | 6 | 9 |
 | Page editing | PAGE | 8 | 4 | 0 | 5 | 3 |
 | In-score navigation | NAV | 5 | 1 | 0 | 1 | 4 |
@@ -51,9 +52,9 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 1 | 4 |
-| **Total** | | **122** | **39** | **0** | **32** | **90** |
+| **Total** | | **123** | **39** | **0** | **41** | **82** |
 
-Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft reuse and the S8 rows (P0 250–530, P1 360–700, P2 230–450, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
+Sum of the estimates: **~923–1,866 agent-hours** for every row, after PDFCraft reuse, the S8 rows and the ruler (P0 250–530, P1 360–700, P2 233–456, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
 ## READ: reading and display
 
@@ -92,22 +93,23 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| ANNO-1 | Pen ink with stylus, finger ("draw with touch") or mouse, low latency | Free | S1, S2, S4 | `annotate.tool.pen`, `annotate.stroke` | ink | P0 | 16–30 | missing |
-| ANNO-2 | Pressure-sensitive strokes (Apple Pencil, Windows Ink, Android stylus, Wacom) | Free | S1, S2 | `annotate.stroke` (pressure) | ink, input | P0 | 8–16 | missing |
-| ANNO-3 | Highlighter that blends with the print like a real one (translucent multiply, no build-up within a stroke; stronger option) | Free | S1, S8 | `annotate.tool.highlighter` | ink | P0 | 4–8 | missing |
-| ANNO-4 | Custom pen colours and widths, saved presets | Free | S1 | `annotate.pen.preset.set` | ink, engine | P1 | 4–8 | missing |
-| ANNO-5 | Whiteout: cover printed marks, then write over them | Free | S1, S2 | `annotate.tool.whiteout` | ink | P1 | 4–8 | missing |
-| ANNO-6 | Stroke eraser (removes whole strokes) | Free | S1 | `annotate.tool.strokeEraser` | ink | P0 | 4–8 | missing |
-| ANNO-7 | Pixel eraser (erases part of a stroke) | Free | S1 | `annotate.tool.pixelEraser` | ink | P1 | 8–16 | missing |
+| ANNO-1 | Pen ink with stylus, finger ("draw with touch") or mouse, low latency | Free | S1, S2, S4 | `annotate.tool.pen`, `annotate.stroke` | ink | P0 | 16–30 | partial |
+| ANNO-2 | Pressure-sensitive strokes (Apple Pencil, Windows Ink, Android stylus, Wacom) | Free | S1, S2 | `annotate.stroke` (pressure) | ink, input | P0 | 8–16 | partial |
+| ANNO-3 | Highlighter that blends with the print like a real one (translucent multiply, no build-up within a stroke; stronger option) | Free | S1, S8 | `annotate.tool.highlighter` | ink | P0 | 4–8 | partial |
+| ANNO-4 | Custom pen colours and widths, saved presets: eight changeable swatches, a fixed palette of extra colours that replaces the selected swatch, a width slider per tool | Free | S1, obs. | `annotate.pen.preset.set` | ink, engine | P1 | 4–8 | missing |
+| ANNO-5 | Whiteout: cover printed marks, then write over them | Free | S1, S2 | `annotate.tool.whiteout` | ink | P1 | 4–8 | partial |
+| ANNO-6 | Stroke eraser (removes whole strokes) | Free | S1 | `annotate.tool.strokeEraser` | ink | P0 | 4–8 | partial |
+| ANNO-7 | Pixel eraser (erases part of a stroke) | Free | S1 | `annotate.tool.pixelEraser` | ink | P1 | 8–16 | partial |
 | ANNO-8 | Typed text annotations, movable and editable | Free | S1, S4 | `annotate.text.add`, `annotate.text.edit` | doc, text | P0 | 8–14 | missing |
 | ANNO-9 | Stamps: fingerings, dynamics, bowings and other music symbols (from an OFL SMuFL font) | Free | S1 | `annotate.stamp.place` | ink, text | P1 | 10–20 | missing |
 | ANNO-10 | Annotation layers: create, rename, show/hide individually (hide for performance) | Pro | S1, S3, S4 | `annotate.layer.new`, `annotate.layer.setVisible` | doc | P1 | 8–14 | missing |
 | ANNO-11 | Pen shortcuts (stylus double-tap / barrel button switches tool) | Free | S1 | `input.pen.shortcut.map` | input | P2 | 4–8 | missing |
-| ANNO-12 | Select, move, resize and recolour existing annotations (lasso) | Free | inferred | `annotate.select`, `annotate.transform` | ink, engine | P1 | 10–18 | missing |
+| ANNO-12 | Select, move, copy, resize, recolour and delete existing annotations with a rectangle (the same rectangle starts a Score Snip or Score Shortcut) | Free | obs. | `annotate.select`, `annotate.transform` | ink, engine | P1 | 10–18 | missing |
 | ANNO-13 | Undo / redo of every markup step | Free | inferred | `edit.undo`, `edit.redo` | ops | P0 | 6–10 | partial |
-| ANNO-14 | Palm rejection and "pen only" drawing mode | Free | inferred | `input.pen.only` | input | P0 | 4–8 | missing |
-| ANNO-15 | Annotations never alter the source PDF; stored separately per page | Free | S1 | n/a (model rule) | doc | P0 | 2–4 | missing |
+| ANNO-14 | Palm rejection while the pen draws, "pen only" drawing by default with Draw with Touch, and a touch lock | Free | S1, obs. | `input.pen.only`, `input.touch.lock` | input | P0 | 4–8 | partial |
+| ANNO-15 | Annotations never alter the source PDF; stored separately per page | Free | S1 | n/a (model rule) | doc | P0 | 2–4 | partial |
 | ANNO-16 | Shapes and lines (straight line, circle) snapped from strokes | Free | inferred | `annotate.tool.shape` | ink | P2 | 6–10 | missing |
+| ANNO-17 | Ruler: a straight edge to rule lines against; its button is hidden unless a setting shows it | Free | obs. | `annotate.ruler.show`, `annotate.ruler.set` | ink | P2 | 3–6 | partial |
 
 ## LIB: library and organisation
 
@@ -269,7 +271,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **122** | **39** | **0** | **32** | **90** |
+| **Total** | | **123** | **39** | **0** | **41** | **82** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -308,6 +310,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M4 part 1: ANNO-1, -2, -3, -5, -6, -7, -14 and -15 partial (strokes, pressure, highlighter, whiteout, both erasers, pen only, Draw with Touch, touch lock, live in the engine with no UI yet); ANNO-17 Ruler added from the owner's observation (123 rows) and partial; ANNO-4, -12 and -14 reworded from the observation |
 | 2026-10-31 | patch | M3: READ-4, READ-9 and PLAT-4 partial (shell commands `ui.view.fullScreen`, `ui.power.keepAwake`, `ui.theme.set` in the reader window; keep-awake on Windows only so far) |
 | 2026-10-31 | patch | M3: TURN-1, -2, -3 and -4 partial (`input.pedal.map` with four pedal profiles; `input.key`, `input.tap`, `input.swipe`) |
 | 2026-10-31 | patch | M3: READ-2, -3, -5, -6, -12, -15, TURN-8 and NAV-5 partial (reader commands live in the engine); summary counts recounted from the rows (M1's 16 partial rows were missing from it) |

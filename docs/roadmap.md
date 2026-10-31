@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M3 in progress: control channel; earlier: reader window; earlier: reader layouts and turn commands; earlier: M1 done: geom, raster, doc, ops, format and the library commands; earlier: M2 done, PDF-2 partial on PDFCraft render gaps; earlier: M2 in progress: PDF adapter; earlier: owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 in progress: ink engine and markup commands; earlier: M3 in progress: control channel; earlier: reader window; earlier: reader layouts and turn commands; earlier: M1 done: geom, raster, doc, ops, format and the library commands; earlier: M2 done, PDF-2 partial on PDFCraft render gaps; earlier: M2 in progress: PDF adapter; earlier: owner's priorities: pedal moves to M3, Windows tablet first, Google Drive sync; earlier: M0 skeleton complete: workspace, CI, command registry, parity, scorecard, testkit; earlier: new S8 rows placed in M8–M10; M2 becomes PDFCraft integration) · **Target:** enScore 3.7 (2026)
 
 Forward-looking plan: milestones, the **Current focus** list, and what's next with estimates.
 Where we stand today is in [`target-app-parity.md`](target-app-parity.md) and the ranked work list
@@ -40,7 +40,7 @@ Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lin
 | M1 | ✅ | Foundation | `geom` (transforms, page boxes, curves), `raster` (bitmaps, tiles, pyramids, damage), `doc` (the whole §5 model), `ops` (reversible ops, transactions, per-score and library undo), `format` v1 (blobs, per-record JSON, atomic saves with a journal, verify and repair); about 35 library, page, list and undo commands; parity 17 / 122. DoD: property tests on history (random edits stay sound, undo-all restores, redo-all replays) and on the store; a save crashed at every write reopens to the old or new library; an unmapped `doc` field fails to compile in `format` (2026-10-31) |
 | M2 | ✅ | PDF integration (PDFCraft) | `scorecraft-pdf` adapter over `pdfcraft-render` 0.15.0 (`65ff3a00`): open, pages, metadata, outline, page and tile render, text; no PDFCraft type in its API (checked by `xtask layers`); page and tile cache with background pre-rendering and dark/sepia filters in `scorecraft-render`; `score.open` and `view.render` live (parity 1 / 122), CLI `info` and `render` to PNG. fuzz target (`crates/pdf/fuzz`, plus 600 mutations in CI); corpus harness (`cargo xtask test-corpus`): PDF-1 done, engraved scores all match, 15/20 overall, renderer gaps reported for PDFCraft ([file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00)); 300 dpi render 41 ms on the tablet (P13 ≤ 300 ms). Closed 2026-10-31 by the owner with PDF-2 partial: the gaps are PDFCraft's and are tracked in G1; re-run `cargo xtask test-corpus` on every PDFCraft pin bump |
 | M3 | 🟡 | Reader app | Part 1: [page-turning spec](spec/page-turning.md); `scorecraft-layout` (single and two-page layouts with first page alone, half-page and alternating turns, fit page or width, zoom and pan); 13 reader commands (`view.turn.*`, `view.layout.*`, `view.page.goto`, `view.zoom.*`, `view.pan`, `view.outline.goto`, `view.viewport.set`, `view.state`); the reader follows the library score's page order, hidden pages, rotation and page range; P1 turn from cache 0.1 ms (synthetic, cloud); parity 25 / 122. Part 2: `scorecraft-input` (key chords, pedal map with four profiles, repeat and bounce filter, tap thirds, swipe classifier) and `input.pedal.map`, `input.key`, `input.tap`, `input.swipe`; parity 29 / 122. Part 3: the `scorecraft` desktop window on craft-ui (one egui fork), reader canvas with key, tap, swipe, pinch and drag input, toolbar, full screen, light and dark themes, keep-awake on Windows, saved preferences and last score, `ui.*` shell commands, `view.snapshot` (CPU picture of the reader); parity 32 / 122. Part 4: control channel (`scorecraft --control`, [protocol](control-protocol.md)): `command`, `command_batch`, `command_list`, `ui.state`, `ui.set`, `ui.key`, `ui.pointer`, `ui.screenshot`; an agent turns a page and screenshots it in a test. Next: Windows tablet check |
-| M4 | ⬜ | Ink | |
+| M4 | 🟡 | Ink | Part 1: [ink spec](spec/ink.md) with the owner's [toolbar observation](observations/anno-markup-toolbar.md); `scorecraft-ink` (cleaning, pressure curve, corner-keeping smoothing, outlines, erasers, ruler), CPU ink in `scorecraft-render` (multiply highlighter without build-up, whiteout, dark-filter ink), palm filter in `scorecraft-input`; 16 markup commands (`annotate.tool.*`, `annotate.stroke`, swatches and palette, `input.pen.only`, `input.touch.lock`, ruler, `annotate.mode.set`); ink in the reader frame, `view.snapshot` and `view.render`; parity 40 / 123 (ANNO-17 Ruler added). Next: text notes, stamps, layers and presets (part 2), rectangle select and shapes (part 3), the pen in the app with the toolbar (part 4), export with ink (part 5) |
 | M5 | ⬜ | Library | |
 | M6 | ⬜ | Performance (→ alpha) | |
 | M7 | ⬜ | Mobile | |
@@ -74,7 +74,7 @@ Ranked; pick from the top unless an issue is assigned to you.
 | Rank | Milestone | Estimate |
 |---|---|---:|
 | 1 | M3 reader app (layouts, turns, pedal, control channel, Windows tablet and desktop, then web) | 66–122 h |
-| 2 | M4 ink | 80–150 h |
+| 2 | M4 ink (part 1 done: engine; next text, stamps, layers, selection, the pen in the app, export) | 60–120 h |
 | 3 | M5 library (search, sort, thumbnails, the library UI) | 40–80 h |
 | 4 | M6 performance (setlists, shortcuts, snips, metronome) | 44–88 h |
 | Later | M7 mobile, M8 sync, M9 interop, M10 practice and MIDI, M11 parity | 490–980 h |
@@ -103,6 +103,7 @@ platforms (macOS, Windows, Linux) plus a wasm build.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 🟡: part 1, ink engine and markup commands; parity floor 40 of 123; M4 80–150 → 60–120 h |
 | 2026-10-31 | patch | M3 🟡: control channel for agents (turn and screenshot) |
 | 2026-10-31 | patch | M3 🟡: desktop reader window on craft-ui, keep-awake, snapshot; parity floor 32 |
 | 2026-10-31 | patch | M3 🟡: pedal and key map, taps and swipes; parity floor 29 |

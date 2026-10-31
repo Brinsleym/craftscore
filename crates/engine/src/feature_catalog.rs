@@ -172,7 +172,7 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "ANNO-4",
-        title: "Custom pen colours and widths, saved presets",
+        title: "Custom pen colours and widths, saved presets: eight changeable swatches, a fixed palette of extra colours that replaces the selected swatch, a width slider per tool",
         priority: "P1",
         commands: &["annotate.pen.preset.set"],
     },
@@ -220,7 +220,7 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "ANNO-12",
-        title: "Select, move, resize and recolour existing annotations (lasso)",
+        title: "Select, move, copy, resize, recolour and delete existing annotations with a rectangle (the same rectangle starts a Score Snip or Score Shortcut)",
         priority: "P1",
         commands: &["annotate.select", "annotate.transform"],
     },
@@ -232,9 +232,9 @@ pub const FEATURES: &[Feature] = &[
     },
     Feature {
         id: "ANNO-14",
-        title: "Palm rejection and \"pen only\" drawing mode",
+        title: "Palm rejection while the pen draws, \"pen only\" drawing by default with Draw with Touch, and a touch lock",
         priority: "P0",
-        commands: &["input.pen.only"],
+        commands: &["input.pen.only", "input.touch.lock"],
     },
     Feature {
         id: "ANNO-15",
@@ -247,6 +247,12 @@ pub const FEATURES: &[Feature] = &[
         title: "Shapes and lines (straight line, circle) snapped from strokes",
         priority: "P2",
         commands: &["annotate.tool.shape"],
+    },
+    Feature {
+        id: "ANNO-17",
+        title: "Ruler: a straight edge to rule lines against; its button is hidden unless a setting shows it",
+        priority: "P2",
+        commands: &["annotate.ruler.show", "annotate.ruler.set"],
     },
     Feature {
         id: "LIB-1",

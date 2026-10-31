@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 1: G4 stroke engine, highlighter, whiteout, erasers, palm rejection and ruler in the engine; earlier: M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -19,7 +19,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 | G1 | PDF engine: parse, render, write (reusing PDFCraft). Reading is in (M2); PDF-2 is partial on six PDFCraft render gaps (blank JBIG2 halftone, rotated-page image placement, short page tree, faint hairlines, light 1-bit downscales, sampling phase), fixed upstream then re-pinned | file format | blocks alpha | 15–30 h | [file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00) |
 | G2 | Reader layout and page turns | features, UI | blocks alpha | 40–80 h | [ui-parity](ui-parity.md) |
 | G3 | Stability and data safety | stability | blocks alpha | 50–100 h | [scorecard](scorecard.md#reliability) |
-| G4 | Ink engine and markup tools | features, UI | blocks alpha | 80–150 h + human | [annotation-parity](annotation-parity.md) |
+| G4 | Ink engine and markup tools. The stroke engine, highlighter, whiteout, erasers, palm rejection and ruler are in the engine (M4 part 1); the pen in the app, text, stamps, layers, selection and export are not | features, UI | blocks alpha | 60–120 h + human | [annotation-parity](annotation-parity.md) |
 | G5 | Library store, organisation and search | features | blocks alpha | 40–80 h | [file-format-parity](file-format-parity.md#scorecraft-library-format) |
 | G6 | Foot pedals and keyboard turning | hardware | blocks alpha | 10–20 h + human | [hardware-parity](hardware-parity.md) |
 | G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 30–65 h | [feature-map](feature-map.md#list-setlists) |
@@ -62,9 +62,22 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G4. Ink engine and markup tools
 
-- **Missing:** pen, pressure, highlighter, whiteout, stroke and pixel erasers, text notes, stamps,
-  layers, lasso, undo/redo, palm rejection.
-- **Rows:** ANNO-1..16.
+- **Spec (2026-10-31):** [`spec/ink.md`](spec/ink.md), with the owner's observation of the markup
+  toolbar ([`observations/anno-markup-toolbar.md`](observations/anno-markup-toolbar.md)): pen only
+  by default with Draw with Touch, touch lock, eight changeable swatches and a fixed palette, a
+  width per tool, one eraser with stroke and pixel modes, rectangle select (move, copy, delete,
+  snip, shortcut) and a ruler hidden unless a setting shows it.
+- **Done (2026-10-31, M4 part 1, engine only):** `scorecraft-ink` (sample cleaning, pressure
+  curve, corner-keeping smoothing, outlines, hit testing, stroke and pixel erasers, ruler), ink on
+  the CPU in `scorecraft-render` (multiply highlighter without build-up, whiteout in the filter's
+  paper colour, dark-filter ink mapping), the palm filter in `scorecraft-input`, and engine
+  commands for the tools, swatches, Draw with Touch, touch lock, ruler and `annotate.stroke` with
+  one undo step per gesture; ink shows in the reader frame and `view.render` (ANNO-1..3, -5..7,
+  -14, -15, -17 partial).
+- **Missing:** the pen in the app (live ink, pen input and pressure from the platform, the
+  toolbar), text notes, stamps, layer commands, presets, rectangle select, shapes, pen
+  shortcuts, export with ink.
+- **Rows:** ANNO-1..17.
 - **Human:** ink feel must be judged on real tablets with real styluses (Apple Pencil, Surface Pen,
   S Pen, Wacom).
 - **Impact:** marking up parts is the second reason musicians use a reader.
