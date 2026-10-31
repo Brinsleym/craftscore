@@ -158,13 +158,13 @@ fn red_line() -> scorecraft_render::PageInk {
     use scorecraft_doc::{Color, InkPoint, Stroke, Tool};
     scorecraft_render::PageInk {
         key: 7,
-        strokes: Arc::new(vec![Stroke {
+        marks: Arc::new(vec![scorecraft_doc::AnnotationKind::Stroke(Stroke {
             tool: Tool::Pen,
             color: Color::RED,
             width: 10.0,
             nib: Default::default(),
             points: vec![InkPoint::new(100.0, 396.0), InkPoint::new(500.0, 396.0)],
-        }]),
+        })]),
         curve: scorecraft_ink::PressureCurve::default(),
     }
 }

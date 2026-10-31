@@ -32,6 +32,7 @@ mod reader_cmds;
 mod score_cmds;
 mod session;
 mod snapshot;
+mod text_cmds;
 mod view_cmds;
 
 pub use commands::{CommandInfo, CommandSpec, registry};

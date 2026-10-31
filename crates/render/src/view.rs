@@ -128,7 +128,7 @@ impl ScoreView {
     pub fn set_ink(&self, page: usize, ink: Option<PageInk>) {
         let mut state = self.shared.lock();
         match ink {
-            Some(i) if !i.strokes.is_empty() => {
+            Some(i) if !i.marks.is_empty() => {
                 state.ink.insert(page, i);
             }
             _ => {
@@ -458,10 +458,10 @@ fn draw_ink(
     base: &Arc<Bitmap>,
     ink: &PageInk,
 ) -> Arc<Bitmap> {
-    let strokes: Vec<&scorecraft_doc::Stroke> = ink.strokes.iter().collect();
+    let marks: Vec<&scorecraft_doc::AnnotationKind> = ink.marks.iter().collect();
     doc.page(page)
         .ok()
         .and_then(|g| page_to_bitmap(g, base))
-        .and_then(|m| compose(base, m, &strokes, filter, &ink.curve))
+        .and_then(|m| compose(base, m, &marks, filter, &ink.curve))
         .map_or_else(|| base.clone(), Arc::new)
 }

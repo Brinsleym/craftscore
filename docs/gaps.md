@@ -80,9 +80,10 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   pen ↔ eraser, stamps as ScoreCraft's own (Edwin dynamics and hairpins), and the observed text
   tool (Type with Touch, wrapping, notes kept inside the page): all in the spec; the highlighter,
   colours, palm grace and ruler changes are in the engine.
+- **Done since (M4 parts 2a and 2b, engine):** layer commands, presets, and text notes (Inter,
+  wrapped and kept inside the page).
 - **Missing:** the pen in the app (live ink, pen input and pressure from the platform, the
-  toolbar), text notes, stamps, layer commands, presets, rectangle select, shapes, pen
-  shortcuts, export with ink.
+  toolbar), stamps, rectangle select, shapes, pen shortcuts, export with ink.
 - **Rows:** ANNO-1..17.
 - **Human:** ink feel must be judged on real tablets with real styluses (Apple Pencil, Surface Pen,
   S Pen, Wacom).

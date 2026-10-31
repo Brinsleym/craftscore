@@ -175,8 +175,8 @@ Observed in enScore (screenshot 29, [observation](../observations/anno-markup-to
   a dark rounded **handle** on its left marked with grip lines, and the text cursor in the box.
   Typing fills it. The same box outline and handle show on a note that is selected for editing.
   Dragging the handle moves the note.
-- A note looks like plain text on the page: black, a sans-serif face, no border and no
-  background, so the music shows around the letters.
+- A note looks like plain text on the page: black, a sans-serif face (ScoreCraft uses Inter,
+  which is always built in), no border and no background, so the music shows around the letters.
 - **Text size** is set with the toolbar's slider, which becomes a **size slider** while the text
   tool is active: from **8 pt to 36 pt**, **12 pt** by default (owner, 2026-10-31). It sets the
   size of new notes and of the selected note.
@@ -387,7 +387,8 @@ ScoreCraft's own additions, beyond what was observed:
 | INK-36 | A highlighter preset saved, then the pen chosen | the preset is applied | the highlighter is active with the preset's colour and width |
 | INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
-INK-33 comes with text notes (M4 part 2). INK-34 to INK-36 are engine tests
+INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
+`crates/engine/src/text_cmds/tests.rs`). INK-34 to INK-36 are engine tests
 (`crates/engine/src/layer_cmds/tests.rs`). INK-29 and INK-30 are `scorecraft-ink` and
 `scorecraft-render` tests; INK-31 is a
 `scorecraft-input` test; INK-32 is an engine test. INK-20 to INK-23 are `scorecraft-input` tests of the palm filter the shell routes pointers through. INK-1 to INK-3, INK-8 to INK-13, INK-16 to INK-19, INK-24 to INK-28 are engine tests
@@ -424,6 +425,7 @@ swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | INK-33 lands with text notes (M4 part 2b); notes are set in Inter, built in |
 | 2026-10-31 | patch | INK-34..36 for layers and presets (M4 part 2a) |
 | 2026-10-31 | minor | ANNO-8 from the owner's observation of enScore's text tool (screenshot 29): Type with Touch, new-note box and handle, plain text with no background, maximum width with wrapping, notes kept inside the page; text size 8–36 pt, 12 pt by default, on the size slider; INK-33 |
 | 2026-10-31 | minor | Owner's answers to the open questions: chisel highlighter at full strength with a round-ends setting; one slider for eraser size, pressure kept by the pixel eraser; stamps are ScoreCraft's own (Edwin dynamics, hairpins with handles); 50 ms palm delay after the pen lifts; the ruler spans the screen, horizontal, turning moved to ANNO-18; separate highlighter swatches and palette; stylus shortcut switches pen and eraser; INK-29..32 |

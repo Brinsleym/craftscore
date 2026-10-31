@@ -13,8 +13,8 @@ supersede estimates elsewhere.
 | [Performance](#performance) | 4 | 0 | 9 | 13 scenarios, 4 measured |
 | [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
-| [Annotation](#annotation) | 0 | 13 | 8 | from annotation-parity |
-| [Automation](#automation) | 0 | 1 | 3 | 39 of 124 feature-map rows live (measured, `cargo xtask parity`) |
+| [Annotation](#annotation) | 0 | 14 | 7 | from annotation-parity |
+| [Automation](#automation) | 0 | 1 | 3 | 40 of 124 feature-map rows live (measured, `cargo xtask parity`) |
 | [Reliability](#reliability) | 2 | 1 | 2 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
 | [Distribution](#distribution) | 0 | 0 | 6 |  |
 
@@ -99,7 +99,7 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | ANN-12 | Whiteout (opaque page-coloured ink, then write over) | partial |
 | ANN-13 | Stroke eraser | partial |
 | ANN-14 | Pixel eraser splitting strokes | partial |
-| ANN-15 | Text notes: plain text, wrapped to a maximum width, kept inside the page, grip handle to move; Type with Touch; size 8–36 pt (12 pt default) on the slider; colour, edit | missing |
+| ANN-15 | Text notes: plain text, wrapped to a maximum width, kept inside the page, grip handle to move; Type with Touch; size 8–36 pt (12 pt default) on the slider; colour, edit | partial |
 | ANN-16 | Stamps (ScoreCraft's own): dynamics pp to ff in Edwin, crescendo and diminuendo hairpins with stretch and move handles | missing |
 | ANN-17 | Rectangle select: move, copy, resize, recolour, delete; starts snips and shortcuts | missing |
 | ANN-18 | Shapes and straight lines | missing |

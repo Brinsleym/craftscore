@@ -12,34 +12,44 @@
 //! This is the oracle every other ink renderer is checked against, and what export and
 //! `view.snapshot` draw with.
 
-use scorecraft_doc::{Annotation, AnnotationKind, Color, Layer, Stroke, Tool};
+use scorecraft_doc::{Annotation, AnnotationKind, Color, Layer, Stroke, TextNote, Tool};
 use scorecraft_geom::{Affine, PageBox, Point, Rect};
 use scorecraft_ink::{PressureCurve, outline};
 use scorecraft_pdf::{Bitmap, PageGeometry};
+use scorecraft_text::{Face, FaceKind, LINE_SPACING, layout};
 
 use crate::Filter;
 
 /// The highlighter's strength laid over a dark page.
 const DARK_HIGHLIGHT: f32 = 0.4;
 
-/// The ink a page carries, as the page cache keeps it: the strokes in drawing order and a key
-/// that changes whenever they do (the engine fingerprints ids and stamps).
+/// The ink a page carries, as the page cache keeps it: the markings to draw in drawing order
+/// and a key that changes whenever they do (the engine fingerprints ids and stamps).
 #[derive(Debug, Clone)]
 pub struct PageInk {
     pub key: u64,
-    pub strokes: std::sync::Arc<Vec<Stroke>>,
+    pub marks: std::sync::Arc<Vec<AnnotationKind>>,
     pub curve: PressureCurve,
 }
 
-/// The strokes to draw on a page, in drawing order: layers bottom first in list order, each
-/// layer's markings in the order they were made. Hidden layers and markings on a layer the score
-/// doesn't have are left out.
-pub fn visible_strokes<'a>(layers: &[Layer], annotations: &'a [Annotation]) -> Vec<&'a Stroke> {
+/// Whether a renderer draws this kind of marking on the page (snips and shortcuts are drawn by
+/// the reader, not into the page).
+pub fn is_drawn(kind: &AnnotationKind) -> bool {
+    matches!(kind, AnnotationKind::Stroke(_) | AnnotationKind::Text(_))
+}
+
+/// The markings to draw on a page, in drawing order: layers bottom first in list order, each
+/// layer's markings in the order they were made. Hidden layers, markings on a layer the score
+/// doesn't have, and kinds that aren't drawn into the page are left out.
+pub fn visible_marks<'a>(
+    layers: &[Layer],
+    annotations: &'a [Annotation],
+) -> Vec<&'a AnnotationKind> {
     let mut out = Vec::new();
     for layer in layers.iter().filter(|l| l.visible) {
         for a in annotations.iter().filter(|a| a.layer == layer.id) {
-            if let AnnotationKind::Stroke(s) = &a.kind {
-                out.push(s);
+            if is_drawn(&a.kind) {
+                out.push(&a.kind);
             }
         }
     }
@@ -73,23 +83,73 @@ pub fn page_to_bitmap(geometry: &PageGeometry, bitmap: &Bitmap) -> Option<Affine
     m.is_finite().then_some(m)
 }
 
-/// `base` with `strokes` drawn on it. Returns `None` when there is nothing to draw (the caller
-/// keeps the original bitmap, no copy) or the transform is degenerate.
+/// `base` with `marks` drawn on it in order. Returns `None` when there is nothing to draw (the
+/// caller keeps the original bitmap, no copy) or the transform is degenerate.
 pub fn compose(
     base: &Bitmap,
     to_bitmap: Affine,
-    strokes: &[&Stroke],
+    marks: &[&AnnotationKind],
     filter: Filter,
     curve: &PressureCurve,
 ) -> Option<Bitmap> {
-    if strokes.is_empty() || !to_bitmap.is_finite() {
+    if !marks.iter().any(|m| is_drawn(m)) || !to_bitmap.is_finite() {
         return None;
     }
     let mut out = base.clone();
-    for s in strokes {
-        draw_stroke(&mut out, to_bitmap, s, filter, curve);
+    for mark in marks {
+        match mark {
+            AnnotationKind::Stroke(s) => draw_stroke(&mut out, to_bitmap, s, filter, curve),
+            AnnotationKind::Text(t) => draw_text(&mut out, to_bitmap, t, filter),
+            _ => {}
+        }
     }
     Some(out)
+}
+
+/// Draws a text note (spec ANNO-8): its optional background, then its lines, wrapped to the
+/// note's width and set from its top-left corner.
+pub fn draw_text(bm: &mut Bitmap, m: Affine, note: &TextNote, filter: Filter) {
+    let style = &note.style;
+    let size = f64::from(style.size);
+    let Some(face) = Face::get(FaceKind::Note, style.bold, style.italic) else {
+        return;
+    };
+    if !(size.is_finite() && size > 0.0 && note.rect.is_finite()) {
+        return;
+    }
+    if let Some(bg) = style.background {
+        let r = note.rect;
+        let bg = paper_mapped(bg, filter);
+        fill(bm, m, &[r.corners().to_vec()], bg, 1.0);
+    }
+    // A hair wider than the box, so rounding never re-wraps a line that fitted.
+    let laid = layout(&face, &note.text, size, note.rect.width() + 0.01);
+    let color = ink_color(Tool::Pen, style.color, filter);
+    let mut polys = Vec::new();
+    for (i, line) in laid.lines.iter().enumerate() {
+        let baseline = note.rect.y1 - laid.baseline - i as f64 * size * LINE_SPACING;
+        polys.extend(face.outlines(line, size, Point::new(note.rect.x0, baseline)));
+    }
+    fill(bm, m, &polys, color, f32::from(color.a) / 255.0);
+}
+
+/// A background colour under `filter`: white becomes the filter's paper, like whiteout.
+fn paper_mapped(c: Color, filter: Filter) -> Color {
+    if Color::rgb(c.r, c.g, c.b) == Color::WHITE {
+        let mut p = ink_color(Tool::Whiteout, c, filter);
+        p.a = c.a;
+        p
+    } else {
+        c
+    }
+}
+
+/// Fills `polys` (page space, any winding, non-zero rule) in `color` at `alpha`, "over".
+fn fill(bm: &mut Bitmap, m: Affine, polys: &[Vec<Point>], color: Color, alpha: f32) {
+    let Some(mask) = Mask::fill(polys, m, bm.width, bm.height) else {
+        return;
+    };
+    blend(bm, &mask, color, alpha, false);
 }
 
 /// Draws one stroke onto `bm`.
@@ -105,8 +165,13 @@ pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve
         // light notation still reads through it.
         alpha = alpha.min(DARK_HIGHLIGHT);
     }
-    let src = [color.r, color.g, color.b].map(|c| f32::from(c) / 255.0);
     let multiply = s.tool == Tool::Highlighter && filter != Filter::Dark;
+    blend(bm, &mask, color, alpha, multiply);
+}
+
+/// Blends `color` at `alpha` through `mask` onto `bm`: multiplied (the highlighter) or "over".
+fn blend(bm: &mut Bitmap, mask: &Mask, color: Color, alpha: f32, multiply: bool) {
+    let src = [color.r, color.g, color.b].map(|c| f32::from(c) / 255.0);
     for row in 0..mask.h {
         let y = mask.y0 + row;
         for col in 0..mask.w {
@@ -126,15 +191,15 @@ pub fn draw_stroke(bm: &mut Bitmap, m: Affine, s: &Stroke, filter: Filter, curve
             let [sr, sg, sb] = src;
             let k = alpha * cov;
             let px = if multiply {
-                let m = |d: f32, s: f32| to_byte(d * (1.0 - k * (1.0 - s)));
-                [m(dr, sr), m(dg, sg), m(db, sb), to_byte(da)]
+                let mul = |d: f32, s: f32| to_byte(d * (1.0 - k * (1.0 - s)));
+                [mul(dr, sr), mul(dg, sg), mul(db, sb), to_byte(da)]
             } else {
                 // Premultiplied "over".
-                let o = |d: f32, s: f32| to_byte(s * 255.0 * k + d * (1.0 - k));
+                let over = |d: f32, s: f32| to_byte(s * 255.0 * k + d * (1.0 - k));
                 [
-                    o(dr, sr),
-                    o(dg, sg),
-                    o(db, sb),
+                    over(dr, sr),
+                    over(dg, sg),
+                    over(db, sb),
                     to_byte(255.0 * k + da * (1.0 - k)),
                 ]
             };
@@ -536,6 +601,7 @@ mod tests {
             &[(10.0, 50.0), (90.0, 50.0)],
         );
         let pen = stroke(Tool::Pen, Color::BLUE, 2.0, &[(50.0, 45.0), (50.0, 55.0)]);
+        let (wo, pen) = (AnnotationKind::Stroke(wo), AnnotationKind::Stroke(pen));
         let out = compose(
             &bm.clone(),
             flip(),
@@ -551,6 +617,65 @@ mod tests {
             px(&bm, 30, 10),
             [0, 0, 0, 255],
             "outside the whiteout stays black"
+        );
+    }
+
+    fn note(text: &str, background: Option<Color>) -> TextNote {
+        TextNote {
+            rect: Rect::new(10.0, 60.0, 95.0, 90.0),
+            text: text.into(),
+            style: scorecraft_doc::TextStyle {
+                size: 12.0,
+                color: Color::BLUE,
+                background,
+                ..Default::default()
+            },
+        }
+    }
+
+    #[test]
+    fn text_notes_draw_their_letters_in_their_box() {
+        let mut bm = page(100, 100, WHITE);
+        draw_text(&mut bm, flip(), &note("Sample Text", None), Filter::Normal);
+        let inked: Vec<(u32, u32)> = (0..100)
+            .flat_map(|y| (0..100).map(move |x| (x, y)))
+            .filter(|&(x, y)| px(&bm, x, y) != WHITE)
+            .collect();
+        assert!(inked.len() > 30, "letters drawn: {}", inked.len());
+        // Inside the box: x 10..95, y (flipped) 10..40.
+        assert!(
+            inked
+                .iter()
+                .all(|&(x, y)| (9..=96).contains(&x) && (9..=41).contains(&y))
+        );
+        assert!(
+            inked
+                .iter()
+                .any(|&(x, y)| px(&bm, x, y) == [30, 80, 220, 255])
+        );
+    }
+
+    #[test]
+    fn text_background_and_wrapping() {
+        let mut bm = page(100, 100, [0, 0, 0, 255]);
+        draw_text(
+            &mut bm,
+            flip(),
+            &note("", Some(Color::WHITE)),
+            Filter::Normal,
+        );
+        assert_eq!(px(&bm, 50, 25), WHITE);
+        // Two lines: a narrow box wraps "Sample Text" onto a second line, 18 pt lower.
+        let mut bm = page(100, 100, WHITE);
+        let mut n = note("Sample Text", None);
+        n.rect = Rect::new(10.0, 40.0, 55.0, 90.0);
+        draw_text(&mut bm, flip(), &n, Filter::Normal);
+        let rows: Vec<u32> = (0..100)
+            .filter(|&y| (0..100).any(|x| px(&bm, x, y) != WHITE))
+            .collect();
+        assert!(
+            rows.iter().any(|&y| y < 22) && rows.iter().any(|&y| y > 30),
+            "{rows:?}"
         );
     }
 
@@ -609,7 +734,7 @@ mod tests {
             kind: AnnotationKind::Stroke(stroke(Tool::Pen, Color::BLACK, 1.0, &[(0.0, 0.0)])),
         };
         let anns = vec![ann(10, l2), ann(11, l1), ann(12, LayerId::from(uuid(9)))];
-        assert_eq!(visible_strokes(&layers, &anns).len(), 1);
+        assert_eq!(visible_marks(&layers, &anns).len(), 1);
     }
 
     fn uuid(n: u128) -> uuid::Uuid {
@@ -644,7 +769,7 @@ mod tests {
             &PressureCurve::default(),
         );
         assert!(bm.words.iter().all(|w| w.to_ne_bytes() == WHITE));
-        let s = stroke(Tool::Pen, Color::BLACK, 2.0, &[(1.0, 1.0)]);
+        let s = AnnotationKind::Stroke(stroke(Tool::Pen, Color::BLACK, 2.0, &[(1.0, 1.0)]));
         assert!(
             compose(
                 &bm,

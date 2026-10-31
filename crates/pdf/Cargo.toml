@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 pdfcraft-render = { workspace = true }
+pdfcraft-fonts = { workspace = true }
 bytemuck = { workspace = true }
 
 [features]

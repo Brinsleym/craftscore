@@ -223,7 +223,7 @@ pub fn markup_ready(s: &Session) -> bool {
 }
 
 /// Optional colour param.
-fn opt_color(
+pub(crate) fn opt_color(
     id: &str,
     p: Option<&Map<String, Value>>,
     key: &str,
@@ -252,7 +252,7 @@ fn opt_width(
     }
 }
 
-fn state_json(s: &Session) -> Value {
+pub(crate) fn state_json(s: &Session) -> Value {
     let layer = s
         .score
         .as_ref()
@@ -397,6 +397,18 @@ fn style_set(session: &mut Session, params: &Value) -> Result<Value, EngineError
             let w = opt_width(ID, p, ERASER_WIDTHS)?;
             if let Some(w) = w {
                 m.eraser_width = w;
+            }
+            w
+        }
+        // With the text tool the slider is the text size (ANNO-8).
+        MarkupTool::Text => {
+            let w = opt_width(ID, p, crate::markup::TEXT_SIZES)?;
+            if let Some(w) = w {
+                m.text_size = w;
+            }
+            if let Some(c) = color {
+                m.apply_color(c);
+                select_matching_swatch(m, c);
             }
             w
         }
@@ -906,7 +918,7 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
 }
 
 /// Refuses to change a hidden or locked layer (spec ANNO-10, INK-10).
-fn writable(score: &Score, layer: scorecraft_doc::LayerId) -> Result<(), EngineError> {
+pub(crate) fn writable(score: &Score, layer: scorecraft_doc::LayerId) -> Result<(), EngineError> {
     let l: &Layer = score
         .layer(layer)
         .ok_or_else(|| OpError::Missing(format!("layer {layer}")))?;

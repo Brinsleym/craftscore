@@ -3531,6 +3531,7 @@ dependencies = [
  "scorecraft-pdf",
  "scorecraft-render",
  "scorecraft-testkit",
+ "scorecraft-text",
  "serde_json",
 ]
 
@@ -3626,6 +3627,7 @@ name = "scorecraft-pdf"
 version = "0.0.1"
 dependencies = [
  "bytemuck",
+ "pdfcraft-fonts",
  "pdfcraft-render",
  "scorecraft-testkit",
  "sha2",
@@ -3651,6 +3653,7 @@ dependencies = [
  "scorecraft-ink",
  "scorecraft-pdf",
  "scorecraft-testkit",
+ "scorecraft-text",
  "uuid",
 ]
 
@@ -3682,6 +3685,11 @@ dependencies = [
 [[package]]
 name = "scorecraft-text"
 version = "0.0.1"
+dependencies = [
+ "scorecraft-geom",
+ "scorecraft-pdf",
+ "skrifa 0.44.0",
+]
 
 [[package]]
 name = "scorecraft-ui-egui"

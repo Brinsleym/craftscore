@@ -10,14 +10,14 @@ use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-use scorecraft_doc::{Color, LayerId, Library, Nib, PageKey, Score, ScoreId, Stroke, Tool};
+use scorecraft_doc::{AnnotationKind, Color, LayerId, Library, Nib, PageKey, Score, ScoreId, Tool};
 use scorecraft_geom::{PageBox, Point, Rect, Rotation};
 use scorecraft_ink::{
     ERASER_WIDTHS, HIGHLIGHTER_PALETTE, HIGHLIGHTER_SWATCHES, PALETTE, PressureCurve, Ruler,
     SWATCHES, ToolStyle, WHITEOUT_SWATCH,
 };
 use scorecraft_pdf::Document;
-use scorecraft_render::ink::{page_box, visible_strokes};
+use scorecraft_render::ink::{is_drawn, page_box, visible_marks};
 use scorecraft_render::{PageInk, ScoreView};
 use serde_json::{Value, json};
 
@@ -30,6 +30,7 @@ pub enum MarkupTool {
     Pen,
     Highlighter,
     Eraser,
+    Text,
 }
 
 impl MarkupTool {
@@ -38,6 +39,7 @@ impl MarkupTool {
             MarkupTool::Pen => "pen",
             MarkupTool::Highlighter => "highlighter",
             MarkupTool::Eraser => "eraser",
+            MarkupTool::Text => "text",
         }
     }
 }
@@ -106,7 +108,16 @@ pub struct Markup {
     pub layers: BTreeMap<ScoreId, LayerId>,
     /// Saved presets, in the order they were made.
     pub presets: Vec<Preset>,
+    /// New text notes' size in points and colour (ANNO-8).
+    pub text_size: f32,
+    pub text_color: Color,
 }
+
+/// Text sizes on the size slider (spec ANNO-8).
+pub const TEXT_SIZES: scorecraft_ink::WidthRange = scorecraft_ink::WidthRange {
+    min: 8.0,
+    max: 36.0,
+};
 
 impl Default for Markup {
     fn default() -> Self {
@@ -130,6 +141,8 @@ impl Default for Markup {
             curve: PressureCurve::default(),
             layers: BTreeMap::new(),
             presets: Vec::new(),
+            text_size: 12.0,
+            text_color: Color::BLACK,
         }
     }
 }
@@ -163,6 +176,10 @@ impl Markup {
                 self.highlighter.color = ToolStyle::color_for(Tool::Highlighter, color);
                 true
             }
+            MarkupTool::Text => {
+                self.text_color = Color::rgb(color.r, color.g, color.b);
+                true
+            }
             MarkupTool::Eraser => false,
         }
     }
@@ -170,7 +187,10 @@ impl Markup {
     /// The active tool's swatches, selected swatch and palette, if it has colours.
     pub fn swatches_mut(&mut self) -> Option<(&mut [Color; 8], &mut usize, &'static [Color; 30])> {
         match self.tool {
-            MarkupTool::Pen => Some((&mut self.pen_swatches, &mut self.pen_swatch, &PALETTE)),
+            // Text takes the pen's swatches and palette.
+            MarkupTool::Pen | MarkupTool::Text => {
+                Some((&mut self.pen_swatches, &mut self.pen_swatch, &PALETTE))
+            }
             MarkupTool::Highlighter => Some((
                 &mut self.highlighter_swatches,
                 &mut self.highlighter_swatch,
@@ -225,21 +245,28 @@ impl Markup {
             "highlighterPalette": hex(&HIGHLIGHTER_PALETTE),
             // The active tool's, as the toolbar shows them; none for the eraser.
             "swatches": match self.tool {
-                MarkupTool::Pen => Some(hex(&self.pen_swatches)),
+                MarkupTool::Pen | MarkupTool::Text => Some(hex(&self.pen_swatches)),
                 MarkupTool::Highlighter => Some(hex(&self.highlighter_swatches)),
                 MarkupTool::Eraser => None,
             },
             "swatch": match self.tool {
-                MarkupTool::Pen => Some(self.pen_swatch + 1),
+                MarkupTool::Pen | MarkupTool::Text => Some(self.pen_swatch + 1),
                 MarkupTool::Highlighter => Some(self.highlighter_swatch + 1),
                 MarkupTool::Eraser => None,
             },
             "palette": match self.tool {
-                MarkupTool::Pen => Some(hex(&PALETTE)),
+                MarkupTool::Pen | MarkupTool::Text => Some(hex(&PALETTE)),
                 MarkupTool::Highlighter => Some(hex(&HIGHLIGHTER_PALETTE)),
                 MarkupTool::Eraser => None,
             },
             "highlighterRoundEnds": self.highlighter_round,
+            "text": {
+                "size": self.text_size,
+                "sizes": [TEXT_SIZES.min, TEXT_SIZES.max],
+                "color": self.text_color.to_string(),
+            },
+            // Draw with Touch reads "Type with Touch" while the text tool is active.
+            "touchLabel": if self.tool == MarkupTool::Text { "Type with Touch" } else { "Draw with Touch" },
             "ruler": self.ruler.map(|y| json!({
                 "y": y,
                 "halfHeight": RULER_HALF_HEIGHT,
@@ -294,7 +321,7 @@ fn ink_key(score: &Score, page: PageKey) -> u64 {
         for a in score
             .annotations_on(page)
             .iter()
-            .filter(|a| a.layer == layer.id)
+            .filter(|a| a.layer == layer.id && is_drawn(&a.kind))
         {
             a.id.hash(&mut h);
             a.stamp.hash(&mut h);
@@ -317,14 +344,14 @@ pub(crate) fn sync_ink(
             continue;
         };
         let page = PageKey(p);
-        let strokes: Vec<Stroke> = match score {
-            Some(s) => visible_strokes(&s.layers, s.annotations_on(page))
+        let marks: Vec<AnnotationKind> = match score {
+            Some(s) => visible_marks(&s.layers, s.annotations_on(page))
                 .into_iter()
                 .cloned()
                 .collect(),
             None => Vec::new(),
         };
-        if strokes.is_empty() {
+        if marks.is_empty() {
             if view.ink_key(file_page).is_some() {
                 view.set_ink(file_page, None);
             }
@@ -337,7 +364,7 @@ pub(crate) fn sync_ink(
                 file_page,
                 Some(PageInk {
                     key,
-                    strokes: Arc::new(strokes),
+                    marks: Arc::new(marks),
                     curve,
                 }),
             );

@@ -1,6 +1,6 @@
 # ScoreCraft vs enScore: target-app parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 2a: breadth 41%, 42 of 124 rows; earlier: ANNO-18 added, breadth 38%, 40 of 124 rows; earlier: M4 part 1, with M3 below it: breadth 39% measured, 40 of 123 rows, ANNO-17 added; alpha ~200–460 h; earlier: M1 foundation done: breadth 14% measured, alpha ~220–490 h; earlier: M0 skeleton done, remaining hours lowered; earlier: 4 rows added from the Microsoft Store description; estimates lowered for PDFCraft reuse) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 2b: breadth 42%, 43 of 124 rows; earlier: M4 part 2a: breadth 41%, 42 of 124 rows; earlier: ANNO-18 added, breadth 38%, 40 of 124 rows; earlier: M4 part 1, with M3 below it: breadth 39% measured, 40 of 123 rows, ANNO-17 added; alpha ~200–460 h; earlier: M1 foundation done: breadth 14% measured, alpha ~220–490 h; earlier: M0 skeleton done, remaining hours lowered; earlier: 4 rows added from the Microsoft Store description; estimates lowered for PDFCraft reuse) · **Target:** enScore 3.7 (2026)
 
 The authoritative answer to "how close is ScoreCraft to enScore, and how much work is left". The
 one-page summary is [`ROADMAP.md`](../ROADMAP.md); the ranked work list is [`gaps.md`](gaps.md);
@@ -15,7 +15,7 @@ the feature catalog is [`feature-map.md`](feature-map.md); the measured checklis
 
 | Number | Value | Kind |
 |---|---|---|
-| **Feature breadth** (does each enScore feature exist?) | **41%** weighted (42 of 124 feature-map rows live, all `partial`: engine commands with tests; markup has no UI yet) | measured by `cargo xtask parity` |
+| **Feature breadth** (does each enScore feature exist?) | **42%** weighted (43 of 124 feature-map rows live, all `partial`: engine commands with tests; markup has no UI yet) | measured by `cargo xtask parity` |
 | **Ready for real work** (could a musician replace enScore with it on stage?) | **0%** | estimated, weights below |
 | **Practising musician** (reads, marks, turns with a pedal, uses setlists) | 0% | estimated, [method](#practising-musician) |
 | **Essentials user** (open a PDF, turn pages, mark it up) | 0% | estimated, [method](#essentials-user) |
@@ -45,19 +45,19 @@ parts.
 - enscore.app was not reachable from our build environment on 2026-10-28; reading it is the first
   re-measure task.
 
-## Feature breadth: 41% (weighted, 2026-10-31)
+## Feature breadth: 42% (weighted, 2026-10-31)
 
 | Component | Weight | Ours / enScore | % | Kind |
 |---|---:|---|---:|---|
 | Reading, layout and page turning (READ, TURN) | 25% | 14 / 23 | 61% | measured |
-| Annotation (ANNO) | 20% | 11 / 18 | 61% | measured |
+| Annotation (ANNO) | 20% | 12 / 18 | 67% | measured |
 | Library, page editing, navigation (LIB, PAGE, NAV) | 15% | 12 / 28 | 43% | measured |
 | Setlists (LIST) | 10% | 4 / 7 | 57% | measured |
 | Import, export, scanning, IMSLP, forScore (IMP, EXP) | 10% | 0 / 12 | 0% | measured |
 | Practice, audio, MIDI (PRAC, PLAY, MIDI) | 10% | 0 / 23 | 0% | measured |
 | Sync and backup (SYNC) | 5% | 0 / 8 | 0% | measured |
 | Platforms and languages (PLAT) | 5% | 1 / 5 | 20% | measured |
-| **Weighted** | 100% | | **41%** | |
+| **Weighted** | 100% | | **42%** | |
 
 Measured on the M4 part 1 branch, which sits on the M3 reader (READ, TURN and PLAT rows come
 from M3). Annotation rows are `partial`: the engine draws, erases and stores ink with tests, but
@@ -136,6 +136,7 @@ performance hardening before beta 100–200.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 2b (text notes): breadth 41% → 42% (43 of 124 rows) |
 | 2026-10-31 | patch | M4 part 2a (layers, presets): breadth 38% → 41% (42 of 124 rows) |
 | 2026-10-31 | patch | ANNO-18 ruler angle added from the owner's answers (124 rows): breadth 39% → 38% |
 | 2026-10-31 | minor | M4 part 1 (on M3): breadth 14% → 39% (40 of 123 rows; ANNO-17 Ruler added from the owner's observation); alpha ~220–490 → ~200–460 h, beta ~670–1,370 → ~650–1,340 h, full ~900–1,820 → ~883–1,796 h; ink feel 40–80 → 30–70 h |

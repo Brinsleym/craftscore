@@ -2,7 +2,7 @@
 
 **Stage: pre-alpha** · next: alpha, the [alpha gate](docs/roadmap.md#alpha-gate) (~220–490 h away)
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 2a: layers and presets, breadth 41%; earlier: owner's answers on markup, 124 rows, breadth 38%; earlier: M4 part 1: the ink engine and markup commands, breadth 39%; earlier: M1 foundation and M2 PDF reading done; earlier: owner's priorities after the M0 review; earlier: M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 2b: text notes, breadth 42%; earlier: M4 part 2a: layers and presets, breadth 41%; earlier: owner's answers on markup, 124 rows, breadth 38%; earlier: M4 part 1: the ink engine and markup commands, breadth 39%; earlier: M1 foundation and M2 PDF reading done; earlier: owner's priorities after the M0 review; earlier: M0 skeleton done; earlier: 4 features added from the Microsoft Store description; PDF backend reuses PDFCraft) · **Target:** enScore 3.7 (2026)
 
 ScoreCraft's one-page summary of how close it is to enScore 3.7 (measured from public listings on
 2026-10-28). Detail: [target-app parity](docs/target-app-parity.md) (methodology, weights,
@@ -18,7 +18,7 @@ repository has merged-PR history. About 75% of the work parallelizes.
 
 | | Value | Kind |
 |---|---|---|
-| **Feature breadth** | **41%** | measured: 42 of 124 feature-map rows live (with M3's reader); markup in the engine only |
+| **Feature breadth** | **42%** | measured: 43 of 124 feature-map rows live (with M3's reader); markup in the engine only |
 | **Ready for real work** | **0%** | estimated |
 | Practising musician | 0% | estimated ([method](docs/target-app-parity.md#practising-musician)) |
 | Essentials user | 0% | estimated ([method](docs/target-app-parity.md#essentials-user)) |
@@ -66,6 +66,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Entry |
 |---|---|
+| 2026-10-31 | M4 part 2b: text notes (Inter built in, wrapped at 86% of the page, kept inside it, 8–36 pt) in the engine and renderer; `scorecraft-text`; parity 43 of 124 |
 | 2026-10-31 | M4 part 2a: annotation layers (new, rename, show, lock, reorder, delete, active) and presets in the engine; parity 42 of 124 |
 | 2026-10-31 | M4 part 1: [ink spec](docs/spec/ink.md) from the owner's toolbar observation; `scorecraft-ink`, CPU ink with a multiply highlighter, palm filter, 16 markup commands (pen, highlighter, whiteout, erasers, swatches and palette, Draw with Touch, touch lock, ruler); ANNO-17 Ruler added; parity 40 of 123; then the owner's answers (chisel highlighter, highlighter colours, palm grace, screen ruler, text and stamps specified), 124 rows |
 | 2026-10-31 | M1 done: `geom`, `raster`, `doc`, `ops` and `format` v1, about 35 library, page, list and undo commands; a save crashed at any write reopens intact; parity 17 of 122 |
@@ -82,6 +83,7 @@ Detail: [docs/roadmap.md](docs/roadmap.md).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 2b, text notes: breadth 41% → 42% (43 of 124 rows) |
 | 2026-10-31 | patch | M4 part 2a, layers and presets: breadth 38% → 41% (42 of 124 rows) |
 | 2026-10-31 | patch | Owner's answers on markup: ANNO-18 ruler angle added (124 rows), breadth 39% → 38% |
 | 2026-10-31 | minor | M4 part 1 (on M3): breadth 14% → 39% (40 of 123 rows); alpha ~220–490 → ~200–460 h, beta and full parity lower; ink feel 40–80 → 30–70 h |
