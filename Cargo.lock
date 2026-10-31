@@ -3548,6 +3548,7 @@ dependencies = [
  "scorecraft-layout",
  "scorecraft-ops",
  "scorecraft-pdf",
+ "scorecraft-practice",
  "scorecraft-render",
  "scorecraft-search",
  "scorecraft-testkit",

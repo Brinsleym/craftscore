@@ -363,7 +363,9 @@ impl App {
                     return;
                 }
                 let keys = !ctx.egui_wants_keyboard_input();
+                let area = ui.available_rect_before_wrap();
                 let out = self.reader.show(ui, &mut self.session, &tokens, keys);
+                self.metronome_pulse(ui, area, &tokens);
                 if out.toggle_chrome {
                     self.state.chrome = !self.state.chrome;
                 }
@@ -405,6 +407,76 @@ impl App {
                     }
                 }
             });
+    }
+
+    /// The metronome's light pulse along the top edge of the reader (PRAC-1): bright on each
+    /// beat, brighter and in the accent colour on the first of the bar, fading through the beat.
+    fn metronome_pulse(&mut self, ui: &Ui, area: Rect, tokens: &Tokens) {
+        let Ok(st) = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+        else {
+            return;
+        };
+        let Some(beat) = st.get("beat").filter(|b| b.is_object()) else {
+            return;
+        };
+        let phase = beat.get("phase").and_then(Value::as_f64).unwrap_or(1.0) as f32;
+        let accent = beat.get("accent").and_then(Value::as_bool).unwrap_or(false);
+        let fade = (1.0 - phase * 2.5).clamp(0.0, 1.0);
+        if fade > 0.0 {
+            let colour = if accent {
+                tokens.accent
+            } else {
+                Color32::from_gray(140)
+            };
+            let h = if accent { 10.0 } else { 6.0 };
+            let bar = Rect::from_min_size(area.min, vec2(area.width(), h));
+            ui.painter()
+                .rect_filled(bar, 0.0, colour.gamma_multiply(fade));
+        }
+        // Wake for the fade and the next beat.
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(if fade > 0.0 {
+                16
+            } else {
+                40
+            }));
+    }
+
+    fn metronome_menu(&mut self, ui: &mut Ui, run: &mut Vec<(&'static str, Value)>) {
+        let st = self
+            .session
+            .dispatch("practice.metronome.state", &json!({}))
+            .unwrap_or(Value::Null);
+        let running = st.get("running").and_then(Value::as_bool).unwrap_or(false);
+        let bpm = st.get("bpm").and_then(Value::as_f64).unwrap_or(100.0);
+        let beats = st.get("beats").and_then(Value::as_u64).unwrap_or(4);
+        ui.menu_button(format!("♩ {bpm:.0}"), |ui| {
+            if ui
+                .selectable_label(running, if running { "Stop" } else { "Start" })
+                .clicked()
+            {
+                run.push(("practice.metronome.toggle", json!({})));
+            }
+            if ui.button("Tap tempo").clicked() {
+                run.push(("practice.metronome.tap", json!({})));
+            }
+            let mut b = bpm;
+            if ui
+                .add(egui::Slider::new(&mut b, 20.0..=300.0).text("BPM"))
+                .changed()
+            {
+                run.push(("practice.metronome.set", json!({ "bpm": b.round() })));
+            }
+            ui.horizontal(|ui| {
+                for m in [2u64, 3, 4, 6] {
+                    if ui.radio(beats == m, m.to_string()).clicked() {
+                        run.push(("practice.metronome.set", json!({ "beats": m })));
+                    }
+                }
+            });
+        });
     }
 
     fn markup_bar(&mut self, ui: &mut Ui, tokens: &Tokens, markup: &Value) {
@@ -616,6 +688,7 @@ impl App {
                     run.push(("view.zoom.set", json!({ "zoom": (zoom * 1.25).min(8.0) })));
                 }
                 ui.separator();
+                self.metronome_menu(ui, &mut run);
                 let marking = self
                     .session
                     .dispatch("annotate.state", &json!({}))

@@ -135,6 +135,11 @@ fn open_entry(
         tempo,
     });
     session.refresh_reader();
+    // The entry's tempo sets the metronome (LIST-3).
+    if let Some(t) = tempo {
+        let now = session.now_ms();
+        session.metronome.set_bpm(f64::from(t), now);
+    }
     if at_end {
         session.dispatch("view.page.goto", &json!({ "to": "last" }))?;
     }

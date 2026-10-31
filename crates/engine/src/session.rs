@@ -22,6 +22,8 @@ pub struct Session {
     pub(crate) library_sort: crate::find_cmds::LibrarySort,
     /// The setlist being played, if any (LIST-4).
     pub(crate) playback: Option<crate::play_cmds::Playback>,
+    /// The metronome (PRAC-1).
+    pub(crate) metronome: scorecraft_practice::Metronome,
 }
 
 impl Default for Session {
@@ -42,6 +44,7 @@ impl Session {
             markup: crate::markup::Markup::default(),
             library_sort: crate::find_cmds::LibrarySort::default(),
             playback: None,
+            metronome: scorecraft_practice::Metronome::new(),
         }
     }
 

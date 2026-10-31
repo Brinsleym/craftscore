@@ -1,6 +1,6 @@
 # Performance: setlists on stage, shortcuts, snips and the metronome
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** major (first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 2: metronome; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 What a musician needs on stage, beyond reading one score: playing a setlist from piece to piece,
 jumping at repeats and codas, seeing the bars after a turn before it, and a metronome. Written
@@ -46,10 +46,13 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
   in the library (the same bytes) and skipped, how many were not PDFs, and each file that
   couldn't be read with the reason (the first five named, the rest counted).
 
-### PRAC-1 Metronome with tap tempo (M6 part 2)
+### PRAC-1 Metronome with tap tempo
 
 - A metronome at 20–300 beats per minute, in 2, 3, 4 or 6, with an accent on the first beat, as
-  a click and a light pulse at the edge of the screen. Tapping the tempo button four times sets
+  a click and a light pulse along the top edge of the reader (brighter, in the accent colour, on
+  the first beat of the bar, fading within the first 40% of the beat). The pulse is in the app
+  (M6 part 2); the click waits on audio output (`scorecraft-audio`), which the app doesn't have
+  yet. Changing the tempo while it runs keeps the beat count going. Tapping the tempo button four times sets
   the tempo from the average of the last three intervals; taps more than 2 s apart start again.
   A playing list's entry tempo sets it when the entry opens.
 
@@ -73,11 +76,15 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 | PERF-2 | An entry with pages 2–3 of a 5-page score | the list is played, then stopped | the reader shows 2 pages, then all 5 |
 | PERF-3 | One score twice in each of two lists | the score is renamed and a list deleted | both lists show the new title; the library still has one score |
 | PERF-4 | An empty list; a list with one entry | the first is played; the second from entry 5; then a score opened by hand | refused; refused; the list stops |
+| PERF-6 | 120 BPM in 3, started at t = 1 s | the beat is asked for at 1.0 s, 1.75 s and 2.5 s | beat 1 (accented, next at 1.5 s); beat 2 half way; beat 1 of the next bar |
+| PERF-7 | Taps at 0, 500, 1000, 1500 ms, then 2100, then 5000 | each tap | 120 BPM at the fourth; the fifth averages the last three intervals; after the pause, nothing until four more |
+| PERF-8 | The engine's clock | the metronome is set to 120 in 3, started, read 1.1 s later, then tapped every 400 ms | the third beat of the bar; 150 BPM; out-of-range tempos and meters refused |
 | PERF-5 | An import of two new PDFs, one already imported, three other files and one broken PDF | it finishes | "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: …)." |
 
 PERF-1 to PERF-4 are engine tests (`crates/engine/src/play_cmds/tests.rs`); PERF-5 is a shell
-test (`crates/ui-egui/src/app.rs`). The metronome, shortcuts and snips get theirs when their part
-lands.
+test (`crates/ui-egui/src/app.rs`); PERF-6 and PERF-7 are `scorecraft-practice` tests, PERF-8 an
+engine test (`crates/engine/src/metronome_cmds.rs`). Shortcuts and snips get theirs when their
+part lands.
 
 ## Open questions
 
@@ -89,4 +96,5 @@ lands.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M6 part 2: the metronome's pulse and timing, PERF-6..8 |
 | 2026-10-31 | major | First version for M6: playing a list, one score in many lists, the import report; the metronome, shortcuts and snips outlined for parts 2 and 3; PERF-1..5 |
