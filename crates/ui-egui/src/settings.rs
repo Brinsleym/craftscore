@@ -28,6 +28,8 @@ pub struct Settings {
     pub markup: Value,
     /// The *Show ruler button* setting (ANNO-17), off by default.
     pub show_ruler_button: bool,
+    /// The library's sort (LIB-9): `library.sort.set`'s `sort`.
+    pub library_sort: Value,
 }
 
 impl Default for Settings {
@@ -44,6 +46,7 @@ impl Default for Settings {
             last_score: None,
             markup: Value::Null,
             show_ruler_button: false,
+            library_sort: Value::Null,
         }
     }
 }
@@ -88,6 +91,9 @@ impl Settings {
         }
         self.theme = ui.theme;
         self.keep_awake = ui.keep_awake.wanted;
+        if let Ok(v) = session.dispatch("library.sort.set", &json!({})) {
+            self.library_sort = v.get("sort").cloned().unwrap_or(Value::Null);
+        }
         if let Ok(mut m) = session.dispatch("annotate.state", &json!({})) {
             if let Some(o) = m.as_object_mut() {
                 // What belongs to this moment or this score, or follows from the rest.
@@ -223,6 +229,9 @@ impl Settings {
 
     /// Applies the pedal map. Bad entries are ignored, keeping the default map.
     pub fn apply_to_session(&self, session: &mut Session) {
+        if self.library_sort.is_object() {
+            let _ = session.dispatch("library.sort.set", &self.library_sort);
+        }
         if self.pedal_map.is_object() {
             let _ = session.dispatch("input.pedal.map", &json!({ "map": self.pedal_map }));
         }

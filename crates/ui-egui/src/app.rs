@@ -187,7 +187,8 @@ impl App {
             && !id.starts_with("annotate.stamp.")
             && !id.starts_with("annotate.layer."))
             || id == "input.pen.only"
-            || id == "input.touch.lock";
+            || id == "input.touch.lock"
+            || id == "library.sort.set";
         let changes_prefs = id.starts_with("view.layout")
             || id.starts_with("view.turn.halfPage")
             || id.starts_with("view.turn.alternating")
