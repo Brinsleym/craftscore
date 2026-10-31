@@ -32,9 +32,21 @@ pub enum MarkupTool {
     Eraser,
     Text,
     Stamp,
+    /// Rectangle select (ANNO-12).
+    Select,
 }
 
 impl MarkupTool {
+    /// Every tool, in the toolbar's order.
+    pub const ALL: [MarkupTool; 6] = [
+        MarkupTool::Pen,
+        MarkupTool::Highlighter,
+        MarkupTool::Eraser,
+        MarkupTool::Text,
+        MarkupTool::Stamp,
+        MarkupTool::Select,
+    ];
+
     pub fn id(self) -> &'static str {
         match self {
             MarkupTool::Pen => "pen",
@@ -42,8 +54,24 @@ impl MarkupTool {
             MarkupTool::Eraser => "eraser",
             MarkupTool::Text => "text",
             MarkupTool::Stamp => "stamp",
+            MarkupTool::Select => "select",
         }
     }
+
+    pub fn from_id(id: &str) -> Option<MarkupTool> {
+        MarkupTool::ALL.into_iter().find(|t| t.id() == id)
+    }
+}
+
+/// The markings a rectangle selected (ANNO-12): on one page of one score, by id. Undo can take
+/// markings away under it, so every action keeps only the ids still on the page.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Selection {
+    pub score: ScoreId,
+    pub page: PageKey,
+    /// The rectangle, in page space; it follows the markings when they move or scale.
+    pub rect: Rect,
+    pub ids: Vec<scorecraft_doc::AnnotationId>,
 }
 
 /// The eraser's two modes (ANNO-6, ANNO-7).
@@ -116,6 +144,16 @@ pub struct Markup {
     /// The selected stamp and its size in points (ANNO-9).
     pub stamp: &'static str,
     pub stamp_size: f32,
+    /// Shapes (ANNO-16): pen and highlighter strokes that are nearly a line or an ellipse are
+    /// straightened.
+    pub shapes: bool,
+    /// The pen button's tool (ANNO-11): pressing the stylus button switches to it, and pressing
+    /// again returns to the tool before.
+    pub button_tool: MarkupTool,
+    /// The tool the pen button returns to.
+    pub button_return: Option<MarkupTool>,
+    /// What the rectangle tool selected, if anything.
+    pub selection: Option<Selection>,
 }
 
 /// The stamp tool's choices, in its bar's order: the dynamics, then the hairpins behind ">".
@@ -159,6 +197,10 @@ impl Default for Markup {
             text_color: Color::BLACK,
             stamp: "p",
             stamp_size: 18.0,
+            shapes: false,
+            button_tool: MarkupTool::Eraser,
+            button_return: None,
+            selection: None,
         }
     }
 }
@@ -201,7 +243,27 @@ impl Markup {
                 self.pen.color = Color::rgb(color.r, color.g, color.b);
                 true
             }
-            MarkupTool::Eraser => false,
+            MarkupTool::Eraser | MarkupTool::Select => false,
+        }
+    }
+
+    /// The pen button (ANNO-11): from any tool but the button's, switches to the button's tool;
+    /// from the button's tool, back to the one before (the pen the first time).
+    pub fn press_button(&mut self) {
+        if self.tool == self.button_tool {
+            let other = if self.button_tool == MarkupTool::Pen {
+                MarkupTool::Eraser
+            } else {
+                MarkupTool::Pen
+            };
+            self.tool = self
+                .button_return
+                .take()
+                .filter(|t| *t != self.button_tool)
+                .unwrap_or(other);
+        } else {
+            self.button_return = Some(self.tool);
+            self.tool = self.button_tool;
         }
     }
 
@@ -217,7 +279,7 @@ impl Markup {
                 &mut self.highlighter_swatch,
                 &HIGHLIGHTER_PALETTE,
             )),
-            MarkupTool::Eraser => None,
+            MarkupTool::Eraser | MarkupTool::Select => None,
         }
     }
 
@@ -268,19 +330,26 @@ impl Markup {
             "swatches": match self.tool {
                 MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(hex(&self.pen_swatches)),
                 MarkupTool::Highlighter => Some(hex(&self.highlighter_swatches)),
-                MarkupTool::Eraser => None,
+                MarkupTool::Eraser | MarkupTool::Select => None,
             },
             "swatch": match self.tool {
                 MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(self.pen_swatch + 1),
                 MarkupTool::Highlighter => Some(self.highlighter_swatch + 1),
-                MarkupTool::Eraser => None,
+                MarkupTool::Eraser | MarkupTool::Select => None,
             },
             "palette": match self.tool {
                 MarkupTool::Pen | MarkupTool::Text | MarkupTool::Stamp => Some(hex(&PALETTE)),
                 MarkupTool::Highlighter => Some(hex(&HIGHLIGHTER_PALETTE)),
-                MarkupTool::Eraser => None,
+                MarkupTool::Eraser | MarkupTool::Select => None,
             },
             "highlighterRoundEnds": self.highlighter_round,
+            "shapes": self.shapes,
+            "penButton": self.button_tool.id(),
+            "selection": self.selection.as_ref().map(|sel| json!({
+                "filePage": u64::from(sel.page.0) + 1,
+                "rect": [sel.rect.x0, sel.rect.y0, sel.rect.x1, sel.rect.y1],
+                "annotations": sel.ids.iter().map(ToString::to_string).collect::<Vec<_>>(),
+            })),
             "text": {
                 "size": self.text_size,
                 "sizes": [TEXT_SIZES.min, TEXT_SIZES.max],

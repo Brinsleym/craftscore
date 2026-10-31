@@ -1,6 +1,6 @@
 # Ink and markup
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** minor (M4 part 3: rectangle select, shapes switch, pen button; earlier: ANNO-8 text notes from the owner's observation; earlier: owner's answers to the open questions; earlier: owner's direction on the toolbar; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 How the player marks up a score: pens, highlighters, whiteout, erasers, text notes, stamps,
 layers, selection, shapes, and exporting the result. Written for milestone M4.
@@ -231,8 +231,10 @@ ScoreCraft's own additions, beyond what was observed:
 
 - A stylus barrel button or double-tap (where the platform reports one) switches between the pen
   and the eraser by default: from any other tool it switches to the eraser, and pressing again
-  returns to the tool before. The player can choose another pair in settings. The eraser end of a
-  stylus always erases, in the eraser's current mode.
+  returns to the tool before. The player can choose another pair in settings (the tool the button
+  switches to; pressing it on that tool returns to the one before, or the pen the first time). The
+  eraser end of a stylus always erases whole strokes. The shell sends each press as
+  `annotate.pen.button`; the setting is `annotate.pen.buttonTool`.
 
 ### ANNO-12 Rectangle select: move, copy, delete; snips and shortcuts
 
@@ -249,6 +251,12 @@ ScoreCraft's own additions, beyond what was observed:
     (and optionally the place) it jumps to.
 - An empty selection offers only snip and shortcut. Snips and shortcuts are specified with
   setlists (M6); the rectangle tool is their way in.
+- Only markings on visible, unlocked layers are selected. A selection is kept until another
+  rectangle, *Deselect* or opening another score; after undo takes some of its markings away, the
+  actions apply to the ones left, and with none left they are refused. A moved or copied
+  selection's rectangle centre lands on the drop point, kept on the target page; notes and stamps
+  stay inside it. Scaling keeps widths, text and stamp sizes inside their tools' ranges.
+  Recolouring leaves whiteout paper-coloured.
 
 ### ANNO-13 Undo and redo
 
@@ -315,9 +323,14 @@ ScoreCraft's own additions, beyond what was observed:
 
 ### ANNO-16 Shapes
 
-- With the shape tool, a stroke that is nearly straight becomes a straight line, and a closed
-  stroke that is nearly round becomes an ellipse; anything else stays freehand. The result is a
-  stroke like any other.
+- With **Shapes** on (a switch in the Markup menu, off by default, `annotate.shapes`), a pen or
+  highlighter stroke that is nearly straight becomes a straight line, and a closed stroke that is
+  nearly round becomes an ellipse; anything else stays freehand. The result is a stroke like any
+  other. A switch rather than a toolbar tool, so the owner's toolbar stays as specified.
+- *Nearly straight*: at least 6 pt between its ends, a path no more than 1.2× that distance, and
+  no sample further from the line between the ends than 6% of its length (or 1.5 pt). *Nearly
+  round*: ends within a quarter of its size, at least 315° round its centre, and samples within
+  12% of the fitted ellipse on average (35% at worst). A ruled stroke is left as ruled.
 
 ### EXP-2 Export with ink
 
@@ -387,6 +400,10 @@ ScoreCraft's own additions, beyond what was observed:
 | INK-36 | A highlighter preset saved, then the pen chosen | the preset is applied | the highlighter is active with the preset's colour and width |
 | INK-37 | The stamp tool, first time | the page is tapped | a **p** is placed, centred on the tap, 18 pt, in the pen's colour; near an edge it is kept inside the page |
 | INK-38 | A crescendo placed by a tap | its end handle is dragged, then its middle | it stretches to the new end, then moves whole; each is one undo step; its opening stays a third of the size |
+| INK-39 | Three strokes and a note inside a rectangle, one stroke mostly outside | they are selected and dropped on page 2 | the three move to page 2 keeping their ids, the other stays; one undo puts them back |
+| INK-40 | A pen and a highlighter stroke selected | they are copied, scaled 2×, recoloured, then deleted | copies get new ids and originals stay; points spread and widths double about the centre; both take the colour; delete is one undo step; 11× is refused |
+| INK-41 | Shapes on | a wobbly straight stroke and a rough circle are drawn | they are stored as a straight line and an ellipse; with shapes off the same stroke stays freehand |
+| INK-42 | The pen | the pen button is pressed twice, then from the highlighter twice | eraser then pen; eraser then highlighter |
 | INK-19 | Pen red, highlighter yellow | the player picks the highlighter's light blue swatch | new highlighter strokes are light blue; the pen is still red |
 
 INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
@@ -398,7 +415,9 @@ INK-33 is a `scorecraft-text` and engine test (`crates/text/src/layout.rs`,
 (`crates/engine/src/annotate_cmds.rs`, `crates/engine/tests/panic_hunt.rs`); INK-4 and INK-15 are
 `scorecraft-ink` tests; INK-5 to INK-7, INK-11 and INK-14 are `scorecraft-render` tests. Text,
 stamps, layers, selection, shapes and export get their acceptance tests when their part of M4
-lands, and are added to this table.
+lands, and are added to this table. INK-39 to INK-42 are engine tests
+(`crates/engine/src/select_cmds/tests.rs`), with `scorecraft-ink` tests of the shape fit
+(`crates/ink/src/shape.rs`).
 
 ## Not in scope
 
@@ -428,6 +447,7 @@ swatches and palette (screenshot 28); the stylus shortcut (pen and eraser).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | minor | M4 part 3: rectangle select's details (visible, unlocked layers; drop point; ranges kept), shapes as a Markup-menu switch with its thresholds, the pen button's setting; INK-39..42 |
 | 2026-10-31 | patch | INK-37, -38 for stamps (M4 part 2c) |
 | 2026-10-31 | patch | INK-33 lands with text notes (M4 part 2b); notes are set in Inter, built in |
 | 2026-10-31 | patch | INK-34..36 for layers and presets (M4 part 2a) |

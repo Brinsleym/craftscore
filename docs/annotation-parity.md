@@ -1,6 +1,6 @@
 # Annotation parity: ink, tools and layers
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** minor (owner's answers and text observation: chisel highlighter, own highlighter colours, stamps ours, ruler across the screen, ANN-21 ruler angle; earlier: M4 part 1: stroke engine, highlighter, whiteout, erasers, pen only, touch lock and ruler partial in the engine; earlier: first version, all rows missing) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 3: ANN-17 rectangle select, ANN-18 shapes and ANN-19 pen button partial; earlier: minor (owner's answers and text observation: chisel highlighter, own highlighter colours, stamps ours, ruler across the screen, ANN-21 ruler angle; earlier: M4 part 1: stroke engine, highlighter, whiteout, erasers, pen only, touch lock and ruler partial in the engine; earlier: first version, all rows missing) · **Target:** enScore 3.7 (2026)
 
 How ScoreCraft's markup compares with enScore 3.7 (PhotoCraft's brush-parity checklist, for a score
 reader). Status and evidence as in [`ui-parity.md`](ui-parity.md).
@@ -31,9 +31,9 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 | ANN-14 | Pixel eraser splitting strokes | ANNO-7 | partial (INK-9) |
 | ANN-15 | Text notes: plain text, wrapped to a maximum width, kept inside the page, grip handle to move; Type with Touch; size 8–36 pt (12 pt default) on the slider; colour, edit | ANNO-8 | partial (engine and CPU renderer, Inter, INK-33; the box and handle come with the UI) |
 | ANN-16 | Stamps (ScoreCraft's own): dynamics pp to ff in Edwin, crescendo and diminuendo hairpins with stretch and move handles | ANNO-9 | partial (engine and CPU renderer, INK-37, -38; handles drawn with the UI) |
-| ANN-17 | Rectangle select: move, copy, resize, recolour, delete; starts snips and shortcuts | ANNO-12 | missing |
-| ANN-18 | Shapes and straight lines | ANNO-16 | missing |
-| ANN-19 | Stylus button / double-tap switches pen and eraser | ANNO-11 | missing |
+| ANN-17 | Rectangle select: move, copy, resize, recolour, delete; starts snips and shortcuts | ANNO-12 | partial (move to the same or another page, copy, delete, scale 0.1–10×, recolour, each one undo step, INK-39, -40; snips and shortcuts with setlists in M6) |
+| ANN-18 | Shapes and straight lines | ANNO-16 | partial (nearly straight strokes become lines, closed round ones ellipses, INK-41) |
+| ANN-19 | Stylus button / double-tap switches pen and eraser | ANNO-11 | partial (`annotate.pen.button` switches and returns, the pair is a setting, INK-42; the app's stylus events in part 4) |
 | ANN-20 | Ruler across the whole screen width, moved up and down, its button hidden unless a setting shows it | ANNO-17 | partial (ruling along either edge, INK-27; no UI) |
 | ANN-21 | Turn the ruler, angle shown (lowest priority) | ANNO-18 | missing |
 
@@ -50,6 +50,7 @@ row can be judged. Text, stamps, layers commands, selection, shapes and export a
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M4 part 3: ANN-17 rectangle select, ANN-18 shapes, ANN-19 pen button partial |
 | 2026-10-31 | patch | M4 part 2c: ANN-16 stamps partial |
 | 2026-10-31 | patch | M4 part 2b: ANN-15 text notes partial |
 | 2026-10-31 | patch | M4 part 2a: ANN-30 layers and ANN-10 presets partial |

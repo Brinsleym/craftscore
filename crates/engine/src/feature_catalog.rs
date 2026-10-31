@@ -216,13 +216,13 @@ pub const FEATURES: &[Feature] = &[
         id: "ANNO-11",
         title: "Pen shortcuts (stylus double-tap / barrel button switches tool)",
         priority: "P2",
-        commands: &["input.pen.shortcut.map"],
+        commands: &["annotate.pen.button", "annotate.pen.buttonTool"],
     },
     Feature {
         id: "ANNO-12",
         title: "Select, move, copy, resize, recolour and delete existing annotations with a rectangle (the same rectangle starts a Score Snip or Score Shortcut)",
         priority: "P1",
-        commands: &["annotate.select", "annotate.transform"],
+        commands: &["annotate.select.rect", "annotate.select.move"],
     },
     Feature {
         id: "ANNO-13",
@@ -246,7 +246,7 @@ pub const FEATURES: &[Feature] = &[
         id: "ANNO-16",
         title: "Shapes and lines (straight line, circle) snapped from strokes",
         priority: "P2",
-        commands: &["annotate.tool.shape"],
+        commands: &["annotate.shapes"],
     },
     Feature {
         id: "ANNO-17",

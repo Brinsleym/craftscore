@@ -188,6 +188,33 @@ pub fn specs() -> Vec<CommandSpec> {
             ruler_set as _,
         ),
         spec(
+            "annotate.shapes",
+            "Shapes",
+            "Markup",
+            r#"{"on":bool?}"#,
+            false,
+            always,
+            shapes as _,
+        ),
+        spec(
+            "annotate.pen.button",
+            "Pen Button",
+            "",
+            "{}",
+            false,
+            always,
+            pen_button as _,
+        ),
+        spec(
+            "annotate.pen.buttonTool",
+            "Pen Button Tool",
+            "Settings>Markup",
+            r#"{"tool":"pen|highlighter|eraser|text|stamp|select"}"#,
+            false,
+            always,
+            pen_button_tool as _,
+        ),
+        spec(
             "annotate.stroke",
             "Draw",
             "",
@@ -424,6 +451,12 @@ fn style_set(session: &mut Session, params: &Value) -> Result<Value, EngineError
             }
             w
         }
+        MarkupTool::Select => {
+            return Err(bad(
+                ID,
+                "the rectangle tool has no colour or width; recolour a selection with annotate.select.recolor".into(),
+            ));
+        }
         _ => {
             let tool = m.drawing().map_or(Tool::Pen, |(t, _)| t);
             let w = opt_width(ID, p, ToolStyle::widths(tool))?;
@@ -657,6 +690,46 @@ fn pen_only(session: &mut Session, params: &Value) -> Result<Value, EngineError>
     Ok(json!({ "penOnly": on, "drawWithTouch": !on }))
 }
 
+/// Shapes on or off (ANNO-16); toggles without `on`.
+fn shapes(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.shapes";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["on"])?;
+    let on = opt_bool(ID, p, "on")?.unwrap_or(!session.markup.shapes);
+    session.markup.shapes = on;
+    Ok(state_json(session))
+}
+
+/// The stylus barrel button or double-tap (ANNO-11): switches to the button's tool, or back.
+fn pen_button(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.pen.button";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &[])?;
+    session.markup.press_button();
+    Ok(state_json(session))
+}
+
+/// Which tool the pen button switches to (the eraser by default).
+fn pen_button_tool(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
+    const ID: &str = "annotate.pen.buttonTool";
+    let p = params_object(ID, params)?;
+    reject_unknown_keys(ID, p, &["tool"])?;
+    let name = opt_str(ID, p, "tool")?.ok_or_else(|| bad(ID, "`tool` is required".into()))?;
+    let tool = MarkupTool::from_id(name).ok_or_else(|| {
+        bad(
+            ID,
+            format!(
+                "`tool` must be pen, highlighter, eraser, text, stamp or select, got {}",
+                truncate(name, 32)
+            ),
+        )
+    })?;
+    let m = &mut session.markup;
+    m.button_tool = tool;
+    m.button_return = None;
+    Ok(state_json(session))
+}
+
 fn state(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     const ID: &str = "annotate.state";
     let p = params_object(ID, params)?;
@@ -761,6 +834,7 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     // A stroke drawn on screen that starts at a ruler edge is ruled along it (ANNO-17). The ruler
     // lies on the screen, so only view-space strokes meet it; erasers are never ruled.
     let erasing = device == PointerKind::Eraser || session.markup.tool == MarkupTool::Eraser;
+    let mut ruled = false;
     if space == "view"
         && !erasing
         && let Some(y) = session.markup.ruler
@@ -776,11 +850,12 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
                 t: r.3,
             })
             .collect();
-        if let Some(ruled) = crate::markup::rule_on_screen(y, &pts) {
-            raw = ruled
+        if let Some(along) = crate::markup::rule_on_screen(y, &pts) {
+            raw = along
                 .iter()
                 .map(|q| (f64::from(q.x), f64::from(q.y), q.pressure, q.t))
                 .collect();
+            ruled = true;
         }
     }
     // Where on which page: map the samples into the page's PDF space.
@@ -877,7 +952,16 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
                 t: r.3,
             })
             .collect();
-        let points = scorecraft_ink::prepare(&samples)?;
+        let mut points = scorecraft_ink::prepare(&samples)?;
+        // Shapes (ANNO-16): a ruled stroke is already straight.
+        let mut shape = None;
+        if markup.shapes
+            && !ruled
+            && let Some((found, straight)) = scorecraft_ink::straighten(&points)
+        {
+            points = straight;
+            shape = Some(found.id());
+        }
         let count = points.len();
         let id: AnnotationId = l.ids.id(now);
         l.hlc = l.hlc.tick(now);
@@ -915,6 +999,7 @@ fn stroke(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
                 },
                 "annotation": id.to_string(),
                 "points": count,
+                "shape": shape,
             }),
         }
     };

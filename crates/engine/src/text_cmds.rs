@@ -110,7 +110,12 @@ pub(crate) fn page_rect(session: &Session, file_page: usize) -> Result<Rect, Eng
 }
 
 /// Lays `text` out in `style` with its top-left corner at `at`, kept inside `page`.
-fn place(text: &str, style: &TextStyle, at: Point, page: Rect) -> Result<Rect, EngineError> {
+pub(crate) fn place(
+    text: &str,
+    style: &TextStyle,
+    at: Point,
+    page: Rect,
+) -> Result<Rect, EngineError> {
     let face = Face::get(FaceKind::Note, style.bold, style.italic)
         .ok_or_else(|| EngineError::Unsupported("the built-in text font".into()))?;
     let laid = layout(

@@ -1,6 +1,6 @@
 //! scorecraft-ink: the stroke engine. Cleans and smooths pen samples, maps pressure to width,
 //! builds the filled outline every renderer draws, hit-tests strokes for the erasers and the
-//! rectangle tool, and rules strokes along the ruler (spec `docs/spec/ink.md`).
+//! rectangle tool, rules strokes along the ruler and straightens shapes (spec `docs/spec/ink.md`).
 //!
 //! Layer L2 in the workspace map (`docs/architecture.md` §2–3). Pure and deterministic: no I/O,
 //! no clock, no randomness. Everything works in source-page PDF space (points, y up), so the same
@@ -24,6 +24,7 @@ mod outline;
 mod prepare;
 mod pressure;
 mod ruler;
+mod shape;
 mod smooth;
 mod style;
 
@@ -33,6 +34,7 @@ pub use outline::{Outline, chisel_half_width, outline};
 pub use prepare::{MAX_COORD, MAX_POINTS, MIN_SPACING, prepare};
 pub use pressure::PressureCurve;
 pub use ruler::{RULER_SNAP_DEGREES, Ruler};
+pub use shape::{LINE_SLACK, LINE_TOLERANCE, MIN_SHAPE_SIZE, Shape, straighten};
 pub use smooth::{CORNER_DEGREES, MAX_OUTLINE_POINTS, Sample, smooth};
 pub use style::{
     ERASER_WIDTHS, HIGHLIGHTER_PALETTE, HIGHLIGHTER_SWATCHES, HIGHLIGHTER_WIDTHS, PALETTE,

@@ -30,6 +30,7 @@ pub mod parity;
 mod reader;
 mod reader_cmds;
 mod score_cmds;
+mod select_cmds;
 mod session;
 mod snapshot;
 mod stamp_cmds;

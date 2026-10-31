@@ -102,7 +102,7 @@ fn tool_stamp(session: &mut Session, params: &Value) -> Result<Value, EngineErro
 }
 
 /// The box a dynamic of `text` at `size` takes, centred on `c`.
-fn dynamic_rect(text: &str, size: f64, c: Point) -> Result<Rect, EngineError> {
+pub(crate) fn dynamic_rect(text: &str, size: f64, c: Point) -> Result<Rect, EngineError> {
     let face = Face::get(FaceKind::Dynamic, false, false)
         .ok_or_else(|| EngineError::Unsupported("the built-in text font".into()))?;
     let half_w = face.advance(text, size) / 2.0 + size * 0.1;
