@@ -1,6 +1,6 @@
 # ScoreCraft architecture
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (current state: first engine commands; earlier: page cache and pre-rendering; earlier: PDF adapter on PDFCraft 0.15.0 with the vello_cpu patch; earlier: §16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (current state: M1 foundation crates, the library store and its commands; earlier: first engine commands; earlier: page cache and pre-rendering; earlier: PDF adapter on PDFCraft 0.15.0 with the vello_cpu patch; earlier: §16 one egui on craft-ui, §17 web runtime, sync redesigned around Google Drive and device-to-device, iPad pen host; earlier: PDF backend reuses PDFCraft's crates, §15; first version) · **Target:** enScore 3.7 (2026)
 
 ## Current state (2026-10-31)
 
@@ -19,6 +19,23 @@
   The session holds one open score until the library lands (M5). `view.render` renders through
   the page cache, can write a PNG through `scorecraft-codecs`, and queues the neighbouring pages
   for pre-rendering. `scorecraft-cli info` and `render` are shorthands for them.
+
+- **Foundation (M1, 2026-10-31).** `scorecraft-geom` has points, rects, affine transforms,
+  quarter-turn rotations, page boxes that map PDF user space to display pixels and back, and
+  cubic Béziers with bounded flattening. `scorecraft-raster` has premultiplied RGBA bitmaps with
+  checked sizes, tile grids, mip pyramids and damage regions (the render cache still uses the
+  PDF adapter's bitmap; moving it over comes with the compositor). `scorecraft-doc` is the §5
+  model, all of it: ids are UUID v7 from a caller-seeded generator, annotations carry hybrid
+  logical clocks. `scorecraft-ops` has reversible ops, all-or-nothing transactions and per-score
+  and library undo stacks (§6). `scorecraft-format` is the §8 store with a journal for
+  multi-record saves; ink is one snapshot file per page until the M8 op log.
+- **Library commands.** The session holds an open library: `library.*` (create, open, import,
+  folders, delete and restore, verify and repair, read-only views for agents), `score.metadata.set`,
+  `page.*`, `score.pageRange.set`, bookmarks, `list.*` and `edit.undo`/`edit.redo`. Each edit is
+  one transaction and one undo step, saved before the command returns; a failed save is undone in
+  memory too. `score.open` takes a library score; the reader still shows the file's pages, and
+  page edits apply when the M3 layout lands. The engine's clock is `chrono` natively and is set
+  by the shell in the browser.
 
 Otherwise this page is the **design plan**: the workspace, the layering rules that
 keep the engine independent of the UI, the document model and how rendering, input, sync and
@@ -511,6 +528,7 @@ framework, so it looks and behaves like a Craft app.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Current state: M1 foundation crates (geom, raster, doc, ops, format) and the library commands |
 | 2026-10-31 | patch | Current state: `score.open` and `view.render` in the engine, CLI `info` and `render` |
 | 2026-10-31 | patch | Current state: `scorecraft-render` page cache, pre-rendering and dark/sepia filters |
 | 2026-10-31 | patch | Current state: `scorecraft-pdf` on `pdfcraft-render` 0.15.0 (`65ff3a00`) with the `vello_cpu` patch; §15 pinned build |

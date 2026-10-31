@@ -1,6 +1,6 @@
 # File-format parity
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (corpus results: PDF-1 done, PDF-2 and PDF-3 partial; earlier: PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (library format v1 written down as built in M1; earlier: corpus results: PDF-1 done, PDF-2 and PDF-3 partial; earlier: PDF reading is partial; earlier: PDF rows reuse PDFCraft's crates; earlier: major, first version) · **Target:** enScore 3.7 (2026)
 
 Which files ScoreCraft reads and writes, against what enScore's public listings say it handles.
 Status: **done** (with round-trip or corpus tests), **partial**, **missing**. Directions: R read,
@@ -30,16 +30,39 @@ W write.
 
 ## ScoreCraft library format
 
-A directory, `<Name>.scorecraft/`, readable without ScoreCraft. Version 1 layout is in
-[`architecture.md` §8](architecture.md#8-library-storage-scorecraft-format). Rules:
+A directory, `<Name>.scorecraft/`, readable without ScoreCraft: plain JSON records plus the
+imported files. Version 1, as built in M1 (`crates/format`, 2026-10-31):
 
-- `manifest.json`: `{"format":"scorecraft-library","version":1,"library":"<uuid>"}`.
-- `blobs/sha256/<2 hex>/<62 hex>`: imported files, byte-for-byte, never modified.
-- `scores/<uuid>.json`: one record per score (`doc::Score` serialised), every field
-  `#[serde(default)]` so older readers skip unknown fields and newer readers fill missing ones.
-- `ink/<uuid>/<page-key>.bin`: annotation ops, length-prefixed records, compacted on idle.
-- Writes are atomic per file; a crash leaves either the old or the new record.
-- Breaking changes bump `version` and ship a migration plus a reader for the previous version.
+```text
+<Name>.scorecraft/
+├─ manifest.json              {"format":"scorecraft-library","version":1,"library":"<uuid>","createdMs":…}
+├─ library.json               folders, Recently Deleted (score → deleted-at ms), settings
+├─ scores/<uuid>.json         a score without its annotations: source, metadata, folder, pages,
+│                             pageRange, layers, bookmarks, audio, midiOnOpen, practiceNotes, times
+├─ ink/<uuid>/<page>.json     {"page":n,"annotations":[…]} for one source page (0-based)
+├─ lists/<uuid>.json          a setlist: name and entries (score or placeholder)
+├─ blobs/sha256/<2 hex>/<62>  imported files, byte-for-byte, never modified
+├─ journal/pending.json       only while a save that changes several records is in flight
+└─ damaged/                   records Verify & Repair could not read, kept for recovery
+```
+
+- **Ids** are UUID v7 strings; times are Unix milliseconds; colours are `#rrggbbaa`; rotations
+  are degrees; blob ids are 64 hex digits; JSON keys are camelCase.
+- **Annotations** are in PDF user space of the source page, so page edits never move them.
+  Annotation objects carry `"type"`: `stroke`, `text`, `stamp`, `snip` or `shortcut`.
+- **Writes** are atomic per file (temp file, flush, rename). A save that changes more than one
+  file writes every new record to `journal/pending.json` first; on open, a journal is replayed
+  and removed, so the library is always as before or after a save. Only files whose bytes
+  changed are written.
+- **Reading** skips a record it can't parse and reports it; the rest of the library opens.
+  `library.verify` checks references and blob hashes; with `repair` it moves damaged records to
+  `damaged/`, fixes dangling references, and removes unused blobs.
+- **Compatibility:** optional fields default when missing, unknown fields are ignored. A newer
+  `version` is refused with an error, never guessed at. Breaking changes bump `version` and ship
+  a migration plus a reader for the previous version. The record mapping destructures every
+  `doc` field, so adding one fails to compile until it is mapped here.
+- The per-page ink files are whole snapshots for now; the append-only op log the sync design
+  needs (architecture §9) replaces them in M8.
 
 ## ScoreCraft setlist bundle
 
@@ -99,6 +122,7 @@ count only; see [development](development.md#test-corpora)).
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | Library format v1 as built (M1): records, ink per page, journal, verify and repair |
 | 2026-10-31 | patch | Corpus results: PDF-1 done; PDF-2 and PDF-3 partial, with the renderer gaps listed |
 | 2026-10-31 | patch | PDF reading is partial: the adapter opens, renders and extracts text |
 | 2026-10-28 | minor | PDF rows reuse PDFCraft's crates |

@@ -14,8 +14,8 @@ supersede estimates elsewhere.
 | [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
 | [Annotation](#annotation) | 0 | 0 | 19 | from annotation-parity |
-| [Automation](#automation) | 0 | 1 | 3 | 1 of 122 feature-map rows live (measured, `cargo xtask parity`) |
-| [Reliability](#reliability) | 2 | 0 | 3 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
+| [Automation](#automation) | 0 | 1 | 3 | 17 of 122 feature-map rows live (measured, `cargo xtask parity`) |
+| [Reliability](#reliability) | 2 | 1 | 2 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
 | [Distribution](#distribution) | 0 | 0 | 6 |  |
 
 ## Performance
@@ -123,9 +123,9 @@ iPad, a 4-core laptop; desktop numbers from the fixed CI runner.
 | Id | Target | Status |
 |---|---|---|
 | REL-1 | Never-crash lints on every production crate | done (2026-10-28, checked by `cargo xtask layers`) |
-| REL-2 | `panic_hunt` covers every command | done (2026-10-28: every registered command, 267 adversarial params each; in CI) |
+| REL-2 | `panic_hunt` covers every command | done (2026-10-28: every registered command, 267 adversarial params each; in CI. 2026-10-31: also with a library open and real ids, checking it stays sound) |
 | REL-3 | Fuzz targets: pdf, fsc, midi, library loader, setlist bundle | missing |
-| REL-4 | Atomic saves and crash recovery tested by kill-during-save | missing |
+| REL-4 | Atomic saves and crash recovery tested by kill-during-save | partial (2026-10-31: a save crashed at every write (simulated storage) reopens to the old or new library; a real process kill on each OS is still to do) |
 | REL-5 | Settings that do nothing: 0 | missing |
 
 ## Distribution

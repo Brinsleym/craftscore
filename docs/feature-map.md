@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -104,7 +104,7 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 | ANNO-10 | Annotation layers: create, rename, show/hide individually (hide for performance) | Pro | S1, S3, S4 | `annotate.layer.new`, `annotate.layer.setVisible` | doc | P1 | 8–14 | missing |
 | ANNO-11 | Pen shortcuts (stylus double-tap / barrel button switches tool) | Free | S1 | `input.pen.shortcut.map` | input | P2 | 4–8 | missing |
 | ANNO-12 | Select, move, resize and recolour existing annotations (lasso) | Free | inferred | `annotate.select`, `annotate.transform` | ink, engine | P1 | 10–18 | missing |
-| ANNO-13 | Undo / redo of every markup step | Free | inferred | `edit.undo`, `edit.redo` | ops | P0 | 6–10 | missing |
+| ANNO-13 | Undo / redo of every markup step | Free | inferred | `edit.undo`, `edit.redo` | ops | P0 | 6–10 | partial |
 | ANNO-14 | Palm rejection and "pen only" drawing mode | Free | inferred | `input.pen.only` | input | P0 | 4–8 | missing |
 | ANNO-15 | Annotations never alter the source PDF; stored separately per page | Free | S1 | n/a (model rule) | doc | P0 | 2–4 | missing |
 | ANNO-16 | Shapes and lines (straight line, circle) snapped from strokes | Free | inferred | `annotate.tool.shape` | ink | P2 | 6–10 | missing |
@@ -113,18 +113,18 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| LIB-1 | Import PDFs from a file picker, open-with / share sheet, drag and drop | Free | S1, S4 | `library.import.files` | io | P0 | 6–12 | missing |
+| LIB-1 | Import PDFs from a file picker, open-with / share sheet, drag and drop | Free | S1, S4 | `library.import.files` | io | P0 | 6–12 | partial |
 | LIB-2 | Import a whole folder, with folder-level bulk add | Free | S1, S3 | `library.import.folder` | io | P1 | 4–8 | missing |
-| LIB-3 | Folders | Free | S1 | `library.folder.new`, `library.score.move` | doc | P0 | 4–8 | missing |
-| LIB-4 | Metadata fields: title, composer, tags, key | Free | S1 | `score.metadata.set` | doc | P0 | 4–8 | missing |
+| LIB-3 | Folders | Free | S1 | `library.folder.new`, `library.score.move` | doc | P0 | 4–8 | partial |
+| LIB-4 | Metadata fields: title, composer, tags, key | Free | S1 | `score.metadata.set` | doc | P0 | 4–8 | partial |
 | LIB-5 | Search across title, composer, tags, key and folders | Free | S1 | `library.search` | search | P0 | 6–12 | missing |
 | LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search; pdf ♻ pdfcraft-render (text) | P1 | 6–12 | missing |
 | LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2, S8 | `score.metadata.detect` | metadata ♻ pdfcraft-ocr | P2 | 8–16 | missing |
 | LIB-8 | Detection for a whole folder of files at once | Acct | S1 | `library.metadata.detectAll` | metadata | P2 | 4–8 | missing |
 | LIB-9 | Sort by title, composer, date added, recently opened | Free | S1 | `library.sort.set` | engine | P0 | 2–4 | missing |
-| LIB-10 | Recently Deleted folder with restore | Free | S1, S3 | `library.trash.restore`, `library.trash.empty` | doc | P1 | 4–8 | missing |
-| LIB-11 | Bookmarks: name a page, list and jump | Free | S1, S4 | `score.bookmark.add`, `view.bookmark.goto` | doc | P0 | 3–6 | missing |
-| LIB-12 | Verify & Repair Library (check files, rebuild index) | Free | S1 | `library.verify` | format | P1 | 6–12 | missing |
+| LIB-10 | Recently Deleted folder with restore | Free | S1, S3 | `library.trash.restore`, `library.trash.empty` | doc | P1 | 4–8 | partial |
+| LIB-11 | Bookmarks: name a page, list and jump | Free | S1, S4 | `score.bookmark.add`, `view.bookmark.goto` | doc | P0 | 3–6 | partial |
+| LIB-12 | Verify & Repair Library (check files, rebuild index) | Free | S1 | `library.verify` | format | P1 | 6–12 | partial |
 | LIB-13 | Unlimited scores; library opens fast with thousands of PDFs | Free | S4 | n/a (performance budget) | format, search | P1 | 8–16 | missing |
 | LIB-14 | Thumbnails / cover grid and list views | Free | inferred | `ui.library.view` | ui-egui, render | P1 | 6–12 | missing |
 | LIB-15 | Recently opened list | Free | inferred | `library.recent.list` | engine | P1 | 2–4 | missing |
@@ -133,14 +133,14 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| PAGE-1 | Reorder pages | Free | S1, S4 | `page.move` | doc | P0 | 3–6 | missing |
-| PAGE-2 | Rotate pages | Free | S1, S4 | `page.rotate` | doc | P0 | 2–4 | missing |
-| PAGE-3 | Hide pages (kept, not shown) | Free | S1, S4 | `page.setHidden` | doc | P0 | 2–4 | missing |
-| PAGE-4 | Delete pages | Free | S1, S4 | `page.delete` | doc | P0 | 2–4 | missing |
+| PAGE-1 | Reorder pages | Free | S1, S4 | `page.move` | doc | P0 | 3–6 | partial |
+| PAGE-2 | Rotate pages | Free | S1, S4 | `page.rotate` | doc | P0 | 2–4 | partial |
+| PAGE-3 | Hide pages (kept, not shown) | Free | S1, S4 | `page.setHidden` | doc | P0 | 2–4 | partial |
+| PAGE-4 | Delete pages | Free | S1, S4 | `page.delete` | doc | P0 | 2–4 | partial |
 | PAGE-5 | Crop and straighten scanned pages without altering the file | Free | S1 | `page.straighten`, `page.crop.set` | algo, doc | P1 | 8–16 | missing |
 | PAGE-6 | Blank manuscript paper: single staff, grand staff or tab, any page size | Free | S1 | `score.newManuscript` | pdf ♻ pdfcraft-create | P1 | 4–8 | missing |
 | PAGE-7 | Score Snips: copy bars from one place and paste them elsewhere, for example the bars after a page turn pasted before it, so the turn can come later | Pro | S1, S3, S4, S8 | `page.snip.create`, `page.snip.place` | doc, render | P1 | 12–24 | missing |
-| PAGE-8 | Page Range: limit a score to a range of its PDF's pages | Free | S1 | `score.pageRange.set` | doc | P1 | 3–6 | missing |
+| PAGE-8 | Page Range: limit a score to a range of its PDF's pages | Free | S1 | `score.pageRange.set` | doc | P1 | 3–6 | partial |
 
 ## NAV: in-score navigation
 
@@ -156,13 +156,13 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| LIST-1 | Setlists ("Lists") for practice, lessons and concerts: create, reorder, rename | Pro | S1, S4 | `list.new`, `list.entry.add`, `list.entry.move` | doc | P0 | 6–12 | missing |
-| LIST-2 | Page range per list entry | Pro | S1 | `list.entry.pageRange.set` | doc | P1 | 3–6 | missing |
-| LIST-3 | Tempo per list entry (feeds the metronome) | Pro | S1 | `list.entry.tempo.set` | doc, practice | P1 | 2–4 | missing |
+| LIST-1 | Setlists ("Lists") for practice, lessons and concerts: create, reorder, rename | Pro | S1, S4 | `list.new`, `list.entry.add`, `list.entry.move` | doc | P0 | 6–12 | partial |
+| LIST-2 | Page range per list entry | Pro | S1 | `list.entry.pageRange.set` | doc | P1 | 3–6 | partial |
+| LIST-3 | Tempo per list entry (feeds the metronome) | Pro | S1 | `list.entry.tempo.set` | doc, practice | P1 | 2–4 | partial |
 | LIST-4 | Pieces flow into one another; screen stays awake until the end | Pro | S1, S2 | `list.play` | engine | P0 | 4–8 | missing |
 | LIST-5 | Share a whole setlist as one file (PDFs, order, page ranges, markings) and import it ready to play on another device | Pro | S1, S3, S8 | `list.export.bundle`, `list.import.bundle` | io, format | P1 | 10–18 | missing |
 | LIST-6 | The same score appears in several lists without duplication | Pro | inferred | n/a (model rule) | doc | P0 | 1–2 | missing |
-| LIST-7 | Placeholders / breaks in a list (intermission, spoken item) | Pro | inferred | `list.entry.addPlaceholder` | doc | P3 | 2–4 | missing |
+| LIST-7 | Placeholders / breaks in a list (intermission, spoken item) | Pro | inferred | `list.entry.addPlaceholder` | doc | P3 | 2–4 | partial |
 
 ## PLAY: audio playback
 
