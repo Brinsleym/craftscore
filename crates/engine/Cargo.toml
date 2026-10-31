@@ -12,6 +12,7 @@ publish = false
 scorecraft-doc = { workspace = true }
 scorecraft-format = { workspace = true }
 scorecraft-geom = { workspace = true }
+scorecraft-layout = { workspace = true }
 scorecraft-ops = { workspace = true }
 scorecraft-codecs = { workspace = true }
 scorecraft-pdf = { workspace = true }

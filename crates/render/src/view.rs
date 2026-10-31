@@ -162,13 +162,21 @@ impl ScoreView {
     /// Pages already cached or out of range are skipped. Earlier requests that have not started
     /// are dropped, so fast turning never builds a backlog.
     pub fn prefetch(&self, pages: &[usize], scale: f32) {
-        let Some(zoom) = ZoomBucket::of(scale) else {
-            return;
-        };
+        let each: Vec<(usize, f32)> = pages.iter().map(|&p| (p, scale)).collect();
+        self.prefetch_each(&each);
+    }
+
+    /// Like [`ScoreView::prefetch`], with a scale per page (facing pages of different sizes
+    /// render at different scales). Requests with a scale that isn't a positive number are
+    /// skipped.
+    pub fn prefetch_each(&self, pages: &[(usize, f32)]) {
         let count = self.doc.page_count();
         let mut state = self.shared.lock();
         state.queue.clear();
-        for &page in pages.iter().filter(|&&p| p < count) {
+        for &(page, scale) in pages.iter().filter(|&&(p, _)| p < count) {
+            let Some(zoom) = ZoomBucket::of(scale) else {
+                continue;
+            };
             let key = TileKey {
                 page,
                 zoom,

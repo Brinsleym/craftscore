@@ -21,8 +21,8 @@ pub struct OpenScore {
     pub(crate) view: ScoreView,
     /// The file name shown in titles and errors.
     pub(crate) name: String,
-    /// The 0-based page last rendered.
-    pub(crate) page: usize,
+    /// Which pages are shown, where the player is, layout and zoom.
+    pub(crate) reader: crate::reader::ReaderState,
     /// The library score it was opened from, if any.
     pub(crate) library_score: Option<scorecraft_doc::ScoreId>,
 }
@@ -106,6 +106,7 @@ impl Session {
         let info = score_info(&doc, name);
         #[allow(unused_mut)]
         let mut view = ScoreView::new(doc, CACHE_BUDGET);
+        let reader = crate::reader::ReaderState::new(crate::reader::file_pages(view.document()));
         // Without a worker thread, pre-render requests wait for `run_prefetch`; the score still
         // opens and renders.
         #[cfg(not(target_arch = "wasm32"))]
@@ -113,7 +114,7 @@ impl Session {
         self.score = Some(OpenScore {
             view,
             name: name.to_owned(),
-            page: 0,
+            reader,
             library_score: None,
         });
         Ok(info)
@@ -141,6 +142,8 @@ impl Session {
         if let Some(open) = self.score.as_mut() {
             open.library_score = Some(id);
         }
+        self.refresh_reader();
+        self.prefetch_reader();
         let l = self.lib_mut(ID)?;
         if let Some(s) = l.lib.scores.get_mut(&id) {
             s.opened_ms = Some(now);

@@ -50,4 +50,4 @@ and public standards. Implementers work from these specs.
 
 | Spec | Feature-map ids | Status |
 |---|---|---|
-| _none yet_ | | |
+| [page-turning.md](page-turning.md) | READ-2, READ-3, READ-5, READ-6, READ-12, READ-15, TURN-1..4, TURN-8, NAV-5 | first version 2026-10-31 |

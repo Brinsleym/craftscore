@@ -73,23 +73,20 @@ fn bookmark_goto(session: &mut Session, params: &Value) -> Result<Value, EngineE
         .find(|b| b.id == bid)
         .ok_or_else(|| scorecraft_ops::OpError::Missing(format!("bookmark {bid}")))?;
     let (name, page) = (b.name.clone(), b.page.0 as usize);
-    let position = s.pages.iter().position(|pg| pg.source == b.page);
-    let open = session
-        .score
-        .as_mut()
-        .ok_or_else(|| EngineError::Disabled(ID.to_owned()))?;
-    if page >= open.view.document().page_count() {
+    let r = session.reader_mut(ID)?;
+    if !r.goto_file_page(page) {
         return Err(bad(
             ID,
-            format!("bookmark `{name}` points past the end of the file"),
+            format!(
+                "bookmark `{name}` is on a page that isn't shown (hidden, outside the page range or past the end of the file)"
+            ),
         ));
     }
-    open.page = page;
-    Ok(json!({
-        "bookmark": name,
-        "page": page + 1,
-        "scorePage": position.map(|p| p + 1),
-    }))
+    let mut out = r.to_json();
+    session.prefetch_reader();
+    crate::commands::set(&mut out, "bookmark", json!(name));
+    crate::commands::set(&mut out, "filePage", json!(page + 1));
+    Ok(out)
 }
 
 /// Renders a page (1-based `page`, default the current one) through the page cache and makes it
@@ -106,7 +103,7 @@ fn render(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     let count = score.view.document().page_count();
     let page = match opt_int(ID, p, "page", 1, count as u64)? {
         Some(n) => usize::try_from(n - 1).map_err(|_| bad(ID, "`page` is too large".into()))?,
-        None => score.page,
+        None => score.reader.current_file_page(),
     };
     let dpi = opt_f64(ID, p, "dpi")?.unwrap_or(DEFAULT_DPI);
     if !(dpi > 0.0 && dpi <= MAX_DPI) {
@@ -130,7 +127,7 @@ fn render(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     let scale = (dpi / f64::from(scorecraft_pdf::POINTS_PER_INCH)) as f32;
     let cached = score.view.is_cached(page, scale);
     let bitmap = score.view.page(page, scale)?;
-    score.page = page;
+    score.reader.goto_file_page(page);
     if prefetch {
         score.view.prefetch(&neighbours(page, count), scale);
     }

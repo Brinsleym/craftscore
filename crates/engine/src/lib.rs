@@ -23,6 +23,8 @@ mod library_cmds;
 mod list_cmds;
 mod page_cmds;
 pub mod parity;
+mod reader;
+mod reader_cmds;
 mod score_cmds;
 mod session;
 mod view_cmds;
@@ -30,6 +32,7 @@ mod view_cmds;
 pub use commands::{CommandInfo, CommandSpec, registry};
 pub use error::EngineError;
 pub use library::{AnyStorage, Clock, library_open};
+pub use reader::{FrameSlot, ShownPage};
 pub use session::Session;
 
 /// The crate's package name, used in diagnostics.

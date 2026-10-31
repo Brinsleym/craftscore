@@ -85,6 +85,6 @@ mod tests {
     fn is_enabled_knows_registered_commands_only() {
         let s = Session::new();
         assert_eq!(s.is_enabled("engine.version"), Some(true));
-        assert_eq!(s.is_enabled("view.turn.next"), None);
+        assert_eq!(s.is_enabled("view.no.such.command"), None);
     }
 }
