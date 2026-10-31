@@ -156,7 +156,7 @@ The corpus test (`crates/pdf/tests/corpus.rs`) is opt-in through the `corpus` ca
 It checks PDF-1 and PDF-2 in [file-format-parity](file-format-parity.md#pdf-fidelity-targets).
 
 - **PDF-1:** every distinct score opens or asks for its password.
-- **PDF-2:** every page renders at 150 dpi, and the first three also at 300 dpi. Each render is compared with PDFium's after both are reduced to 4 × 4-pixel grey blocks. PDFium draws images without smoothing for the references (`no_smoothimage`), as ScoreCraft does for every image whose /Interpolate flag is off; otherwise every scan fails on its anti-aliased edges alone.
+- **PDF-2:** every page renders at 150 dpi, and the first three also at 300 dpi. Each render is compared with PDFium's after both are reduced to 4 × 4-pixel grey blocks. PDFium draws the references at exactly the requested scale (its `PdfPage.render` rounds a Letter page at 150 dpi up to 1651 rows and stretches it) and without image smoothing (`no_smoothimage`), as ScoreCraft does for every image whose /Interpolate flag is off; otherwise every scan fails on its anti-aliased edges alone.
 
 `cargo xtask corpus --references` renders the PDFium references. It needs Python 3 with
 `pip install pypdfium2 pillow`.

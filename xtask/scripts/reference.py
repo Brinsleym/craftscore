@@ -18,16 +18,23 @@ which defaults to off (ISO 32000-2, 8.9.5.3). On a scanned score that one differ
 whole page fail, while with it removed the renders were pixel-identical. Paths and text stay
 anti-aliased on both sides.
 
+Pages are drawn at exactly the requested scale onto a bitmap sized as ScoreCraft sizes it (each
+side rounded up, ignoring float noise under 1/100 px). `PdfPage.render` rounds 792 pt at 150 dpi
+(1650.0000000000002 px) up to 1651 rows and stretches the page to fill them, which moved every
+staff line by up to a pixel and failed engraved pages on that alone.
+
 Run through `cargo xtask corpus --references`, which installs nothing:
 `pip install pypdfium2 pillow` first.
 """
 
 import argparse
 import hashlib
+import math
 import pathlib
 import sys
 
 import pypdfium2 as pdfium
+import pypdfium2.raw as pdfium_c
 from PIL import Image
 
 BLOCK = 4
@@ -35,7 +42,26 @@ FULL_DPI = 150
 DETAIL_DPI = 300
 DETAIL_PAGES = 3
 # Bump the version when the renders change, so `cargo xtask test-corpus` redoes old references.
-MARKER = ".complete-v2"
+MARKER = ".complete-v3"
+
+
+def device_pixels(pt, scale):
+    """Pixels covering `pt` points, as pdfcraft-render's `device_pixels` counts them."""
+    return max(1, math.ceil(pt * scale - 0.01))
+
+
+def render(page, scale):
+    """The page at exactly `scale`, on white, with annotations, images unsmoothed."""
+    w_pt, h_pt = page.get_size()
+    w, h = device_pixels(w_pt, scale), device_pixels(h_pt, scale)
+    bitmap = pdfium.PdfBitmap.new_native(w, h, pdfium_c.FPDFBitmap_BGRx)
+    bitmap.fill_rect((255, 255, 255, 255), 0, 0, w, h)
+    # PDFium maps the page (crop box and /Rotate applied) to points, y down, then this matrix.
+    matrix = pdfium_c.FS_MATRIX(scale, 0, 0, scale, 0, 0)
+    clip = pdfium_c.FS_RECTF(0, 0, w, h)
+    flags = pdfium_c.FPDF_ANNOT | pdfium_c.FPDF_RENDER_NO_SMOOTHIMAGE
+    pdfium_c.FPDF_RenderPageBitmapWithMatrix(bitmap.raw, page.raw, matrix, clip, flags)
+    return bitmap
 
 
 def reduce(image):
@@ -83,9 +109,7 @@ def main():
             try:
                 page = pdf[index]
                 for dpi in dpis:
-                    bitmap = page.render(
-                        scale=dpi / 72, fill_color=(255, 255, 255, 255), no_smoothimage=True
-                    )
+                    bitmap = render(page, dpi / 72)
                     write_pgm(out / doc_id / f"p{index + 1:03}-{dpi}.pgm", reduce(bitmap.to_pil()))
             except pdfium.PdfiumError:
                 # PDFium can't load or draw this page: it gets no reference, so the corpus test
