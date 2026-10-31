@@ -30,7 +30,7 @@ The workflows a performing musician runs every week, checked end to end on the m
 Plus the skeleton (M0, done 2026-10-28) and the stability floor: never-crash lints on every crate,
 `panic_hunt` green, fuzzed `pdf` and library loader.
 
-**Result: does not pass** (2026-10-31: code complete for reading, markup, setlists and export; left: the metronome click, fuzzing the `pdf` and library loaders, and the end-to-end checks on the Windows tablet).
+**Result: does not pass** (2026-10-31: code complete for reading, markup, setlists and export; left: the metronome click and the end-to-end checks on the Windows tablet; the `pdf` and library loaders have deterministic mutation tests (`cargo-fuzz` targets on nightly are the next step)).
 
 ## Milestones
 

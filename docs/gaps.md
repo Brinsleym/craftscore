@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (merged with M3 done on main: M3: G2 and G6 progress from the Windows check; earlier: M4 part 1: G4 stroke engine, highlighter, whiteout, erasers, palm rejection and ruler in the engine; earlier: M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (G3: library-loader mutation test; earlier: merged with M3 done on main: M3: G2 and G6 progress from the Windows check; earlier: M4 part 1: G4 stroke engine, highlighter, whiteout, erasers, palm rejection and ruler in the engine; earlier: M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -163,8 +163,12 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   crashes a save at every write and reopens to exactly the old or the new library; damaged
   records are skipped on open and repaired by `library.verify`; `panic_hunt` also runs every
   command against an open library with real ids and checks the library stays sound.
-- **Missing:** fuzz targets for `fsc`, `midi`, the library loader and setlist bundles; a real
-  kill-the-process save test on each OS; the last-resort panic guard.
+- **Done (2026-10-31):** a deterministic stand-in for a library-loader fuzz target
+  (`crates/format/tests/mutate.rs`): every file of a stored library damaged a dozen ways, one
+  at a time and many together, never panics the loader, and checking what it opens never panics.
+  The desktop app's frame has a last-resort panic guard (M3).
+- **Missing:** fuzz targets for `fsc`, `midi` and setlist bundles (with those formats); a real
+  kill-the-process save test on each OS.
 - **Impact:** a crash on stage or lost markings ends trust permanently.
 
 ## Hardware gaps
