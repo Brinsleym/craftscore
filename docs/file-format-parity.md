@@ -89,7 +89,8 @@ count only; see [development](development.md#test-corpora)).
      staff lines); PDFium widens them to one pixel. Not yet tracked upstream.
   5. Unsmoothed images pick different source pixels from PDFium (1-px flips along edges). The
      ink and layout match; only the 4 × 4 tolerance sees it. Tracked with item 3.
-  6. One file's page tree yields one page where PDFium finds six. Not yet tracked upstream.
+  6. A damaged file yields one page where PDFium finds six (Acrobat recovers it, other readers
+     fail to open it). Damaged-file recovery, PDF-4, rather than a rendering bug.
 - Images are not smoothed when they are scaled, because hayro honours each image's /Interpolate
   flag. Scans therefore look harder-edged than in PDFium-based readers. An "always smooth
   images" render option in PDFCraft would fix that and items 3 and 5.
