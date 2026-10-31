@@ -176,13 +176,45 @@ fn library_workflow_survives_reopen() {
     );
     let opened = run(&mut s, "score.open", json!({ "score": sonata }));
     assert_eq!(opened["pageCount"], 4);
-    let r = run(&mut s, "view.bookmark.goto", json!({ "bookmark": bm }));
+    // The reader shows the score's pages within its range (positions 1–2) without the hidden
+    // one, with each page's rotation.
+    let shown: Vec<(usize, &Value)> = got["pages"].as_array().unwrap()[..2]
+        .iter()
+        .enumerate()
+        .filter(|(_, p)| !p["hidden"].as_bool().unwrap_or(false))
+        .collect();
+    let (intro_position, first) = shown[0];
+    let st = run(&mut s, "view.state", json!({}));
+    assert_eq!(st["pageCount"], shown.len());
     assert_eq!(
-        (r["page"].as_u64(), r["scorePage"].as_u64()),
-        (Some(1), Some(3))
+        st["slots"][0]["filePage"].as_u64(),
+        first["source"].as_u64().map(|p| p + 1)
+    );
+    assert_eq!(
+        st["slots"][0]["rotation"].as_i64().unwrap(),
+        first["rotation"].as_i64().unwrap_or(0)
+    );
+    let intro_file_page = first["source"].as_u64().unwrap() + 1;
+    // "Coda" is on score page 3, outside the page range.
+    assert_eq!(
+        fails(&mut s, "view.bookmark.goto", json!({ "bookmark": bm })),
+        "bad_params"
+    );
+    let intro = run(
+        &mut s,
+        "score.bookmark.add",
+        json!({ "score": sonata, "name": "Intro", "page": intro_position + 1 }),
+    )["bookmark"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let r = run(&mut s, "view.bookmark.goto", json!({ "bookmark": intro }));
+    assert_eq!(
+        (r["page"].as_u64(), r["filePage"].as_u64()),
+        (Some(1), Some(intro_file_page))
     );
     let r = run(&mut s, "view.render", json!({ "dpi": 36 }));
-    assert_eq!(r["page"], 1);
+    assert_eq!(r["page"], intro_file_page);
 
     // Setlists.
     let list = run(&mut s, "list.new", json!({ "name": "Recital" }))["list"]

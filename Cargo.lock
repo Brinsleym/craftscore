@@ -1156,6 +1156,7 @@ dependencies = [
  "scorecraft-doc",
  "scorecraft-format",
  "scorecraft-geom",
+ "scorecraft-layout",
  "scorecraft-ops",
  "scorecraft-pdf",
  "scorecraft-render",
@@ -1217,6 +1218,9 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-layout"
 version = "0.0.1"
+dependencies = [
+ "scorecraft-geom",
+]
 
 [[package]]
 name = "scorecraft-metadata"

@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+scorecraft-geom = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,7 +1,9 @@
 //! scorecraft-layout: Page layout: single, two-page, half-page and alternating turns, zoom, crop and snips.
 //!
-//! Layer L2 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Layer L2 in the workspace map (`docs/architecture.md` §2–3). Pure geometry, no rendering: the
+//! [`Reader`] holds the layout, turn mode and position in a score, turns forward and back
+//! ([`docs/spec/page-turning.md`](../../../docs/spec/page-turning.md)), and [`place`] maps the
+//! current [`View`] to rectangles on screen that a frontend fills with page bitmaps.
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -10,6 +12,13 @@
     clippy::todo,
     clippy::unreachable
 )]
+
+mod place;
+mod reader;
+
+pub use place::{Fit, Frame, PageSize, Slot, Viewport, ZOOM_RANGE, Zoom, place};
+pub use reader::{Layout, Reader, SPLIT_RANGE, TurnMode, View, views};
+pub use scorecraft_geom::{Rect, Size};
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

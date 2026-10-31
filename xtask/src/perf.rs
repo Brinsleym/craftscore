@@ -1,5 +1,6 @@
 //! `cargo xtask perf [--update-baseline]`: measures the render budgets in `perf/budgets.toml`
-//! with `crates/pdf/examples/perf.rs` (release build, the corpus if fetched) and prints them
+//! with `crates/pdf/examples/perf.rs` and `crates/engine/examples/perf.rs` (release builds, the
+//! corpus if fetched) and prints them
 //! beside their budgets. `--update-baseline` writes `perf/baseline.json`, which
 //! `cargo xtask scorecard` folds into docs/scorecard.md. Set `SCORECRAFT_PERF_DEVICE` to name
 //! the machine; publish baselines only from a reference device.
@@ -56,30 +57,29 @@ pub fn baseline(device: &str, measured: &[Measured]) -> String {
 
 pub fn run(root: &Path, update_baseline: bool) -> Result<(), String> {
     let corpus = root.join("corpus/public-domain");
-    let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
-    let mut cmd = Command::new(cargo);
-    cmd.current_dir(root).args([
-        "run",
-        "--release",
-        "-q",
-        "-p",
-        "scorecraft-pdf",
-        "--example",
-        "perf",
-    ]);
-    if corpus.is_dir() {
-        cmd.arg("--").arg(&corpus);
-    } else {
+    if !corpus.is_dir() {
         println!("perf: no corpus (run `cargo xtask corpus --all`); using synthetic scores");
     }
-    let out = cmd.output().map_err(|e| format!("running cargo: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "the perf example failed:\n{}",
-            String::from_utf8_lossy(&out.stderr)
-        ));
+    let mut stdout = String::new();
+    // Render budgets from the PDF adapter; the turn budget (P1) from the engine.
+    for package in ["scorecraft-pdf", "scorecraft-engine"] {
+        let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+        let mut cmd = Command::new(cargo);
+        cmd.current_dir(root)
+            .args(["run", "--release", "-q", "-p", package, "--example", "perf"]);
+        if corpus.is_dir() {
+            cmd.arg("--").arg(&corpus);
+        }
+        let out = cmd.output().map_err(|e| format!("running cargo: {e}"))?;
+        if !out.status.success() {
+            return Err(format!(
+                "the {package} perf example failed:\n{}",
+                String::from_utf8_lossy(&out.stderr)
+            ));
+        }
+        stdout.push_str(&String::from_utf8_lossy(&out.stdout));
     }
-    let measured = parse(&String::from_utf8_lossy(&out.stdout));
+    let measured = parse(&stdout);
     let budgets = crate::scorecard::parse_budgets(
         &fs::read_to_string(root.join("perf/budgets.toml")).map_err(|e| e.to_string())?,
     )?;

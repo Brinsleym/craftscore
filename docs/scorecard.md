@@ -14,7 +14,7 @@ supersede estimates elsewhere.
 | [File compatibility](#file-compatibility) | 1 | 2 | 3 | corpus floors not set |
 | [Reader](#reader) | 0 | 0 | 23 | from ui-parity |
 | [Annotation](#annotation) | 0 | 0 | 19 | from annotation-parity |
-| [Automation](#automation) | 0 | 1 | 3 | 17 of 122 feature-map rows live (measured, `cargo xtask parity`) |
+| [Automation](#automation) | 0 | 1 | 3 | 25 of 122 feature-map rows live (measured, `cargo xtask parity`) |
 | [Reliability](#reliability) | 2 | 1 | 2 | never-crash lints on 36 of 36 packages (measured, `cargo xtask layers`) |
 | [Distribution](#distribution) | 0 | 0 | 6 |  |
 
