@@ -22,6 +22,7 @@ mod error;
 mod export_cmds;
 pub mod feature_catalog;
 mod find_cmds;
+mod fulltext_cmds;
 mod input_cmds;
 mod layer_cmds;
 mod library;

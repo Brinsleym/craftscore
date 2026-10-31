@@ -126,6 +126,8 @@ pub struct LibraryView {
     list_detail: Value,
     lists: Value,
     new_list: String,
+    /// Search inside the scores' PDFs and notes (LIB-6) rather than their details.
+    pub full_text: bool,
 }
 
 impl Default for LibraryView {
@@ -145,6 +147,7 @@ impl Default for LibraryView {
             list_detail: Value::Null,
             lists: Value::Null,
             new_list: String::new(),
+            full_text: false,
         }
     }
 }
@@ -173,17 +176,38 @@ impl LibraryView {
             .ok()
             .and_then(|v| v.get("sort").cloned())
             .unwrap_or(Value::Null);
-        let ask = (self.query.clone(), self.folder.clone(), sort);
+        let ask = (
+            format!(
+                "{}{}",
+                if self.full_text { "\u{1}" } else { "" },
+                self.query
+            ),
+            self.folder.clone(),
+            sort,
+        );
         if !self.dirty && self.asked.as_ref() == Some(&ask) {
             return;
         }
-        let mut p = json!({ "query": self.query, "limit": 500 });
-        if let (Some(f), Some(o)) = (&self.folder, p.as_object_mut()) {
-            o.insert("folder".into(), json!(f));
-        }
-        self.results = session
-            .dispatch("library.search", &p)
-            .unwrap_or_else(|e| json!({ "error": e.to_string() }));
+        let mut more = false;
+        self.results = if self.full_text && !self.query.trim().is_empty() {
+            // A little indexing per frame; while files are waiting, ask again next frame.
+            let r = session
+                .dispatch(
+                    "library.search.fullText",
+                    &json!({ "query": self.query, "limit": 200, "budgetMs": 100 }),
+                )
+                .unwrap_or_else(|e| json!({ "error": e.to_string() }));
+            more = r.get("pending").and_then(Value::as_u64).unwrap_or(0) > 0;
+            r
+        } else {
+            let mut p = json!({ "query": self.query, "limit": 500 });
+            if let (Some(f), Some(o)) = (&self.folder, p.as_object_mut()) {
+                o.insert("folder".into(), json!(f));
+            }
+            session
+                .dispatch("library.search", &p)
+                .unwrap_or_else(|e| json!({ "error": e.to_string() }))
+        };
         let info = session
             .dispatch("library.info", &json!({}))
             .unwrap_or(Value::Null);
@@ -199,7 +223,7 @@ impl LibraryView {
             self.open_list = None;
         }
         self.asked = Some(ask);
-        self.dirty = false;
+        self.dirty = more;
     }
 
     fn take_covers(&mut self, ctx: &Context) {
@@ -266,6 +290,13 @@ impl LibraryView {
                     .hint_text("Search title, composer, tags, key…")
                     .desired_width(320.0),
             );
+            if ui
+                .selectable_label(self.full_text, "Inside scores")
+                .on_hover_text("Search the words in the PDFs and practice notes")
+                .clicked()
+            {
+                self.full_text = !self.full_text;
+            }
             let sort = self
                 .asked
                 .as_ref()
@@ -385,13 +416,22 @@ impl LibraryView {
             .get("count")
             .and_then(Value::as_u64)
             .unwrap_or(0);
+        let pending = self
+            .results
+            .get("pending")
+            .and_then(Value::as_u64)
+            .unwrap_or(0);
         ui.label(
-            RichText::new(match count {
-                1 => "1 score".to_owned(),
-                n => format!("{n} scores"),
+            RichText::new(match (count, pending) {
+                (1, 0) => "1 score".to_owned(),
+                (n, 0) => format!("{n} scores"),
+                (n, p) => format!("{n} so far; reading {p} more…"),
             })
             .color(tokens.text),
         );
+        if pending > 0 {
+            ui.ctx().request_repaint();
+        }
         egui::ScrollArea::vertical()
             .auto_shrink(false)
             .show(ui, |ui| {
@@ -432,6 +472,19 @@ impl LibraryView {
                                     .and_then(Value::as_u64)
                                     .unwrap_or(0)));
                                 ui.end_row();
+                                if let Some(sn) = s
+                                    .get("snippet")
+                                    .or_else(|| s.get("notes"))
+                                    .and_then(Value::as_str)
+                                {
+                                    let page = s
+                                        .get("filePage")
+                                        .and_then(Value::as_u64)
+                                        .map(|p| format!("p. {p}: "))
+                                        .unwrap_or_default();
+                                    ui.label(RichText::new(format!("{page}{sn}")).weak().italics());
+                                    ui.end_row();
+                                }
                             }
                         });
                 }

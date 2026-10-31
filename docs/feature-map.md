@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 3: NAV-1, PAGE-7 partial; earlier: M6 part 2: PRAC-1 partial; earlier: M6 part 1: LIST-4, LIST-6, IMP-6 partial; earlier: M5 part 3: LIB-13 partial, measured; earlier: M5 part 2: LIB-14 partial; earlier: M5 part 1: LIB-2, -5, -9, -15 partial; earlier: M4 part 5: EXP-2 partial; earlier: M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (LIB-6 partial; earlier: M6 part 3: NAV-1, PAGE-7 partial; earlier: M6 part 2: PRAC-1 partial; earlier: M6 part 1: LIST-4, LIST-6, IMP-6 partial; earlier: M5 part 3: LIB-13 partial, measured; earlier: M5 part 2: LIB-14 partial; earlier: M5 part 1: LIB-2, -5, -9, -15 partial; earlier: M4 part 5: EXP-2 partial; earlier: M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -41,7 +41,7 @@ feature-map ids each one informs. `obs.` in the Source column means an observati
 | Reading and display | READ | 15 | 8 | 0 | 9 | 6 |
 | Page turning inputs | TURN | 8 | 4 | 0 | 5 | 3 |
 | Annotation | ANNO | 18 | 8 | 0 | 17 | 1 |
-| Library and organisation | LIB | 15 | 6 | 0 | 12 | 3 |
+| Library and organisation | LIB | 15 | 6 | 0 | 13 | 2 |
 | Page editing | PAGE | 8 | 4 | 0 | 6 | 2 |
 | In-score navigation | NAV | 5 | 1 | 0 | 2 | 3 |
 | Setlists | LIST | 7 | 3 | 0 | 6 | 1 |
@@ -52,7 +52,7 @@ feature-map ids each one informs. `obs.` in the Source column means an observati
 | Export and print | EXP | 4 | 1 | 0 | 1 | 3 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 1 | 4 |
-| **Total** | | **124** | **39** | **0** | **61** | **63** |
+| **Total** | | **124** | **39** | **0** | **62** | **62** |
 
 Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft reuse, the S8 rows and the ruler (P0 250–530, P1 350–680, P2 233–456, P3 92–194) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -121,7 +121,7 @@ Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft
 | LIB-3 | Folders | Free | S1 | `library.folder.new`, `library.score.move` | doc | P0 | 4–8 | partial |
 | LIB-4 | Metadata fields: title, composer, tags, key | Free | S1 | `score.metadata.set` | doc | P0 | 4–8 | partial |
 | LIB-5 | Search across title, composer, tags, key and folders | Free | S1 | `library.search` | search | P0 | 6–12 | partial |
-| LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search; pdf ♻ pdfcraft-render (text) | P1 | 6–12 | missing |
+| LIB-6 | Full-text search inside PDFs and practice notes | Free | S1 | `library.search.fullText` | search; pdf ♻ pdfcraft-render (text) | P1 | 6–12 | partial |
 | LIB-7 | Automatic title and composer detection from generic scan names | Acct | S1, S2, S8 | `score.metadata.detect` | metadata ♻ pdfcraft-ocr | P2 | 8–16 | missing |
 | LIB-8 | Detection for a whole folder of files at once | Acct | S1 | `library.metadata.detectAll` | metadata | P2 | 4–8 | missing |
 | LIB-9 | Sort by title, composer, date added, recently opened | Free | S1 | `library.sort.set` | engine | P0 | 2–4 | partial |
@@ -272,7 +272,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **124** | **39** | **0** | **61** | **63** |
+| **Total** | | **124** | **39** | **0** | **62** | **62** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -311,6 +311,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | LIB-6 full-text search (PDF text and practice notes) partial |
 | 2026-10-31 | patch | M6 part 3: NAV-1 Score Shortcuts and PAGE-7 Score Snips partial |
 | 2026-10-31 | patch | M6 part 2: PRAC-1 metronome with tap tempo partial (visual pulse; the click waits on audio output) |
 | 2026-10-31 | patch | M6 part 1: LIST-4 playing a list, LIST-6 one score in many lists, IMP-6 import report partial |
