@@ -117,7 +117,7 @@ impl eframe::App for Shell {
                 Some("Something went wrong drawing that frame. Your score is still open.".into());
         }
         if let Some(c) = &mut self.control {
-            c.after_frame(&mut self.app);
+            c.after_frame(&mut self.app, ui.ctx());
         }
     }
 }

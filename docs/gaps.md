@@ -1,6 +1,6 @@
 # Where ScoreCraft falls short of enScore
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M4 part 1: G4 stroke engine, highlighter, whiteout, erasers, palm rejection and ruler in the engine; earlier: M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (merged with M3 done on main: M3: G2 and G6 progress from the Windows check; earlier: M4 part 1: G4 stroke engine, highlighter, whiteout, erasers, palm rejection and ruler in the engine; earlier: M1: G3 atomic saves and crash recovery done, G5 store done, G7 setlist model done; earlier: G1: M2 reading done, PDFCraft render gaps listed; earlier: G3: never-crash lints on every crate and `panic_hunt`; earlier: Microsoft Store description: G9, G10, G11, G12, G15 updated; G1 becomes integration of PDFCraft's crates) · **Target:** enScore 3.7 (2026)
 
 Every known shortfall against enScore 3.7, one entry each, ranked by user impact on the way to
 alpha and beta. This is the work list agents pick from: take the highest-ranked entry nobody is
@@ -17,11 +17,11 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 | # | Gap | Kind | Impact | Estimate | Parity doc |
 |---|---|---|---|---:|---|
 | G1 | PDF engine: parse, render, write (reusing PDFCraft). Reading is in (M2); PDF-2 is partial on six PDFCraft render gaps (blank JBIG2 halftone, rotated-page image placement, short page tree, faint hairlines, light 1-bit downscales, sampling phase), fixed upstream then re-pinned | file format | blocks alpha | 15–30 h | [file-format-parity](file-format-parity.md#corpus-results-2026-10-31-pdfcraft-65ff3a00) |
-| G2 | Reader layout and page turns | features, UI | blocks alpha | 40–80 h | [ui-parity](ui-parity.md) |
+| G2 | Reader layout and page turns. Mostly done in M3; split snapping, first-render cost and other platforms' keep-awake remain | features, UI | blocks alpha | 15–30 h | [ui-parity](ui-parity.md) |
 | G3 | Stability and data safety | stability | blocks alpha | 50–100 h | [scorecard](scorecard.md#reliability) |
 | G4 | Ink engine and markup tools. Ink, erasers, palm rejection, ruler, layers, presets, text notes and stamps are in the engine (M4 parts 1 and 2); the pen in the app, selection, shapes and export are not | features, UI | blocks alpha | 45–100 h + human | [annotation-parity](annotation-parity.md) |
 | G5 | Library store, organisation and search | features | blocks alpha | 40–80 h | [file-format-parity](file-format-parity.md#scorecraft-library-format) |
-| G6 | Foot pedals and keyboard turning | hardware | blocks alpha | 10–20 h + human | [hardware-parity](hardware-parity.md) |
+| G6 | Foot pedals and keyboard turning. Key maps, profiles and debounce done in M3; learn mode and more pedals remain | hardware | blocks alpha | 6–12 h + human | [hardware-parity](hardware-parity.md) |
 | G7 | Setlists, Score Shortcuts and Score Snips | features | blocks beta | 30–65 h | [feature-map](feature-map.md#list-setlists) |
 | G8 | Import, export, print and forScore migration | file format | blocks beta | 70–140 h + human | [file-format-parity](file-format-parity.md) |
 | G9 | Mobile platforms | platforms | blocks beta | 80–200 h + human | [hardware-parity](hardware-parity.md) |
@@ -54,8 +54,15 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G2. Reader layout and page turns
 
-- **Missing:** single and two-page layouts, half-page and alternating turns, full screen,
-  zoom/pan, landscape page zoom, keep-awake, turn latency budget.
+- **Done in M3 (2026-10-31):** single and two-page layouts, half-page and alternating turns,
+  full screen, zoom and pan, landscape fit, keep-awake (Windows), turns from cache well inside
+  P1 (0.06 ms on real library scores, WIN-RB), a desktop window that renders real scores
+  correctly, including rotated landscape pages.
+- **Missing:** the half-page split is a fixed fraction (0.2–0.8, default 0.5), so on real scores it
+  can cut through a system. It should snap to the gap between systems, which needs system
+  detection. First render of a big scanned page takes seconds: native builds no longer block the
+  window on it (the page appears when ready), but the render cost itself is G1 territory.
+  Keep-awake on macOS, Linux and the web.
 - **Rows:** READ-2..6, READ-9, READ-12, READ-15, TURN-1..3, TURN-8.
 - **Open questions:** tap-zone proportions and half-page split behaviour (G17).
 - **Impact:** the core experience. A turn must never wait on rendering.
@@ -164,8 +171,10 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 ### G6. Foot pedals and keyboard turning
 
-- **Missing:** key mapping for HID pedals (AirTurn, PageFlip, Donner and generic), learn mode,
-  per-pedal profiles, debounce.
+- **Done in M3 (2026-10-31):** key maps with four profiles, repeat and bounce filter, taps and
+  swipes. One Bluetooth pedal, tested by the owner on Windows: one turn per press, correct
+  direction, both in its key mode and in its touch (swipe) mode.
+- **Missing:** learn mode, more pedal models (AirTurn, PageFlip, Donner), other platforms.
 - **Rows:** TURN-3, TURN-4.
 - **Human:** test with at least three real pedal models on each platform.
 
@@ -220,6 +229,7 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M3: G2 (40–80 → 15–30 h) and G6 (10–20 → 6–12 h) after the Windows check; half-page split snapping recorded |
 | 2026-10-31 | patch | M1: G3 crash-safe saves (60–120 → 50–100 h), G5 library store and commands (60–120 → 40–80 h), G7 setlist model and commands (40–80 → 30–65 h) |
 | 2026-10-31 | patch | G1: reading lands in M2; six PDFCraft render gaps listed, estimate 15–30 h |
 | 2026-10-28 | minor | G3: `panic_hunt` lands with the engine command registry |

@@ -4,6 +4,7 @@
 //! integration hands back the next frame's pixels.
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use eframe::egui::{Context, RawInput, ViewportCommand};
 use scorecraft_automation::control::{self, Reply, Request, Server};
@@ -16,7 +17,12 @@ pub struct Control {
     server: Server,
     /// Requests answered with the state once the current frame has run.
     after_frame: Vec<Request>,
+    /// Screenshots waiting for the visible pages to finish rendering, with when they arrived.
+    shots: Vec<(Request, Instant)>,
 }
+
+/// Longest a screenshot waits for pages still rendering before it captures what is shown.
+const SHOT_WAIT: Duration = Duration::from_secs(15);
 
 fn engine_err(e: EngineError) -> (String, String) {
     (e.code().to_owned(), e.to_string())
@@ -30,6 +36,7 @@ impl Control {
         Ok(Control {
             server,
             after_frame: Vec::new(),
+            shots: Vec::new(),
         })
     }
 
@@ -49,10 +56,30 @@ impl Control {
         }
     }
 
-    /// After the frame: answer the input requests with the new state.
-    pub fn after_frame(&mut self, app: &mut App) {
+    /// After the frame: answer the input requests with the new state, and take the screenshots
+    /// whose pages are ready.
+    pub fn after_frame(&mut self, app: &mut App, ctx: &Context) {
         for req in self.after_frame.drain(..) {
             req.ok(app.control_state());
+        }
+        if self.shots.is_empty() {
+            return;
+        }
+        let ready = app.pages_ready();
+        let (take, wait): (Vec<_>, Vec<_>) = std::mem::take(&mut self.shots)
+            .into_iter()
+            .partition(|(_, since)| ready || since.elapsed() >= SHOT_WAIT);
+        self.shots = wait;
+        for (req, _) in take {
+            // Paint even if the window is minimised or covered.
+            ctx.send_viewport_cmd(ViewportCommand::RequestPaintWhileHidden);
+            ctx.request_screenshot(move |image| match screenshot_json(&image) {
+                Ok(v) => req.ok(v),
+                Err(e) => req.err("io", e),
+            });
+        }
+        if !self.shots.is_empty() {
+            ctx.request_repaint_after(Duration::from_millis(30));
         }
     }
 
@@ -83,12 +110,9 @@ impl Control {
                 Err(e) => req.err("bad_params", e),
             },
             "ui.screenshot" => {
-                // Paint even if the window is minimised or covered.
+                // Taken after a frame in which every visible page is rendered.
                 ctx.send_viewport_cmd(ViewportCommand::RequestPaintWhileHidden);
-                ctx.request_screenshot(move |image| match screenshot_json(&image) {
-                    Ok(v) => req.ok(v),
-                    Err(e) => req.err("io", e),
-                });
+                self.shots.push((req, Instant::now()));
             }
             _ => req.err(
                 "unknown_method",
@@ -173,7 +197,7 @@ mod tests {
             };
             control.before_frame(&mut app, &ctx, &mut raw);
             let mut out = ctx.run_ui(raw, |ui| app.ui(ui));
-            control.after_frame(&mut app);
+            control.after_frame(&mut app, &ctx);
             out.textures_delta.clear();
             if let Some(vp) = out.viewport_output.remove(&ViewportId::ROOT) {
                 for cmd in vp.commands {
