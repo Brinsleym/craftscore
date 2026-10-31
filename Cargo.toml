@@ -52,6 +52,8 @@ pdfcraft-render = { git = "https://github.com/storytold/pdfcraft", rev = "65ff3a
 # Third-party
 bytemuck = "1"
 png = "0.18"
+proptest = { version = "1", default-features = false, features = ["std"] }
+serde = { version = "1", features = ["derive"] }
 sha2 = "0.11"
 serde_json = "1"
 toml = "0.9"
