@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+base64 = { workspace = true }
 craft-ui = { workspace = true }
 egui = { workspace = true, features = ["default_fonts"] }
 scorecraft-codecs = { workspace = true }

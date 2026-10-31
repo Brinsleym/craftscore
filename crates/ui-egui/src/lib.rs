@@ -13,6 +13,7 @@
 )]
 
 pub mod app;
+pub mod control;
 pub mod reader;
 pub mod settings;
 pub mod state;

@@ -1,7 +1,7 @@
 //! scorecraft-automation: MCP server and control-channel handlers.
 //!
-//! Layer L6 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Layer L6 in the workspace map (`docs/architecture.md` §2–3). [`control`] is the desktop app's
+//! control channel (`docs/control-protocol.md`); the MCP bridge comes later.
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -10,6 +10,9 @@
     clippy::todo,
     clippy::unreachable
 )]
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod control;
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

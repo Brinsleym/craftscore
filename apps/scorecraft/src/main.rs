@@ -2,6 +2,11 @@
 //!
 //! `scorecraft [score.pdf]` opens the reader; with no file it reopens the last score. Settings
 //! (reader preferences, pedal map, theme, keep-awake) live in the platform's config folder.
+//!
+//! `--control` starts the control channel (`docs/control-protocol.md`) on a free loopback port
+//! and prints `control: 127.0.0.1:<port> token=<hex>`; `--control-port N` picks the port and
+//! `--control-file PATH` also writes that line to a file (release Windows builds have no
+//! console).
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -13,7 +18,10 @@
 // Release builds on Windows have no console window.
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod control;
+
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use scorecraft_devices::KeepAwake;
 use scorecraft_ui_egui::{App, Platform, Settings};
@@ -89,9 +97,16 @@ impl Platform for Desktop {
 
 struct Shell {
     app: App,
+    control: Option<control::Control>,
 }
 
 impl eframe::App for Shell {
+    fn raw_input_hook(&mut self, ctx: &eframe::egui::Context, raw: &mut eframe::egui::RawInput) {
+        if let Some(c) = &mut self.control {
+            c.before_frame(&mut self.app, ctx, raw);
+        }
+    }
+
     fn ui(&mut self, ui: &mut eframe::egui::Ui, _frame: &mut eframe::Frame) {
         // Last-resort guard (never-crash rule 7): a panic in a frame is reported and the reader
         // stays on screen.
@@ -101,13 +116,60 @@ impl eframe::App for Shell {
             self.app.state.message =
                 Some("Something went wrong drawing that frame. Your score is still open.".into());
         }
+        if let Some(c) = &mut self.control {
+            c.after_frame(&mut self.app);
+        }
     }
 }
 
+/// Command-line options.
+#[derive(Debug, Default, PartialEq)]
+struct Args {
+    score: Option<String>,
+    control: bool,
+    control_port: u16,
+    control_file: Option<PathBuf>,
+}
+
+fn parse_args(mut args: impl Iterator<Item = String>) -> Result<Args, String> {
+    let mut a = Args::default();
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--control" => a.control = true,
+            "--control-port" => {
+                a.control = true;
+                a.control_port = args
+                    .next()
+                    .and_then(|p| p.parse().ok())
+                    .ok_or("--control-port wants a port number")?;
+            }
+            "--control-file" => {
+                a.control = true;
+                a.control_file = Some(args.next().ok_or("--control-file wants a path")?.into());
+            }
+            "--help" | "-h" => {
+                return Err("usage: scorecraft [--control] [--control-port N] \
+                            [--control-file PATH] [score.pdf]"
+                    .into());
+            }
+            s if s.starts_with("--") => return Err(format!("unknown option {s}")),
+            _ if a.score.is_none() => a.score = Some(arg),
+            _ => return Err("give one score at most".into()),
+        }
+    }
+    Ok(a)
+}
+
 fn main() -> std::process::ExitCode {
+    let args = match parse_args(std::env::args().skip(1)) {
+        Ok(a) => a,
+        Err(e) => {
+            eprintln!("scorecraft: {e}");
+            return std::process::ExitCode::FAILURE;
+        }
+    };
     let settings = load_settings();
-    let arg = std::env::args().nth(1);
-    let open = arg.clone().or_else(|| settings.last_score.clone());
+    let open = args.score.clone().or_else(|| settings.last_score.clone());
     let mut app = App::new(
         Box::new(Desktop {
             keep_awake: KeepAwake::new(),
@@ -116,7 +178,7 @@ fn main() -> std::process::ExitCode {
     );
     if let Some(path) = open
         && let Err(e) = app.open_path(&path)
-        && arg.is_some()
+        && args.score.is_some()
     {
         app.state.message = Some(e.to_string());
     }
@@ -131,12 +193,53 @@ fn main() -> std::process::ExitCode {
     match eframe::run_native(
         "ScoreCraft",
         options,
-        Box::new(|_cc| Ok(Box::new(Shell { app }))),
+        Box::new(move |cc| {
+            let control = if args.control {
+                let ctx = cc.egui_ctx.clone();
+                let c = control::Control::start(
+                    args.control_port,
+                    Arc::new(move || ctx.request_repaint()),
+                )?;
+                let banner = c.banner();
+                println!("{banner}");
+                if let Some(path) = &args.control_file {
+                    std::fs::write(path, format!("{banner}\n"))?;
+                }
+                Some(c)
+            } else {
+                None
+            };
+            Ok(Box::new(Shell { app, control }))
+        }),
     ) {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("scorecraft: {e}");
             std::process::ExitCode::FAILURE
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(s: &[&str]) -> Result<Args, String> {
+        parse_args(s.iter().map(|s| (*s).to_owned()))
+    }
+
+    #[test]
+    fn arguments_parse() {
+        assert_eq!(args(&[]).unwrap(), Args::default());
+        let a = args(&["--control-port", "7000", "x.pdf"]).unwrap();
+        assert!(a.control && a.control_port == 7000 && a.score.as_deref() == Some("x.pdf"));
+        for bad in [
+            &["--control-port"][..],
+            &["--nope"],
+            &["a.pdf", "b.pdf"],
+            &["--control-port", "x"],
+        ] {
+            assert!(args(bad).is_err(), "{bad:?}");
         }
     }
 }

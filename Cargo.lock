@@ -3449,10 +3449,15 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 name = "scorecraft"
 version = "0.0.1"
 dependencies = [
+ "base64",
  "eframe",
  "rfd",
+ "scorecraft-automation",
  "scorecraft-devices",
+ "scorecraft-engine",
+ "scorecraft-testkit",
  "scorecraft-ui-egui",
+ "serde_json",
 ]
 
 [[package]]
@@ -3470,6 +3475,10 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-automation"
 version = "0.0.1"
+dependencies = [
+ "getrandom 0.3.4",
+ "serde_json",
+]
 
 [[package]]
 name = "scorecraft-cli"
@@ -3668,6 +3677,7 @@ version = "0.0.1"
 name = "scorecraft-ui-egui"
 version = "0.0.1"
 dependencies = [
+ "base64",
  "craft-ui",
  "egui",
  "scorecraft-codecs",
