@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -37,7 +37,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 
 | Area | Prefix | Rows | P0 | Done | Partial | Missing |
 |---|---|---:|---:|---:|---:|---:|
-| Reading and display | READ | 15 | 8 | 0 | 0 | 15 |
+| Reading and display | READ | 15 | 8 | 0 | 1 | 14 |
 | Page turning inputs | TURN | 8 | 4 | 0 | 0 | 8 |
 | Annotation | ANNO | 16 | 8 | 0 | 0 | 16 |
 | Library and organisation | LIB | 15 | 6 | 0 | 0 | 15 |
@@ -51,7 +51,7 @@ feature-map ids each one informs. Cite them as "screenshot 13" in observation no
 | Export and print | EXP | 4 | 1 | 0 | 0 | 4 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 0 | 5 |
-| **Total** | | **122** | **39** | **0** | **0** | **122** |
+| **Total** | | **122** | **39** | **0** | **1** | **121** |
 
 Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft reuse and the S8 rows (P0 250–530, P1 360–700, P2 230–450, P3 80–170) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -59,7 +59,7 @@ Sum of the estimates: **~920–1,860 agent-hours** for every row, after PDFCraft
 
 | Id | Feature | Tier | Source | Command | Crate | P | Est | Status |
 |---|---|---|---|---|---|---|---:|---|
-| READ-1 | Open a PDF score and render its pages crisply at any zoom, fast enough to turn without a visible delay | Free | S1 | `score.open`, `view.render` | pdf ♻ pdfcraft-cos, -render; render | P0 | 10–20 | missing |
+| READ-1 | Open a PDF score and render its pages crisply at any zoom, fast enough to turn without a visible delay | Free | S1 | `score.open`, `view.render` | pdf ♻ pdfcraft-cos, -render; render | P0 | 10–20 | partial |
 | READ-2 | Single-page layout | Free | S1, S4 | `view.layout.single` | layout | P0 | 4–8 | missing |
 | READ-3 | Two-page spread layout, with correct first-page placement for spreads | Free | S1 | `view.layout.twoPage` | layout | P0 | 6–12 | missing |
 | READ-4 | Full-screen (chrome hidden) performance mode | Free | S1, S4 | `ui.view.fullScreen` | ui-egui | P0 | 3–6 | missing |
@@ -308,6 +308,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | READ-1 partial: `score.open` opens a PDF and `view.render` renders pages through the page cache; the reader UI comes in M3 |
 | 2026-10-28 | minor | Owner's answers: SYNC-1, SYNC-5 and SYNC-7 describe Google Drive first, Wi-Fi device sync and download-everything; PLAT-1 puts the Windows tablet first and the iPad Swift pen host at P2; rows and estimates unchanged |
 | 2026-10-28 | minor | Reconciled with the Microsoft Store description (S8): added PLAY-7, MIDI-5, SYNC-8, PLAT-5 (118 → 122 rows); corrected PAGE-7 and PLAT-3; all rows ~910–1,830 → ~920–1,860 h |
 | 2026-10-28 | minor | 13 rows marked ♻ PDFCraft reuse; estimates lowered (all rows ~990–1,990 → ~910–1,830 h) |

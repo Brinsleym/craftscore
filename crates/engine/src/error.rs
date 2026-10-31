@@ -11,6 +11,10 @@ pub enum EngineError {
     BadParams { command: String, message: String },
     /// The command or an option of it is not implemented yet.
     Unsupported(String),
+    /// The score could not be opened, rendered or read; carries the PDF layer's stable code.
+    Pdf(scorecraft_pdf::PdfError),
+    /// A file could not be read or written; the message names the path and the reason.
+    Io(String),
 }
 
 impl EngineError {
@@ -21,6 +25,8 @@ impl EngineError {
             EngineError::Disabled(_) => "disabled",
             EngineError::BadParams { .. } => "bad_params",
             EngineError::Unsupported(_) => "unsupported",
+            EngineError::Pdf(e) => e.code(),
+            EngineError::Io(_) => "io_error",
         }
     }
 }
@@ -34,8 +40,16 @@ impl fmt::Display for EngineError {
                 write!(f, "bad params for `{command}`: {message}")
             }
             EngineError::Unsupported(what) => write!(f, "not supported yet: {what}"),
+            EngineError::Pdf(e) => e.fmt(f),
+            EngineError::Io(why) => f.write_str(why),
         }
     }
 }
 
 impl std::error::Error for EngineError {}
+
+impl From<scorecraft_pdf::PdfError> for EngineError {
+    fn from(e: scorecraft_pdf::PdfError) -> Self {
+        EngineError::Pdf(e)
+    }
+}

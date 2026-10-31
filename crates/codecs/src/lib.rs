@@ -1,7 +1,7 @@
 //! scorecraft-codecs: Raster decode and encode for imported images (PNG, JPEG, TIFF, HEIC, WebP).
 //!
-//! Layer L0 in the workspace map (`docs/architecture.md` §2–3). This crate is a milestone M0
-//! stub: it exists so layering, lints and the wasm build are checked from the first commit.
+//! Layer L0 in the workspace map (`docs/architecture.md` §2–3). So far it only encodes PNG, for
+//! rendered pages (`view.render`, the CLI, screenshots); decoders land with import (M5).
 #![deny(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -10,6 +10,8 @@
     clippy::todo,
     clippy::unreachable
 )]
+
+pub mod png;
 
 /// The crate's package name, used by `cargo xtask layers` smoke tests and diagnostics.
 pub const CRATE_NAME: &str = env!("CARGO_PKG_NAME");

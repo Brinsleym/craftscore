@@ -9,7 +9,13 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+scorecraft-codecs = { workspace = true }
+scorecraft-pdf = { workspace = true }
+scorecraft-render = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+scorecraft-testkit = { workspace = true }
 
 [lints]
 workspace = true

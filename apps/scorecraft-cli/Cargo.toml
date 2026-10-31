@@ -12,5 +12,8 @@ publish = false
 scorecraft-engine = { workspace = true }
 serde_json = { workspace = true }
 
+[dev-dependencies]
+scorecraft-testkit = { workspace = true }
+
 [lints]
 workspace = true
