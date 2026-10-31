@@ -58,9 +58,11 @@ marks what an agent cannot finish alone (real devices, observation of enScore, l
   full screen, zoom and pan, landscape fit, keep-awake (Windows), turns from cache well inside
   P1 (0.06 ms on real library scores, WIN-RB), a desktop window that renders real scores
   correctly, including rotated landscape pages.
-- **Missing:** the half-page split is a fixed fraction (0.2–0.8, default 0.5), so on real scores it
-  can cut through a system. It should snap to the gap between systems, which needs system
-  detection. First render of a big scanned page takes seconds: native builds no longer block the
+- **Done (2026-10-31):** the half-page split snaps to the gap between systems on the page on
+  screen (blank bands in a small render's row profile), within 15% of the page height.
+- **Missing:** a split per page (it is one fraction for the score, snapped on the page shown when
+  half-page turns are turned on); system detection that copes with very sparse or very dense
+  pages. First render of a big scanned page takes seconds: native builds no longer block the
   window on it (the page appears when ready), but the render cost itself is G1 territory.
   Keep-awake on macOS, Linux and the web.
 - **Rows:** READ-2..6, READ-9, READ-12, READ-15, TURN-1..3, TURN-8.

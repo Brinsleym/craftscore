@@ -754,7 +754,8 @@ impl App {
                 ui.separator();
                 let half = mode == "halfPage";
                 if self.icon_button(ui, tokens, "Half-Page Turns", half, Icon::Half) {
-                    run.push(("view.turn.halfPage", json!({ "on": !half })));
+                    // Turning it on snaps the split to the gap between systems (G2).
+                    run.push(("view.turn.halfPage", json!({ "on": !half, "snap": !half })));
                 }
                 let alt = mode == "alternating";
                 if self.icon_button(ui, tokens, "Alternating Turns", alt, Icon::Alternate) {
