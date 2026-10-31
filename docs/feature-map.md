@@ -1,6 +1,6 @@
 # Feature map
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M5 part 3: LIB-13 partial, measured; earlier: M5 part 2: LIB-14 partial; earlier: M5 part 1: LIB-2, -5, -9, -15 partial; earlier: M4 part 5: EXP-2 partial; earlier: M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 1: LIST-4, LIST-6, IMP-6 partial; earlier: M5 part 3: LIB-13 partial, measured; earlier: M5 part 2: LIB-14 partial; earlier: M5 part 1: LIB-2, -5, -9, -15 partial; earlier: M4 part 5: EXP-2 partial; earlier: M4 part 3: ANNO-11, ANNO-12 and ANNO-16 partial; earlier: M4 part 2c: ANNO-9 partial; earlier: M4 part 2b: ANNO-8 partial; earlier: M4 part 2a: ANNO-4 and ANNO-10 partial; earlier: owner's answers: ANNO-9 is ScoreCraft's own, ANNO-18 ruler angle added, 124 rows; earlier: M4 part 1: 8 ANNO rows partial, ANNO-17 Ruler added from the owner's observation, 123 rows; earlier: M3: READ-4, READ-9 and PLAT-4 partial: the reader window's full screen, keep-awake and theme; earlier: M3: TURN-1..4 partial: keys, pedal map, taps and swipes go through the engine; earlier: M3: 8 reader rows partial (layouts, half-page and alternating turns, zoom, go to page, contents), live in the engine, the reader window comes later in M3; summary counts recounted; earlier: M1: 16 library, page, list and undo rows partial, live in the engine with no UI yet; earlier: READ-1 partial: `score.open` and `view.render` are live; earlier: owner's sync design and platform priorities in SYNC-1, -5, -7 and PLAT-1; earlier: reconciled with the Microsoft Store description S8, 4 rows added, 1 corrected; 13 rows marked ♻ PDFCraft reuse; first version 118 rows) · **Target:** enScore 3.7 (2026)
 
 Every user-visible enScore capability we know of, one row each, with the ScoreCraft command that
 will implement it. This is ScoreCraft's equivalent of PhotoCraft's Photoshop menu catalog: it is
@@ -44,15 +44,15 @@ feature-map ids each one informs. `obs.` in the Source column means an observati
 | Library and organisation | LIB | 15 | 6 | 0 | 12 | 3 |
 | Page editing | PAGE | 8 | 4 | 0 | 5 | 3 |
 | In-score navigation | NAV | 5 | 1 | 0 | 1 | 4 |
-| Setlists | LIST | 7 | 3 | 0 | 4 | 3 |
+| Setlists | LIST | 7 | 3 | 0 | 6 | 1 |
 | Audio playback | PLAY | 7 | 0 | 0 | 0 | 7 |
 | MIDI | MIDI | 5 | 0 | 0 | 0 | 5 |
 | Practice tools | PRAC | 11 | 1 | 0 | 0 | 11 |
-| Import and scanning | IMP | 8 | 1 | 0 | 0 | 8 |
+| Import and scanning | IMP | 8 | 1 | 0 | 1 | 7 |
 | Export and print | EXP | 4 | 1 | 0 | 1 | 3 |
 | Sync and backup | SYNC | 8 | 0 | 0 | 0 | 8 |
 | Platforms, UI and languages | PLAT | 5 | 2 | 0 | 1 | 4 |
-| **Total** | | **124** | **39** | **0** | **55** | **69** |
+| **Total** | | **124** | **39** | **0** | **58** | **66** |
 
 Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft reuse, the S8 rows and the ruler (P0 250–530, P1 350–680, P2 233–456, P3 92–194) (P0 alone: see [`roadmap.md`](roadmap.md#alpha-gate)).
 
@@ -162,9 +162,9 @@ Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft
 | LIST-1 | Setlists ("Lists") for practice, lessons and concerts: create, reorder, rename | Pro | S1, S4 | `list.new`, `list.entry.add`, `list.entry.move` | doc | P0 | 6–12 | partial |
 | LIST-2 | Page range per list entry | Pro | S1 | `list.entry.pageRange.set` | doc | P1 | 3–6 | partial |
 | LIST-3 | Tempo per list entry (feeds the metronome) | Pro | S1 | `list.entry.tempo.set` | doc, practice | P1 | 2–4 | partial |
-| LIST-4 | Pieces flow into one another; screen stays awake until the end | Pro | S1, S2 | `list.play` | engine | P0 | 4–8 | missing |
+| LIST-4 | Pieces flow into one another; screen stays awake until the end | Pro | S1, S2 | `list.play` | engine | P0 | 4–8 | partial |
 | LIST-5 | Share a whole setlist as one file (PDFs, order, page ranges, markings) and import it ready to play on another device | Pro | S1, S3, S8 | `list.export.bundle`, `list.import.bundle` | io, format | P1 | 10–18 | missing |
-| LIST-6 | The same score appears in several lists without duplication | Pro | inferred | n/a (model rule) | doc | P0 | 1–2 | missing |
+| LIST-6 | The same score appears in several lists without duplication | Pro | inferred | n/a (model rule) | doc | P0 | 1–2 | partial |
 | LIST-7 | Placeholders / breaks in a list (intermission, spoken item) | Pro | inferred | `list.entry.addPlaceholder` | doc | P3 | 2–4 | partial |
 
 ## PLAY: audio playback
@@ -214,7 +214,7 @@ Sum of the estimates: **~925–1,870 agent-hours** for every row, after PDFCraft
 | IMP-3 | Import photos / images (PNG, JPEG, HEIC, TIFF) as pages | Free | S1 | `library.import.images` | io ♻ pdfcraft-create | P1 | 2–4 | missing |
 | IMP-4 | IMSLP search and import of public-domain scores | Pro | S1, S3, S4 | `imslp.search`, `imslp.import` | imslp | P2 | 12–24 | missing |
 | IMP-5 | Import a forScore library from a `.4sc` file: pages, ink, stamps, layers | Free | S1, S4, S8 | `library.import.forscore` | fsc, io | P1 | 30–60 | missing |
-| IMP-6 | Import report: what was imported, skipped, or could not be read | Free | inferred | n/a (result of import) | io | P0 | 2–4 | missing |
+| IMP-6 | Import report: what was imported, skipped, or could not be read | Free | inferred | n/a (result of import) | io | P0 | 2–4 | partial |
 | IMP-7 | Import PDF annotations made in other PDF apps (ISO 32000 ink, highlight, free-text annots) | Free | ours | `library.import.files` | pdf ♻ pdfcraft-annot | P1 | 4–8 | missing |
 | IMP-8 | Import MusicXML / MIDI rendered to pages | n/a | ours | `library.import.musicxml` | engrave | P3 | 80–160 | missing |
 
@@ -272,7 +272,7 @@ work on top of PDFCraft rather than new code. Estimates are agent-hours, before 
 | EXP-2 | pdfcraft-annot builds ISO 32000 annotations with appearance streams; pdfcraft-cos saves incrementally or flattens | 10–18 | 4–8 |
 | EXP-3 | pdfcraft-organize concatenates and reorders pages | 3–6 | 1–2 |
 | IMP-1 | pdfcraft-create assembles the scanned pages; capture and straightening stay ours | 24–40 | 18–32 |
-| **Total** | | **124** | **39** | **0** | **55** | **69** |
+| **Total** | | **124** | **39** | **0** | **58** | **66** |
 
 Outside the rows, the PDF engine milestone (M2, [gap G1](gaps.md#g1-pdf-engine-parse-render-write))
 shrinks from 80–160 h of new code to 20–40 h of integration: the `scorecraft-pdf` adapter, page-tile
@@ -311,6 +311,7 @@ framework rather than from enScore. They are counted in the scorecard, not in pa
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M6 part 1: LIST-4 playing a list, LIST-6 one score in many lists, IMP-6 import report partial |
 | 2026-10-31 | patch | M5 part 3: LIB-13 partial: 10,000 synthetic scores open in 172 ms and search in 22 ms (perf P6, P7), not yet on the reference device |
 | 2026-10-31 | patch | M5 part 2: LIB-14 library window (covers or list, search, sort, folders) partial |
 | 2026-10-31 | patch | M5 part 1: LIB-5 search, LIB-9 sort, LIB-15 recently opened and LIB-2 folder import partial, live in the engine |

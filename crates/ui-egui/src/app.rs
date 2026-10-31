@@ -396,7 +396,10 @@ impl App {
                                     "library.import.folder",
                                     &json!({ "path": path, "keepFolders": true }),
                                 );
-                                self.report(r);
+                                match r {
+                                    Ok(v) => self.state.message = Some(import_report(&v)),
+                                    Err(e) => self.state.message = Some(e.to_string()),
+                                }
                             }
                         }
                     }
@@ -655,6 +658,66 @@ impl App {
             self.report(r);
         }
     }
+}
+
+/// What an import did, in a sentence (IMP-6): imported, already in the library, ignored, and
+/// each file that couldn't be read with why.
+pub fn import_report(v: &Value) -> String {
+    let n = |k: &str| match v.get(k) {
+        Some(Value::Array(a)) => a.len() as u64,
+        Some(x) => x.as_u64().unwrap_or(0),
+        None => 0,
+    };
+    let plural = |n: u64, one: &str, many: &str| {
+        if n == 1 {
+            format!("1 {one}")
+        } else {
+            format!("{n} {many}")
+        }
+    };
+    let mut parts = vec![format!(
+        "Imported {}",
+        plural(n("imported"), "score", "scores")
+    )];
+    if n("skipped") > 0 {
+        parts.push(format!("{} already in the library", n("skipped")));
+    }
+    if n("ignored") > 0 {
+        parts.push(format!(
+            "{} not PDFs",
+            plural(n("ignored"), "file", "files")
+        ));
+    }
+    let failed: Vec<String> = v
+        .get("failed")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .take(5)
+        .map(|f| {
+            let path = f.get("path").and_then(Value::as_str).unwrap_or("?");
+            let name = std::path::Path::new(path)
+                .file_name()
+                .map_or_else(|| path.to_owned(), |n| n.to_string_lossy().into_owned());
+            format!(
+                "{name}: {}",
+                f.get("message")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unreadable")
+            )
+        })
+        .collect();
+    let mut out = parts.join("; ");
+    if n("failed") > 0 {
+        out.push_str(&format!(
+            "; {} couldn't be read ({}{})",
+            n("failed"),
+            failed.join("; "),
+            if n("failed") > 5 { "; …" } else { "" }
+        ));
+    }
+    out.push('.');
+    out
 }
 
 /// The toolbar's icons, painted with shapes so the shell ships no icon assets.
@@ -1151,6 +1214,24 @@ mod tests {
         let id = app.score_id.clone().unwrap();
         app.command("score.open", &json!({ "score": id })).unwrap();
         assert!(!app.state.library);
+    }
+
+    #[test]
+    fn perf_5_imports_report_what_happened() {
+        let v = json!({
+            "imported": ["a", "b"],
+            "skipped": 1,
+            "ignored": 3,
+            "failed": [{ "path": "/x/broken.pdf", "message": "not a PDF" }],
+        });
+        assert_eq!(
+            import_report(&v),
+            "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: not a PDF)."
+        );
+        assert_eq!(
+            import_report(&json!({ "imported": ["a"] })),
+            "Imported 1 score."
+        );
     }
 
     #[test]

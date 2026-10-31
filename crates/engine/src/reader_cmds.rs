@@ -178,23 +178,36 @@ fn after_turn(r: &mut ReaderState) {
 }
 
 fn turn_next(s: &mut Session, params: &Value) -> Result<Value, EngineError> {
-    with_reader(s, "view.turn.next", params, &[], |r, _| {
+    let v = with_reader(s, "view.turn.next", params, &[], |r, _| {
         let turned = r.reader.turn_next();
         if turned {
             after_turn(r);
         }
         Ok(json!({ "turned": turned }))
-    })
+    })?;
+    // Past the last page of a setlist entry: the next entry (LIST-4).
+    if v.get("turned") == Some(&json!(false))
+        && let Some(next) = crate::play_cmds::continue_turn(s, crate::play_cmds::Way::Forward)?
+    {
+        return Ok(next);
+    }
+    Ok(v)
 }
 
 fn turn_previous(s: &mut Session, params: &Value) -> Result<Value, EngineError> {
-    with_reader(s, "view.turn.previous", params, &[], |r, _| {
+    let v = with_reader(s, "view.turn.previous", params, &[], |r, _| {
         let turned = r.reader.turn_previous();
         if turned {
             after_turn(r);
         }
         Ok(json!({ "turned": turned }))
-    })
+    })?;
+    if v.get("turned") == Some(&json!(false))
+        && let Some(prev) = crate::play_cmds::continue_turn(s, crate::play_cmds::Way::Back)?
+    {
+        return Ok(prev);
+    }
+    Ok(v)
 }
 
 fn page_goto(s: &mut Session, params: &Value) -> Result<Value, EngineError> {

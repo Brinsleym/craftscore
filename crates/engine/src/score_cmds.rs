@@ -46,6 +46,8 @@ fn open(session: &mut Session, params: &Value) -> Result<Value, EngineError> {
     reject_unknown_keys(ID, p, &["path", "score", "password"])?;
     let password = opt_str(ID, p, "password")?;
     let score: Option<scorecraft_doc::ScoreId> = crate::commands::opt_id(ID, p, "score")?;
+    // Opening a score by hand stops a setlist that was playing.
+    session.playback = None;
     match (opt_str(ID, p, "path")?, score) {
         (Some(path), None) => {
             let bytes = read_score(path)?;

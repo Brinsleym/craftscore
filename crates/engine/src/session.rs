@@ -20,6 +20,8 @@ pub struct Session {
     pub(crate) markup: crate::markup::Markup,
     /// How the library lists scores (LIB-9).
     pub(crate) library_sort: crate::find_cmds::LibrarySort,
+    /// The setlist being played, if any (LIST-4).
+    pub(crate) playback: Option<crate::play_cmds::Playback>,
 }
 
 impl Default for Session {
@@ -39,6 +41,7 @@ impl Session {
             key_gate: scorecraft_input::KeyGate::new(scorecraft_input::DEFAULT_DEBOUNCE_MS),
             markup: crate::markup::Markup::default(),
             library_sort: crate::find_cmds::LibrarySort::default(),
+            playback: None,
         }
     }
 
