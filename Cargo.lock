@@ -1184,6 +1184,10 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-render"
 version = "0.0.1"
+dependencies = [
+ "scorecraft-pdf",
+ "scorecraft-testkit",
+]
 
 [[package]]
 name = "scorecraft-scan"

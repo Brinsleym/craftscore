@@ -128,9 +128,23 @@ pub fn fit_scale(page: &PageGeometry, width: f32, height: f32) -> Option<f32> {
     (s.is_finite() && s > 0.0).then_some(s)
 }
 
-/// An open PDF score. `Send`, so a background render thread can own one.
+/// Display colours for a page: dark text and line art are drawn in `ink`, the page clears to
+/// `paper`. Images keep their colours. Display only; the file never changes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PaperColors {
+    /// sRGB colour that dark paints are mapped towards.
+    pub ink: [u8; 3],
+    /// sRGB colour that light paints and the page background are mapped towards.
+    pub paper: [u8; 3],
+}
+
+/// An open PDF score. `Send`, so a background render thread can own one; [`Document::fork`]
+/// gives each thread its own.
 pub struct Document {
     renderer: backend::PageRenderer,
+    bytes: Arc<Vec<u8>>,
+    password: Option<Arc<str>>,
+    colors: Option<PaperColors>,
     pages: Vec<PageGeometry>,
     metadata: Metadata,
     outline: Vec<OutlineEntry>,
@@ -184,17 +198,39 @@ impl Document {
             file_size: info.file_size,
         };
         let outline = info.outline.iter().map(outline_entry).collect();
-        let config = backend::RenderConfig {
-            password: password.map(Arc::from),
-            ..backend::RenderConfig::default()
-        };
-        let renderer = backend::PageRenderer::new(bytes, config);
+        let password: Option<Arc<str>> = password.map(Arc::from);
+        let renderer = backend::PageRenderer::new(bytes.clone(), config(password.clone(), None));
         Ok(Document {
             renderer,
+            bytes,
+            password,
+            colors: None,
             pages,
             metadata,
             outline,
         })
+    }
+
+    /// Another handle on the same file for another thread, drawing with `colors` (`None` for the
+    /// file's own colours). Shares the bytes and page list; the new renderer parses the file
+    /// again, so fork once per thread or colour change, not per render.
+    pub fn fork(&self, colors: Option<PaperColors>) -> Document {
+        let renderer =
+            backend::PageRenderer::new(self.bytes.clone(), config(self.password.clone(), colors));
+        Document {
+            renderer,
+            bytes: self.bytes.clone(),
+            password: self.password.clone(),
+            colors,
+            pages: self.pages.clone(),
+            metadata: self.metadata.clone(),
+            outline: self.outline.clone(),
+        }
+    }
+
+    /// The display colours this handle draws with.
+    pub fn colors(&self) -> Option<PaperColors> {
+        self.colors
     }
 
     pub fn page_count(&self) -> usize {
@@ -328,6 +364,22 @@ fn checked_scale(page: &PageGeometry, scale: f32) -> Result<f32, PdfError> {
         return Err(PdfError::BadScale);
     }
     Ok(backend::effective_scale(page.width, page.height, scale))
+}
+
+fn config(password: Option<Arc<str>>, colors: Option<PaperColors>) -> backend::RenderConfig {
+    let reading_colors = backend::ReadingColors {
+        params: colors.map(|c| backend::ReadingParams {
+            text: c.ink,
+            background: c.paper,
+            only_black: false,
+            line_art: true,
+        }),
+    };
+    backend::RenderConfig {
+        password,
+        reading_colors,
+        ..backend::RenderConfig::default()
+    }
 }
 
 fn non_empty(s: Option<String>) -> Option<String> {

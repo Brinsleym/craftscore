@@ -20,7 +20,7 @@ mod error;
 
 pub use document::{
     Bitmap, Document, MAX_PIXELS, MAX_SIDE, Metadata, OutlineEntry, PageGeometry, PageText,
-    TextGlyph, Tile, device_pixels, fit_scale,
+    PaperColors, TextGlyph, Tile, device_pixels, fit_scale,
 };
 pub use error::PdfError;
 
