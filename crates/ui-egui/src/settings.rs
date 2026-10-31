@@ -30,6 +30,8 @@ pub struct Settings {
     pub show_ruler_button: bool,
     /// The library's sort (LIB-9): `library.sort.set`'s `sort`.
     pub library_sort: Value,
+    /// The library shows covers (true) or a list (LIB-14).
+    pub library_grid: bool,
 }
 
 impl Default for Settings {
@@ -47,6 +49,7 @@ impl Default for Settings {
             markup: Value::Null,
             show_ruler_button: false,
             library_sort: Value::Null,
+            library_grid: true,
         }
     }
 }
@@ -90,6 +93,7 @@ impl Settings {
             self.pedal_map = m.get("map").cloned().unwrap_or(Value::Null);
         }
         self.theme = ui.theme;
+        self.library_grid = ui.library_grid;
         self.keep_awake = ui.keep_awake.wanted;
         if let Ok(v) = session.dispatch("library.sort.set", &json!({})) {
             self.library_sort = v.get("sort").cloned().unwrap_or(Value::Null);

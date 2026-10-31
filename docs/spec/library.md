@@ -1,6 +1,6 @@
 # Library
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** major (first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M5 part 2: covers and the window; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 Finding scores in the library: search, sort, the recently opened list, importing a whole folder,
 and the library window with covers. Written for milestone M5. Importing files, folders as places
@@ -89,6 +89,8 @@ to file scores, metadata, the trash and Verify & Repair are M1's
 | LIBS-6 | Two scores opened, one then trashed | the recent list is asked for | only the other |
 | LIBS-7 | A folder with two PDFs, a text file and a subfolder with one PDF, one already imported | it is imported with subfolders and *keep folders* | two new scores, one skipped, the text file ignored; the subfolder's score is in a library folder of its name; one undo removes them all |
 | LIBS-8 | A score filed in folder *Bach* | "bach" is searched | it is found |
+| LIBS-9 | A portrait score | its cover is asked for at 200 px, then after its first page is turned | 200 px tall, narrower than that; then turned, width and height swapped |
+| LIBS-10 | The app with a library score | the library window is shown | the score's cover arrives without blocking a frame; list view works; opening a score closes the window |
 
 ## Not in scope
 
@@ -106,4 +108,5 @@ to file scores, metadata, the trash and Verify & Repair are M1's
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M5 part 2: LIBS-9, -10 for covers and the library window |
 | 2026-10-31 | major | First version for M5: search, sort, recently opened, folder import, the library window, speed |

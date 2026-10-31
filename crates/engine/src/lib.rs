@@ -15,6 +15,7 @@
 
 mod annotate_cmds;
 pub mod commands;
+mod cover_cmds;
 mod edit_cmds;
 mod engine_cmds;
 mod error;
@@ -40,6 +41,7 @@ mod text_cmds;
 mod view_cmds;
 
 pub use commands::{CommandInfo, CommandSpec, registry};
+pub use cover_cmds::CoverJob;
 pub use error::EngineError;
 pub use library::{AnyStorage, Clock, library_open};
 pub use reader::{FrameSlot, ShownPage};
