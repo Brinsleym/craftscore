@@ -421,6 +421,8 @@ impl App {
             .fill(tokens.toolbar_bg)
             .inner_margin(egui::Margin::same(12))
             .show(ui, |ui| {
+                // The window fills the reader area, whatever its contents.
+                ui.set_min_size(ui.available_size());
                 let actions = self.library.show(ui, &mut self.session, tokens);
                 for a in actions {
                     match a {
@@ -615,12 +617,29 @@ impl App {
         }
     }
 
+    /// A file dropped on the window opens (native builds: the drop gives a path; the browser
+    /// build reads dropped files itself, asynchronously, and calls [`App::open_bytes`]).
     fn dropped_files(&mut self, ctx: &Context) {
+        if cfg!(target_arch = "wasm32") {
+            return;
+        }
         let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped {
             let r = self.open_path(&path.to_string_lossy());
             self.report(r);
         }
+    }
+
+    /// Opens a score from its bytes through the library (the browser's picked or dropped files).
+    pub fn open_bytes(&mut self, name: &str, bytes: Vec<u8>) -> Result<Value, EngineError> {
+        let r = self.session.open_bytes_in_library(name, bytes, None);
+        if r.is_ok() {
+            self.opened(&json!({}));
+            self.state.library = false;
+            self.library.dirty = true;
+            self.score_cache = None;
+        }
+        r
     }
 
     /// Exports the open score with its visible layers' ink (EXP-2).
