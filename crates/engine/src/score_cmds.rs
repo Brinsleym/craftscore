@@ -161,6 +161,14 @@ impl Session {
     }
 
     /// Whether a score is open.
+    /// The open score's id in the library, if it was opened from there.
+    pub fn library_score_id(&self) -> Option<String> {
+        self.score
+            .as_ref()
+            .and_then(|o| o.library_score)
+            .map(|id| id.to_string())
+    }
+
     pub fn has_score(&self) -> bool {
         self.score.is_some()
     }

@@ -1,6 +1,6 @@
 # Performance: setlists on stage, shortcuts, snips and the metronome
 
-> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 3: shortcuts and snips; earlier: M6 part 2: metronome; earlier: first version) · **Target:** enScore 3.7 (2026)
+> **Last reviewed:** 2026-10-31 · **Last updated:** 2026-10-31 · **Change:** patch (M6 part 4: the Lists panel; earlier: M6 part 3: shortcuts and snips; earlier: M6 part 2: metronome; earlier: first version) · **Target:** enScore 3.7 (2026)
 
 What a musician needs on stage, beyond reading one score: playing a setlist from piece to piece,
 jumping at repeats and codas, seeing the bars after a turn before it, and a metronome. Written
@@ -32,7 +32,12 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 - The screen stays awake from the first entry to the end (READ-9 applies throughout, as a score
   is always open).
 - The reader can show where the player is: the list's name, entry *n* of *m*, the score's title,
-  its tempo (LIST-3) and the next score's title.
+  its tempo (LIST-3) and the next score's title. The app shows this in the toolbar with a *Stop
+  list* button.
+- Each score opens in the same window size, layout, turn mode and fit as the one before it.
+- The library window has a Lists panel: the lists, a new-list box, and for the list picked its
+  entries with play-from-here, up, down and remove, *Add break*, *Delete list* and *Play*. A
+  score's cover menu adds it to the picked list.
 
 ### LIST-6 One score, many lists
 
@@ -90,12 +95,14 @@ for milestone M6, which closes the [alpha gate](../roadmap.md#alpha-gate). Setli
 | PERF-9 | A shortcut on page 1 to page 3 | the page is tapped beside it, then on it; then page 3 is hidden and it is tapped again | nothing; page 3; nothing |
 | PERF-10 | A snip of the top of page 2 at the foot of page 1 | it is created, moved below the page, and the move undone | same size, top at the tap; kept on the page; back where it was |
 | PERF-11 | Page 1 | a snip of page 2 is placed on it | page 1's picture changes |
+| PERF-12 | The app, a list "Gig" with the open score, picked in the Lists panel | *Play* | the reader shows; the list plays |
 | PERF-5 | An import of two new PDFs, one already imported, three other files and one broken PDF | it finishes | "Imported 2 scores; 1 already in the library; 3 files not PDFs; 1 couldn't be read (broken.pdf: …)." |
 
 PERF-1 to PERF-4 are engine tests (`crates/engine/src/play_cmds/tests.rs`); PERF-5 is a shell
 test (`crates/ui-egui/src/app.rs`); PERF-6 and PERF-7 are `scorecraft-practice` tests, PERF-8 an
 engine test (`crates/engine/src/metronome_cmds.rs`); PERF-9 to PERF-11 are engine tests
-(`crates/engine/src/nav_cmds/tests.rs`).
+(`crates/engine/src/nav_cmds/tests.rs`); PERF-12 is a shell test (`crates/ui-egui/src/app.rs`).
+PERF-1 also checks that the window and layout carry over to the next score.
 
 ## Open questions
 
@@ -107,6 +114,7 @@ engine test (`crates/engine/src/metronome_cmds.rs`); PERF-9 to PERF-11 are engin
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-31 | patch | M6 part 4: the Lists panel and the now-playing strip; scores in a list keep the window and layout; PERF-12 |
 | 2026-10-31 | patch | M6 part 3: shortcuts and snips from the rectangle, how they behave; PERF-9..11 |
 | 2026-10-31 | patch | M6 part 2: the metronome's pulse and timing, PERF-6..8 |
 | 2026-10-31 | major | First version for M6: playing a list, one score in many lists, the import report; the metronome, shortcuts and snips outlined for parts 2 and 3; PERF-1..5 |

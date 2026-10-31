@@ -78,8 +78,15 @@ fn perf_1_turning_past_the_end_opens_the_next_entry_and_back() {
         (Some(1), Some("A"))
     );
     assert_eq!(r["next"], "B");
+    run(
+        &mut s,
+        "view.viewport.set",
+        json!({ "width": 1000, "height": 700, "pixelsPerPoint": 2 }),
+    );
+    run(&mut s, "view.layout.single", json!({}));
     run(&mut s, "view.turn.next", json!({}));
     assert_eq!(page(&mut s), (2, 2));
+    run(&mut s, "view.layout.twoPage", json!({}));
     // A pedal press on the last page goes on to the next score, past the interval.
     let r = run(&mut s, "input.key", json!({ "key": "PageDown" }));
     let st = run(&mut s, "list.state", json!({}));
@@ -89,6 +96,13 @@ fn perf_1_turning_past_the_end_opens_the_next_entry_and_back() {
         "{r}"
     );
     assert_eq!(page(&mut s), (1, 3));
+    let v = s.reader_state().unwrap();
+    assert_eq!(
+        (v["layout"].as_str(), v["viewport"]["width"].as_f64()),
+        (Some("twoPage"), Some(1000.0)),
+        "the next score keeps the window and layout"
+    );
+    run(&mut s, "view.layout.single", json!({}));
     // Back from its first page: the previous score at its last page.
     let r = run(&mut s, "view.turn.previous", json!({}));
     assert_eq!(r["breaks"], json!(["Interval"]));

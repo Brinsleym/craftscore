@@ -73,8 +73,6 @@ pub struct App {
     sent_full_screen: Option<bool>,
     /// The theme last applied to egui.
     applied_theme: Option<Theme>,
-    /// The open score's id in the library, for undo.
-    score_id: Option<String>,
     /// The library window (LIB-14).
     library: crate::library_view::LibraryView,
 }
@@ -125,7 +123,6 @@ impl App {
             platform,
             sent_full_screen: None,
             applied_theme: None,
-            score_id: None,
             library: crate::library_view::LibraryView::new(),
         }
     }
@@ -168,17 +165,14 @@ impl App {
         } else {
             self.session.dispatch(id, params)
         };
-        if let (Ok(v), true) = (&r, id == "score.open" || id == "library.openFile") {
-            self.score_id = v
-                .get("score")
-                .and_then(Value::as_str)
-                .map(str::to_owned)
-                .or_else(|| {
-                    params
-                        .get("score")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned)
-                });
+        if r.is_ok() && id == "list.play" {
+            // A list opens its first score in the reader.
+            self.reader.clear();
+            self.state.library = false;
+            self.library.dirty = true;
+            return r;
+        }
+        if let (Ok(_), true) = (&r, id == "score.open" || id == "library.openFile") {
             self.opened(params);
             self.state.library = false;
             self.library.dirty = true;
@@ -487,7 +481,7 @@ impl App {
             ui,
             tokens,
             markup,
-            self.score_id.as_deref(),
+            self.session.library_score_id().as_deref(),
             &mut self.reader.ink,
             crate::markup_bar::BarSettings {
                 show_ruler_button: &mut show_ruler,
@@ -700,6 +694,33 @@ impl App {
                 }
             });
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let playing = self
+                    .session
+                    .dispatch("list.state", &json!({}))
+                    .unwrap_or(Value::Null);
+                if playing.get("playing").and_then(Value::as_bool) == Some(true) {
+                    if ui.button("Stop list").clicked() {
+                        run.push(("list.stop", json!({})));
+                    }
+                    let s = |k: &str| playing.get(k).and_then(Value::as_str).unwrap_or("");
+                    let n = |k: &str| playing.get(k).and_then(Value::as_u64).unwrap_or(0);
+                    let next = if s("next").is_empty() {
+                        String::new()
+                    } else {
+                        format!(" · next: {}", s("next"))
+                    };
+                    ui.label(
+                        RichText::new(format!(
+                            "{} {}/{}: {}{next}",
+                            s("name"),
+                            n("entry"),
+                            n("entries"),
+                            s("title")
+                        ))
+                        .color(tokens.text),
+                    );
+                    ui.separator();
+                }
                 let dark = self.state.theme == Theme::Dark;
                 if self.icon_button(ui, tokens, "Dark Theme", dark, Icon::Theme) {
                     run.push((
@@ -1284,7 +1305,7 @@ mod tests {
             "bad_params"
         );
         // Opening a score from the library closes the window.
-        let id = app.score_id.clone().unwrap();
+        let id = app.session.library_score_id().unwrap();
         app.command("score.open", &json!({ "score": id })).unwrap();
         assert!(!app.state.library);
     }
@@ -1304,6 +1325,31 @@ mod tests {
         assert_eq!(
             import_report(&json!({ "imported": ["a"] })),
             "Imported 1 score."
+        );
+    }
+
+    #[test]
+    fn perf_12_a_list_made_in_the_library_window_plays() {
+        let (mut app, _) = app_with_score(2);
+        let ctx = Context::default();
+        let score = app.session.library_score_id().unwrap();
+        let list = app.command("list.new", &json!({ "name": "Gig" })).unwrap()["list"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        app.command("list.entry.add", &json!({ "list": list, "score": score }))
+            .unwrap();
+        app.command("ui.library.show", &json!({ "on": true }))
+            .unwrap();
+        app.library.open_list = Some(list.clone());
+        frames(&mut app, &ctx, 2, Vec::new());
+        app.command("list.play", &json!({ "list": list })).unwrap();
+        assert!(!app.state.library, "playing shows the reader");
+        frames(&mut app, &ctx, 2, Vec::new());
+        let st = app.session.dispatch("list.state", &json!({})).unwrap();
+        assert_eq!(
+            (st["playing"].as_bool(), st["name"].as_str()),
+            (Some(true), Some("Gig"))
         );
     }
 

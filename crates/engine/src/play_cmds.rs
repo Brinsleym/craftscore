@@ -126,7 +126,12 @@ fn open_entry(
     let Some((entry, score, range, tempo, breaks)) = find(session, list, from, way)? else {
         return Ok(None);
     };
+    // The next score opens in the same window, layout and turn mode as the last.
+    let before = session.reader_state();
     session.open_library_score(score, None)?;
+    if let Some(st) = before {
+        carry_reader(session, &st);
+    }
     session.playback = Some(Playback {
         list,
         entry,
@@ -147,6 +152,35 @@ fn open_entry(
     crate::commands::set(&mut v, "breaks", json!(breaks));
     crate::commands::set(&mut v, "turned", json!(true));
     Ok(Some(v))
+}
+
+/// Applies the reader settings of `st` (an earlier `view.state`) to the reader just opened:
+/// the viewport, layout, turn mode and fit. Each is best effort.
+fn carry_reader(session: &mut Session, st: &Value) {
+    if let Some(vp) = st.get("viewport") {
+        let _ = session.dispatch("view.viewport.set", vp);
+    }
+    let first_alone = st
+        .get("firstAlone")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    let _ = match st.get("layout").and_then(Value::as_str) {
+        Some("twoPage") => {
+            session.dispatch("view.layout.twoPage", &json!({ "firstAlone": first_alone }))
+        }
+        _ => session.dispatch("view.layout.single", &json!({})),
+    };
+    let _ = match st.get("mode").and_then(Value::as_str) {
+        Some("halfPage") => session.dispatch(
+            "view.turn.halfPage",
+            &json!({ "split": st.get("split").cloned().unwrap_or(json!(0.5)) }),
+        ),
+        Some("alternating") => session.dispatch("view.turn.alternating", &json!({})),
+        _ => Ok(Value::Null),
+    };
+    if st.pointer("/zoom/fit").and_then(Value::as_str) == Some("width") {
+        let _ = session.dispatch("view.zoom.landscapeFit", &json!({}));
+    }
 }
 
 /// A turn that ran off the end (or start) of the open entry: the next (or previous) entry, if
