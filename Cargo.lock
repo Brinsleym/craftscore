@@ -1225,6 +1225,9 @@ version = "0.0.1"
 [[package]]
 name = "scorecraft-raster"
 version = "0.0.1"
+dependencies = [
+ "proptest",
+]
 
 [[package]]
 name = "scorecraft-render"
